@@ -1,0 +1,43 @@
+# Node modules
+node_modules/
+*/node_modules/
+
+# Environment files
+.env
+.env*.local
+*.env
+server/.env
+client/.env
+
+# Build outputs
+dist/
+client/dist/
+server/dist/
+build/
+
+# Database files
+database/*.db
+database/*.db-journal
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Uploads content (keep folder)
+server/uploads/*
+!server/uploads/.gitkeep
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editor & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.gemini/

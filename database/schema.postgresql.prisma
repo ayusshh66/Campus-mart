@@ -1,0 +1,198 @@
+// PostgreSQL Schema for CampusMart
+// Prisma schema file for PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+  CAMPUS_HERO
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+model College {
+  id                       String                  @id @default(uuid())
+  code                     String                  @unique
+  name                     String
+  is_active                Boolean                 @default(true)
+  created_at               DateTime                @default(now())
+  users                    User[]
+  sell_requests            SellRequest[]
+  buy_requests             BuyRequest[]
+  campus_hero_applications CampusHeroApplication[]
+  delivery_tasks           DeliveryTask[]
+
+  @@map("colleges")
+}
+
+model User {
+  id                       String                  @id @default(uuid())
+  name                     String
+  email                    String                  @unique
+  phone                    String
+  password_hash            String
+  college_id               String
+  college                  College                 @relation(fields: [college_id], references: [id])
+  role                     Role                    @default(USER)
+  created_at               DateTime                @default(now())
+  updated_at               DateTime                @updatedAt
+  sell_requests            SellRequest[]
+  buy_requests             BuyRequest[]
+  campus_hero_applications CampusHeroApplication[]
+  hero_tasks               DeliveryTask[]          @relation("HeroTasks")
+  sent_messages            Message[]               @relation("SentMessages")
+  received_messages        Message[]               @relation("ReceivedMessages")
+
+  @@map("users")
+}
+
+model Product {
+  id                      String         @id @default(uuid())
+  name                    String
+  description             String
+  image_url               String
+  images                  String         @default("[]") // JSON array of multiple showcase images
+  category                String
+  buy_price               Float          // Base/fixed buying price
+  upto_buy_price          Float?         // "Up to" maximum price students can receive
+  sell_price              Float          // Admin-determined selling price (what buyer pays)
+  is_buying_enabled       Boolean        @default(true) // We are currently buying this item
+  is_active               Boolean        @default(true) // Visible in catalog
+  quality_questions       String         @default("[]") // JSON array of quality check questions
+  
+  // Auto-Match & Auto-Accept Rules
+  auto_match_enabled      Boolean        @default(true)
+  max_campus_inventory    Int            @default(10)
+  auto_accept_conditions  String         @default("[\"Like New\", \"Good\"]")
+  require_photos_for_auto Boolean        @default(true)
+  min_payout_for_auto     Float?
+  
+  created_at              DateTime       @default(now())
+  updated_at              DateTime       @updatedAt
+  sell_requests           SellRequest[]
+  buy_requests            BuyRequest[]
+  delivery_tasks          DeliveryTask[]
+
+  @@map("products")
+}
+
+model SellRequest {
+  id               String         @id @default(uuid())
+  user_id          String
+  user             User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  product_id       String
+  product          Product        @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  college_id       String
+  college          College        @relation(fields: [college_id], references: [id], onDelete: Cascade)
+  condition        String         // "Like New", "Good", "Used"
+  description      String?
+  images           String         @default("[]") // JSON string of student uploaded image URLs
+  quality_answers  String         @default("{}") // JSON string of student quality check responses
+  estimated_price  Float?         // Dynamic calculated price based on quality check
+  admin_buy_price  Float?         // Price paid to student
+  admin_sell_price Float?         // Price set for buyer
+  status           RequestStatus  @default(PENDING)
+  auto_matched     Boolean        @default(false)
+  created_at       DateTime       @default(now())
+  updated_at       DateTime       @updatedAt
+  delivery_tasks   DeliveryTask[]
+  messages         Message[]
+
+  @@map("sell_requests")
+}
+
+model BuyRequest {
+  id                      String         @id @default(uuid())
+  user_id                 String
+  user                    User           @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  product_id              String
+  product                 Product        @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  college_id              String
+  college                 College        @relation(fields: [college_id], references: [id], onDelete: Cascade)
+  status                  RequestStatus  @default(PENDING)
+  notes                   String?
+  auto_matched            Boolean        @default(false)
+  matched_sell_request_id String?
+  created_at              DateTime       @default(now())
+  updated_at              DateTime       @updatedAt
+  delivery_tasks          DeliveryTask[]
+  messages                Message[]
+
+  @@map("buy_requests")
+}
+
+model CampusHeroApplication {
+  id         String        @id @default(uuid())
+  user_id    String
+  user       User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  college_id String
+  college    College       @relation(fields: [college_id], references: [id], onDelete: Cascade)
+  branch     String
+  year       String
+  phone      String
+  instagram  String?
+  linkedin   String?
+  reason     String
+  status     RequestStatus @default(PENDING)
+  created_at DateTime      @default(now())
+  updated_at DateTime      @updatedAt
+
+  @@map("campus_hero_applications")
+}
+
+model DeliveryTask {
+  id               String       @id @default(uuid())
+  task_type        String       // "PICKUP", "DROP", "MATCHED_EXCHANGE"
+  sell_request_id  String?
+  sell_request     SellRequest? @relation(fields: [sell_request_id], references: [id], onDelete: SetNull)
+  buy_request_id   String?
+  buy_request      BuyRequest?  @relation(fields: [buy_request_id], references: [id], onDelete: SetNull)
+  product_id       String
+  product          Product      @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  college_id       String
+  college          College      @relation(fields: [college_id], references: [id], onDelete: Cascade)
+  assigned_hero_id String?
+  assigned_hero    User?        @relation("HeroTasks", fields: [assigned_hero_id], references: [id], onDelete: SetNull)
+  status           String       @default("ASSIGNED")
+  quality_verified Boolean      @default(false)
+  pickup_notes     String?
+  delivery_notes   String?
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  messages         Message[]
+
+  @@map("delivery_tasks")
+}
+
+model Message {
+  id                  String        @id @default(uuid())
+  sender_id           String
+  sender              User          @relation("SentMessages", fields: [sender_id], references: [id], onDelete: Cascade)
+  sender_display_name String        @default("Operations Team — Campus Hero")
+  receiver_id         String
+  receiver            User          @relation("ReceivedMessages", fields: [receiver_id], references: [id], onDelete: Cascade)
+  task_id             String?
+  task                DeliveryTask? @relation(fields: [task_id], references: [id], onDelete: SetNull)
+  sell_request_id     String?
+  sell_request        SellRequest?  @relation(fields: [sell_request_id], references: [id], onDelete: SetNull)
+  buy_request_id      String?
+  buy_request         BuyRequest?   @relation(fields: [buy_request_id], references: [id], onDelete: SetNull)
+  content             String
+  is_read             Boolean       @default(false)
+  created_at          DateTime      @default(now())
+
+  @@map("messages")
+}
