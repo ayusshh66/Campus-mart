@@ -1,6 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { api, SellRequestItem } from '../../services/api';
-import { CheckCircle, XCircle, MapPin, Tag, AlertCircle, Eye, Phone, Mail } from 'lucide-react';
+import { 
+  CheckCircle, 
+  XCircle, 
+  MapPin, 
+  Tag, 
+  AlertCircle, 
+  Eye, 
+  Phone, 
+  Mail,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Image as ImageIcon,
+  Search
+} from 'lucide-react';
 
 interface Props {
   onAction?: () => void;
@@ -10,9 +24,23 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
   const [requests, setRequests] = useState<SellRequestItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'PENDING' | 'ALL'>('PENDING');
+  const [searchTerm, setSearchTerm] = useState('');
   const [pricingDrafts, setPricingDrafts] = useState<Record<string, { buy: number; sell: number }>>({});
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [inspectImages, setInspectImages] = useState<string[] | null>(null);
+  const [inspectIndex, setInspectIndex] = useState(0);
+
+  // Confirmation modal
+  const [confirmModal, setConfirmModal] = useState<{
+    id: string;
+    productName: string;
+    studentName: string;
+    collegeCode: string;
+    status: 'APPROVED' | 'REJECTED';
+    buyPrice: number;
+    sellPrice: number;
+  } | null>(null);
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -66,6 +94,18 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
     }));
   };
 
+  const filteredRequests = requests.filter((item) => {
+    const q = searchTerm.toLowerCase();
+    return (
+      searchTerm === '' ||
+      (item.product_name || '').toLowerCase().includes(q) ||
+      (item.student_name || '').toLowerCase().includes(q) ||
+      (item.student_email || '').toLowerCase().includes(q) ||
+      (item.college_code || '').toLowerCase().includes(q) ||
+      (item.college_name || '').toLowerCase().includes(q)
+    );
+  });
+
   return (
     <div className="space-y-6">
       {/* Filter and Title bar */}
@@ -99,6 +139,23 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
         </div>
       </div>
 
+      {/* Search Input Bar */}
+      <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-2">
+        <Search className="w-4 h-4 text-slate-400 ml-1" />
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search by product name, student, email, or campus..."
+          className="w-full text-xs bg-transparent border-none outline-none text-slate-800 placeholder-slate-400"
+        />
+        {searchTerm && (
+          <button onClick={() => setSearchTerm('')} className="text-xs text-slate-400 hover:text-slate-600 px-2 font-bold">
+            Clear
+          </button>
+        )}
+      </div>
+
       {message && (
         <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
           <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -112,15 +169,15 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
             <div key={i} className="h-44 bg-slate-100 rounded-2xl animate-pulse" />
           ))}
         </div>
-      ) : requests.length === 0 ? (
+      ) : filteredRequests.length === 0 ? (
         <div className="bg-white rounded-3xl p-12 text-center border border-slate-200">
           <Tag className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="font-bold text-slate-800 text-base">No {filter === 'PENDING' ? 'Pending' : ''} Sell Requests</h3>
-          <p className="text-xs text-slate-500 mt-1">There are currently no items waiting for admin approval.</p>
+          <h3 className="font-bold text-slate-800 text-base">No Matching Sell Requests</h3>
+          <p className="text-xs text-slate-500 mt-1">There are currently no items matching your filter.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-5">
-          {requests.map((item) => {
+          {filteredRequests.map((item) => {
             const draft = pricingDrafts[item.id] || { buy: item.admin_buy_price, sell: item.admin_sell_price || 0 };
 
             return (
@@ -183,16 +240,18 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
                         <span className="text-[10px] uppercase font-bold text-slate-400">Photos ({item.images.length}):</span>
                         <div className="flex gap-1.5">
                           {item.images.map((img, iIdx) => (
-                            <a
+                            <button
                               key={iIdx}
-                              href={img}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 hover:border-campus-primary"
-                              title="Click to view full photo"
+                              type="button"
+                              onClick={() => {
+                                setInspectImages(item.images || []);
+                                setInspectIndex(iIdx);
+                              }}
+                              className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 hover:border-campus-primary hover:scale-105 transition-all cursor-pointer"
+                              title="Click to inspect photo"
                             >
                               <img src={img} alt="" className="w-full h-full object-cover" />
-                            </a>
+                            </button>
                           ))}
                         </div>
                       </div>
@@ -260,7 +319,17 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
                   <div className="flex items-center gap-2">
                     {item.status !== 'APPROVED' && (
                       <button
-                        onClick={() => handleReview(item.id, 'APPROVED')}
+                        onClick={() =>
+                          setConfirmModal({
+                            id: item.id,
+                            productName: item.product_name,
+                            studentName: item.student_name || 'Student',
+                            collegeCode: item.college_code || 'Campus',
+                            status: 'APPROVED',
+                            buyPrice: draft.buy,
+                            sellPrice: draft.sell,
+                          })
+                        }
                         disabled={processingId === item.id}
                         className="px-4 py-2.5 rounded-xl bg-campus-primary hover:bg-campus-primary-hover text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5"
                       >
@@ -271,7 +340,17 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
 
                     {item.status !== 'REJECTED' && (
                       <button
-                        onClick={() => handleReview(item.id, 'REJECTED')}
+                        onClick={() =>
+                          setConfirmModal({
+                            id: item.id,
+                            productName: item.product_name,
+                            studentName: item.student_name || 'Student',
+                            collegeCode: item.college_code || 'Campus',
+                            status: 'REJECTED',
+                            buyPrice: draft.buy,
+                            sellPrice: draft.sell,
+                          })
+                        }
                         disabled={processingId === item.id}
                         className="px-4 py-2.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold transition-all flex items-center gap-1.5"
                       >
@@ -286,6 +365,136 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
               </div>
             );
           })}
+        </div>
+      )}
+      {/* Image Inspection Modal */}
+      {inspectImages && inspectImages.length > 0 && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
+          onClick={() => setInspectImages(null)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                <ImageIcon className="w-4 h-4 text-campus-primary" />
+                <span>Uploaded Photo Inspection ({inspectIndex + 1} of {inspectImages.length})</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setInspectImages(null)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Main Inspection Image */}
+            <div className="relative aspect-[4/3] bg-slate-900 flex items-center justify-center overflow-hidden">
+              <img
+                src={inspectImages[inspectIndex]}
+                alt={`Photo ${inspectIndex + 1}`}
+                className="max-w-full max-h-full object-contain"
+              />
+
+              {inspectImages.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setInspectIndex((prev) => (prev > 0 ? prev - 1 : inspectImages.length - 1))}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center backdrop-blur-sm transition-all"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInspectIndex((prev) => (prev < inspectImages.length - 1 ? prev + 1 : 0))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center backdrop-blur-sm transition-all"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Thumbnails row */}
+            {inspectImages.length > 1 && (
+              <div className="p-3 bg-slate-50 flex items-center justify-center gap-2 border-t border-slate-100">
+                {inspectImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setInspectIndex(idx)}
+                    className={`w-12 h-12 rounded-xl overflow-hidden border-2 transition-all ${
+                      inspectIndex === idx
+                        ? 'border-campus-primary ring-2 ring-campus-primary/30 scale-105'
+                        : 'border-slate-200 opacity-60 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      {/* Confirmation Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className={`p-2.5 rounded-2xl ${
+                  confirmModal.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                }`}
+              >
+                {confirmModal.status === 'APPROVED' ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm text-slate-900">
+                  {confirmModal.status === 'APPROVED' ? 'Approve Sell Request?' : 'Reject Sell Request?'}
+                </h3>
+                <p className="text-[11px] text-slate-500">Confirm catalog item status</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 mb-4 leading-relaxed">
+              Are you sure you want to mark the sell request for <strong className="text-slate-900">{confirmModal.productName}</strong> by <strong className="text-slate-900">{confirmModal.studentName}</strong> ({confirmModal.collegeCode}) as <span className="font-bold uppercase">{confirmModal.status}</span>?
+            </p>
+
+            {confirmModal.status === 'APPROVED' && (
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] text-emerald-800 mb-5 leading-normal">
+                Approved price: <strong className="font-bold">₹{confirmModal.buyPrice}</strong> (Student payout) • <strong className="font-bold">₹{confirmModal.sellPrice}</strong> (Selling price on {confirmModal.collegeCode} campus).
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2.5">
+              <button
+                onClick={() => setConfirmModal(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const modal = confirmModal;
+                  setConfirmModal(null);
+                  await handleReview(modal.id, modal.status);
+                }}
+                className={`px-4 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-sm ${
+                  confirmModal.status === 'APPROVED'
+                    ? 'bg-campus-primary hover:bg-campus-primary-hover'
+                    : 'bg-rose-600 hover:bg-rose-700'
+                }`}
+              >
+                Confirm {confirmModal.status}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

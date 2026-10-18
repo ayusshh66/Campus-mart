@@ -92,8 +92,11 @@ export const getDefaultQualityQuestions = (
 router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     // Determine the college ID to check availability for:
-    // Priority: authenticated user's locked college > query param college_id
-    const targetCollegeId = req.user?.college_id || (req.query.college_id as string | undefined);
+    // Priority: Explicit browsing query param college_id > Authenticated user's locked home college
+    const queryCollegeId = (req.query.college_id as string | undefined)?.trim();
+    const targetCollegeId = (queryCollegeId && queryCollegeId !== 'undefined' && queryCollegeId !== 'null' && queryCollegeId !== '')
+      ? queryCollegeId
+      : req.user?.college_id;
 
     const targetCollege = targetCollegeId
       ? await prisma.college.findUnique({ where: { id: targetCollegeId } })
@@ -173,7 +176,15 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
 
     return res.json({
       success: true,
-      college: targetCollege ? { id: targetCollege.id, code: targetCollege.code, name: targetCollege.name } : null,
+      college: targetCollege
+        ? {
+            id: targetCollege.id,
+            code: targetCollege.code,
+            name: targetCollege.name,
+            is_active: targetCollege.is_active,
+            is_home_campus: Boolean(req.user && req.user.college_id === targetCollege.id),
+          }
+        : null,
       data: productsWithAvailability,
     });
   } catch (error: any) {
@@ -189,7 +200,10 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
 router.get('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const targetCollegeId = req.user?.college_id || (req.query.college_id as string | undefined);
+    const queryCollegeId = (req.query.college_id as string | undefined)?.trim();
+    const targetCollegeId = (queryCollegeId && queryCollegeId !== 'undefined' && queryCollegeId !== 'null' && queryCollegeId !== '')
+      ? queryCollegeId
+      : req.user?.college_id;
 
     const product = await prisma.product.findUnique({
       where: { id },
@@ -266,6 +280,7 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
         college_id: targetCollegeId || null,
         college_code: targetCollege?.code || null,
         college_name: targetCollege?.name || null,
+        is_home_campus: Boolean(req.user && req.user.college_id === targetCollege?.id),
       },
     });
   } catch (error: any) {

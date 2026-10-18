@@ -11,6 +11,8 @@ interface AuthContextType {
   refreshUser: () => Promise<void>;
   selectedCollegeId: string | null;
   setSelectedCollegeId: (id: string | null) => void;
+  resetToHomeCollege: () => void;
+  isBrowsingOtherCollege: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,6 +22,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(() => localStorage.getItem('campusmart_token'));
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [guestCollegeId, setGuestCollegeId] = useState<string | null>(() => localStorage.getItem('campusmart_guest_college'));
+  const [browsingCollegeId, setBrowsingCollegeId] = useState<string | null>(() => localStorage.getItem('campusmart_browsing_college'));
 
   useEffect(() => {
     const initAuth = async () => {
@@ -46,6 +49,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('campusmart_token', res.data.token);
     setToken(res.data.token);
     setUser(res.data.user);
+    // On login, reset cross-campus browsing filter to their newly logged in home campus
+    localStorage.removeItem('campusmart_browsing_college');
+    setBrowsingCollegeId(null);
     return res.data.user;
   };
 
@@ -60,13 +66,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('campusmart_token', res.data.token);
     setToken(res.data.token);
     setUser(res.data.user);
+    localStorage.removeItem('campusmart_browsing_college');
+    setBrowsingCollegeId(null);
     return res.data.user;
   };
 
   const logout = () => {
     localStorage.removeItem('campusmart_token');
+    localStorage.removeItem('campusmart_browsing_college');
     setToken(null);
     setUser(null);
+    setBrowsingCollegeId(null);
   };
 
   const refreshUser = async () => {
@@ -81,16 +91,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const setSelectedCollegeId = (id: string | null) => {
-    if (id) {
-      localStorage.setItem('campusmart_guest_college', id);
+    if (user) {
+      if (id && id !== user.college.id) {
+        localStorage.setItem('campusmart_browsing_college', id);
+        setBrowsingCollegeId(id);
+      } else {
+        localStorage.removeItem('campusmart_browsing_college');
+        setBrowsingCollegeId(null);
+      }
     } else {
-      localStorage.removeItem('campusmart_guest_college');
+      if (id) {
+        localStorage.setItem('campusmart_guest_college', id);
+      } else {
+        localStorage.removeItem('campusmart_guest_college');
+      }
+      setGuestCollegeId(id);
     }
-    setGuestCollegeId(id);
   };
 
-  // If user is logged in, their locked college is ALWAYS used
-  const activeCollegeId = user ? user.college.id : guestCollegeId;
+  const resetToHomeCollege = () => {
+    localStorage.removeItem('campusmart_browsing_college');
+    setBrowsingCollegeId(null);
+  };
+
+  // Determine active browsing college ID
+  const activeCollegeId = user
+    ? (browsingCollegeId || user.college.id)
+    : guestCollegeId;
+
+  const isBrowsingOtherCollege = Boolean(user && browsingCollegeId && browsingCollegeId !== user.college.id);
 
   return (
     <AuthContext.Provider
@@ -104,6 +133,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         refreshUser,
         selectedCollegeId: activeCollegeId,
         setSelectedCollegeId,
+        resetToHomeCollege,
+        isBrowsingOtherCollege,
       }}
     >
       {children}

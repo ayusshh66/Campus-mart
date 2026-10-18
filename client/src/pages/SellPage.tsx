@@ -2,11 +2,13 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api, Product } from '../services/api';
+import { ImageUploader } from '../components/ImageUploader';
 import { 
   Tag, 
   MapPin, 
   Upload, 
   CheckCircle, 
+  CheckCircle2,
   AlertCircle, 
   Banknote, 
   Check, 
@@ -20,7 +22,10 @@ import {
   Layers,
   HelpCircle,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  PlusCircle,
+  Image as ImageIcon,
+  FileText
 } from 'lucide-react';
 
 interface QualityOption {
@@ -38,6 +43,9 @@ interface QualityQuestion {
 export const SellPage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // Mode switcher: 'catalog' | 'custom'
+  const [sellMode, setSellMode] = useState<'catalog' | 'custom'>('catalog');
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -64,6 +72,19 @@ export const SellPage: React.FC = () => {
   const [submittedSuccess, setSubmittedSuccess] = useState<boolean>(false);
   const [submittedData, setSubmittedData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Custom Item Submission State
+  const [customName, setCustomName] = useState<string>('');
+  const [customCategory, setCustomCategory] = useState<string>('Books & Academic');
+  const [customCondition, setCustomCondition] = useState<string>('Good');
+  const [customExpectedPrice, setCustomExpectedPrice] = useState<string>('');
+  const [customDescription, setCustomDescription] = useState<string>('');
+  const [customImages, setCustomImages] = useState<string[]>([]);
+  const [customUploading, setCustomUploading] = useState<boolean>(false);
+  const [customSubmitting, setCustomSubmitting] = useState<boolean>(false);
+  const [customSubmittedSuccess, setCustomSubmittedSuccess] = useState<boolean>(false);
+  const [customSubmittedData, setCustomSubmittedData] = useState<any>(null);
+  const [customError, setCustomError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -181,31 +202,6 @@ export const SellPage: React.FC = () => {
   const totalDeductions = Object.values(qualityAnswers).reduce((sum, item) => sum + (item.deduction || 0), 0);
   const liveEstimatedPayout = Math.max(50, Math.round(maxPrice - totalDeductions));
 
-  // Multi-image upload handler
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    const files = Array.from(e.target.files);
-
-    setUploading(true);
-    setError(null);
-
-    for (const file of files) {
-      try {
-        const uploadRes = await api.uploadImage(file);
-        setImageUrls((prev) => [...prev, uploadRes.url]);
-      } catch (err: any) {
-        console.error('Image upload fallback to object URL:', err);
-        const localPreview = URL.createObjectURL(file);
-        setImageUrls((prev) => [...prev, localPreview]);
-      }
-    }
-    setUploading(false);
-  };
-
-  const removeImage = (indexToRemove: number) => {
-    setImageUrls((prev) => prev.filter((_, idx) => idx !== indexToRemove));
-  };
-
   const handleAnswerSelect = (questionId: string, option: QualityOption) => {
     setQualityAnswers((prev) => ({
       ...prev,
@@ -274,9 +270,58 @@ export const SellPage: React.FC = () => {
     }
   };
 
+  const handleCustomSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCustomError(null);
+
+    if (!customName.trim()) {
+      setCustomError('Please enter the item name.');
+      return;
+    }
+    const price = parseFloat(customExpectedPrice);
+    if (isNaN(price) || price <= 0) {
+      setCustomError('Please enter a valid expected cash price (greater than ₹0).');
+      return;
+    }
+    if (customDescription.trim().length < 5) {
+      setCustomError('Please provide a brief description (at least 5 characters).');
+      return;
+    }
+    if (customImages.length === 0) {
+      setCustomError('Please upload at least 1 photo of your item (1 to 5 photos supported).');
+      return;
+    }
+
+    setCustomSubmitting(true);
+    try {
+      await api.submitCustomSellRequest({
+        name: customName.trim(),
+        category: customCategory,
+        condition: customCondition,
+        description: customDescription.trim(),
+        expected_price: price,
+        images: customImages,
+      });
+
+      setCustomSubmittedData({
+        name: customName.trim(),
+        category: customCategory,
+        condition: customCondition,
+        expectedPrice: price,
+        collegeCode: user?.college.code,
+        imageCount: customImages.length,
+      });
+      setCustomSubmittedSuccess(true);
+    } catch (err: any) {
+      setCustomError(err.message || 'Failed to submit custom sell request.');
+    } finally {
+      setCustomSubmitting(false);
+    }
+  };
+
   if (!user) return null;
 
-  // View: Success Screen
+  // View: Success Screen for Catalog Sell Request
   if (submittedSuccess) {
     return (
       <div className="max-w-xl mx-auto px-4 py-16 sm:py-24 text-center">
@@ -327,61 +372,391 @@ export const SellPage: React.FC = () => {
     );
   }
 
+  // View: Success Screen for Custom Item Submission
+  if (customSubmittedSuccess) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-16 sm:py-24 text-center animate-fade-in">
+        <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200/80 shadow-card">
+          <div className="w-16 h-16 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-8 h-8" />
+          </div>
+          <span className="text-[11px] uppercase tracking-wider font-extrabold px-3 py-1 rounded-full bg-amber-100 text-amber-800 inline-block mb-3">
+            Pending Admin Review
+          </span>
+          <h2 className="text-2xl font-extrabold text-campus-dark mb-2">
+            Custom Item Submitted!
+          </h2>
+          <p className="text-sm text-slate-600 leading-relaxed mb-6">
+            Your submission for <strong className="text-slate-900">{customSubmittedData?.name}</strong> has been received by our campus operations team.
+          </p>
+
+          <div className="inline-flex flex-col items-center p-5 rounded-2xl bg-purple-50/60 border border-purple-200/80 mb-8 w-full max-w-sm mx-auto space-y-2">
+            <div className="flex items-center justify-between w-full text-xs text-slate-600 border-b border-purple-100 pb-2">
+              <span>Category:</span>
+              <strong className="text-slate-900">{customSubmittedData?.category}</strong>
+            </div>
+            <div className="flex items-center justify-between w-full text-xs text-slate-600 border-b border-purple-100 pb-2">
+              <span>Condition:</span>
+              <strong className="text-slate-900">{customSubmittedData?.condition}</strong>
+            </div>
+            <div className="flex items-center justify-between w-full text-xs text-slate-600 border-b border-purple-100 pb-2">
+              <span>Your Asking Price:</span>
+              <strong className="text-purple-700 text-base font-extrabold">₹{customSubmittedData?.expectedPrice.toLocaleString('en-IN')}</strong>
+            </div>
+            <div className="flex items-center justify-between w-full text-xs text-slate-600 pt-1">
+              <span>Campus Handover:</span>
+              <strong className="text-campus-primary font-bold">📍 {customSubmittedData?.collegeCode}</strong>
+            </div>
+          </div>
+
+          <div className="bg-slate-50 rounded-2xl p-4 text-xs text-slate-600 text-left mb-6 border border-slate-100 space-y-1.5">
+            <div className="flex items-center gap-2 font-bold text-slate-800">
+              <Sparkles className="w-4 h-4 text-purple-600" />
+              <span>What happens next?</span>
+            </div>
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              1. An admin will inspect your photos, condition grade, and expected price.<br />
+              2. Once approved, the item will immediately be published to the <strong>{customSubmittedData?.collegeCode} Campus Marketplace</strong> for students to purchase.<br />
+              3. You can monitor the review progress in your Profile under <strong>Custom Submissions</strong>.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              to="/profile"
+              className="px-6 py-3 rounded-xl bg-campus-primary hover:bg-campus-primary-hover text-white text-xs font-bold shadow-md transition-all"
+            >
+              Track in My Profile
+            </Link>
+            <button
+              onClick={() => {
+                setCustomSubmittedSuccess(false);
+                setCustomName('');
+                setCustomExpectedPrice('');
+                setCustomDescription('');
+                setCustomImages([]);
+                setCustomError(null);
+              }}
+              className="px-6 py-3 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors"
+            >
+              Submit Another Item
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       
       {/* ============================================================== */}
-      {/* VIEW 1: CATALOGUE VIEW (When user has not clicked an item yet) */}
+      {/* VIEW 1: CATALOGUE OR CUSTOM SELLING VIEW (When not in step-by-step) */}
       {/* ============================================================== */}
       {!selectedProduct && (
         <div className="space-y-8">
-          {/* Header Banner */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-8">
-            <div>
-              <div className="flex items-center gap-2 text-xs font-bold text-campus-primary uppercase tracking-wider mb-2">
-                <Tag className="w-4 h-4" />
-                <span>We Are Buying Catalog</span>
-              </div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-campus-dark tracking-tight">
-                Sell Your Campus Essentials
-              </h1>
-              <p className="text-sm text-slate-500 mt-2 max-w-xl">
-                Select the item you want to sell from our official campus inventory. 
-                Answer a quick condition assessment to receive your guaranteed cash quote.
-              </p>
-            </div>
-
-            {/* Permanent College Lock Indicator */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-campus-soft border border-campus-primary/30 text-campus-dark text-xs font-bold shadow-sm self-start md:self-auto">
-              <span>Selling on campus:</span>
-              <span className="flex items-center gap-1 text-campus-primary font-black">
-                <MapPin className="w-4 h-4" />
-                {user.college.code}
-              </span>
-            </div>
+          {/* Top Mode Switcher Tabs */}
+          <div className="flex p-1.5 bg-slate-100 rounded-2xl max-w-md">
+            <button
+              type="button"
+              onClick={() => setSellMode('catalog')}
+              className={`flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                sellMode === 'catalog'
+                  ? 'bg-white text-campus-dark shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Tag className="w-4 h-4 text-campus-primary" />
+              <span>Catalog Items</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold hidden sm:inline">Instant Quote</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSellMode('custom')}
+              className={`flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+                sellMode === 'custom'
+                  ? 'bg-white text-campus-dark shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Sparkles className="w-4 h-4 text-purple-600" />
+              <span>Sell Any Custom Item</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-800 font-extrabold hidden sm:inline">Sell Anything</span>
+            </button>
           </div>
 
-          {/* Search & Category Filter Strip */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-            {/* Search Bar */}
-            <div className="relative flex-grow max-w-md">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search items we are buying (e.g. Casio, Math book)..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-campus-primary/30 focus:border-campus-primary"
-              />
-              {searchQuery && (
+          {/* ------------------------------------------------------------ */}
+          {/* OPTION A: SELL ANY CUSTOM ITEM                               */}
+          {/* ------------------------------------------------------------ */}
+          {sellMode === 'custom' && (
+            <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-6">
+                <div>
+                  <div className="flex items-center gap-2 text-xs font-bold text-purple-600 uppercase tracking-wider mb-2">
+                    <Sparkles className="w-4 h-4" />
+                    <span>Community Campus Marketplace</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                    Sell Any Second-Hand Item
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1.5 max-w-xl">
+                    Submit any second-hand textbooks, electronics, cycle, lab coats, drafters, or hostel items. Once reviewed, an admin will approve your listing and publish it to the {user.college.code} campus marketplace!
+                  </p>
+                </div>
+
+                <div className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-campus-soft border border-campus-primary/30 text-campus-dark text-xs font-bold shadow-sm self-start md:self-auto shrink-0">
+                  <span>Campus:</span>
+                  <span className="flex items-center gap-1 text-campus-primary font-black">
+                    <MapPin className="w-4 h-4" />
+                    {user.college.code}
+                  </span>
+                </div>
+              </div>
+
+              <form onSubmit={handleCustomSubmit} className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-subtle space-y-6">
+                {customError && (
+                  <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                      <span>{customError}</span>
+                    </div>
+                    <button type="button" onClick={() => setCustomError(null)} className="text-rose-500 hover:text-rose-800">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Item Name */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Item Name <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={customName}
+                    onChange={(e) => setCustomName(e.target.value)}
+                    placeholder="e.g. Casio fx-991CW Scientific Calculator, B.Tech 1st Year Chemistry Book, Decathlon Cycle..."
+                    className="w-full px-4 py-3 text-xs sm:text-sm rounded-2xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30 focus:border-campus-primary"
+                  />
+                </div>
+
+                {/* Category & Expected Price */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                      Category <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      value={customCategory}
+                      onChange={(e) => setCustomCategory(e.target.value)}
+                      className="w-full px-4 py-3 text-xs sm:text-sm rounded-2xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30 focus:border-campus-primary font-medium"
+                    >
+                      <option value="Books & Academic">Books & Academic</option>
+                      <option value="Electronics & Tech">Electronics & Tech</option>
+                      <option value="Engineering & Lab Tools">Engineering & Lab Tools</option>
+                      <option value="Cycles & Mobility">Cycles & Mobility</option>
+                      <option value="Hostel & Dorm Essentials">Hostel & Dorm Essentials</option>
+                      <option value="Stationery & Instruments">Stationery & Instruments</option>
+                      <option value="Other Essentials">Other Essentials</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                      Expected Cash Price (₹) <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        required
+                        value={customExpectedPrice}
+                        onChange={(e) => setCustomExpectedPrice(e.target.value)}
+                        placeholder="e.g. 450"
+                        className="w-full pl-8 pr-4 py-3 text-xs sm:text-sm rounded-2xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30 focus:border-campus-primary font-bold text-slate-900"
+                      />
+                    </div>
+                    <span className="text-[11px] text-slate-400 mt-1 block">
+                      Amount you hope to get. Admin will review and lock final payout price.
+                    </span>
+                  </div>
+                </div>
+
+                {/* Condition Selection */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                    Condition Assessment <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {[
+                      {
+                        value: 'Like New',
+                        label: 'Like New',
+                        desc: 'Pristine, almost unused, zero damage or marks.',
+                      },
+                      {
+                        value: 'Good',
+                        label: 'Good Condition',
+                        desc: 'Normal campus wear, fully functional & clean.',
+                      },
+                      {
+                        value: 'Used',
+                        label: 'Used / Fair',
+                        desc: 'Visible scuffs or markings, but 100% usable.',
+                      },
+                    ].map((c) => (
+                      <div
+                        key={c.value}
+                        onClick={() => setCustomCondition(c.value)}
+                        className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
+                          customCondition === c.value
+                            ? 'border-campus-primary bg-campus-soft/40 shadow-sm'
+                            : 'border-slate-200 hover:border-slate-300 bg-white'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-bold text-xs text-slate-900">{c.label}</span>
+                          <div
+                            className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                              customCondition === c.value
+                                ? 'border-campus-primary bg-campus-primary text-white'
+                                : 'border-slate-300'
+                            }`}
+                          >
+                            {customCondition === c.value && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-slate-500 leading-tight">{c.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Description & Details <span className="text-rose-500">*</span>
+                  </label>
+                  <textarea
+                    rows={3}
+                    required
+                    value={customDescription}
+                    onChange={(e) => setCustomDescription(e.target.value)}
+                    placeholder="e.g. 8th edition textbook, includes formula sheet, bought last semester for IT department. Fully clean inside."
+                    className="w-full p-3.5 text-xs sm:text-sm rounded-2xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30 focus:border-campus-primary resize-none"
+                  />
+                </div>
+
+                {/* Multi-Image Uploader (1 to 5 images) */}
+                <ImageUploader
+                  images={customImages}
+                  onChange={setCustomImages}
+                  maxImages={5}
+                  minImages={1}
+                  label="Photos of Item (1 to 5 photos) *"
+                  helperText="Upload real photos. Click the star on any image to set it as the primary cover photo."
+                />
+
+                {/* Campus Handover Notice */}
+                <div className="p-4 rounded-2xl bg-campus-soft border border-campus-primary/30 flex items-center gap-3 text-xs">
+                  <MapPin className="w-5 h-5 text-campus-primary shrink-0" />
+                  <div className="text-campus-dark">
+                    <span className="font-bold block">Campus-Specific Handover Guaranteed</span>
+                    <span className="text-[11px] text-slate-600">
+                      Once approved, your item will be published to the <strong>{user.college.code} campus marketplace</strong>.
+                    </span>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
                 <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  type="submit"
+                  disabled={customSubmitting}
+                  className="w-full py-4 px-6 rounded-2xl bg-campus-primary hover:bg-campus-primary-hover text-white font-bold text-sm shadow-hero hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <Sparkles className="w-4 h-4" />
+                  <span>{customSubmitting ? 'Submitting Item for Review...' : 'Submit Custom Item for Listing'}</span>
                 </button>
-              )}
+              </form>
             </div>
+          )}
+
+          {/* ------------------------------------------------------------ */}
+          {/* OPTION B: CATALOGUE WE ARE BUYING VIEW                       */}
+          {/* ------------------------------------------------------------ */}
+          {sellMode === 'catalog' && (
+            <div className="space-y-8 animate-fade-in">
+              {/* Header Banner */}
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-8">
+                <div>
+                  <div className="flex items-center gap-2 text-xs font-bold text-campus-primary uppercase tracking-wider mb-2">
+                    <Tag className="w-4 h-4" />
+                    <span>We Are Buying Catalog</span>
+                  </div>
+                  <h1 className="text-3xl sm:text-4xl font-extrabold text-campus-dark tracking-tight">
+                    Sell Your Campus Essentials
+                  </h1>
+                  <p className="text-sm text-slate-500 mt-2 max-w-xl">
+                    Select the item you want to sell from our official campus inventory. 
+                    Answer a quick condition assessment to receive your guaranteed cash quote.
+                  </p>
+                </div>
+
+                {/* Permanent College Lock Indicator */}
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-campus-soft border border-campus-primary/30 text-campus-dark text-xs font-bold shadow-sm self-start md:self-auto">
+                  <span>Selling on campus:</span>
+                  <span className="flex items-center gap-1 text-campus-primary font-black">
+                    <MapPin className="w-4 h-4" />
+                    {user.college.code}
+                  </span>
+                </div>
+              </div>
+
+              {/* Custom Item Promo Strip */}
+              <div className="bg-gradient-to-r from-campus-soft via-emerald-50/40 to-purple-50/40 rounded-2xl p-4 border border-campus-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 shadow-sm">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-xs sm:text-sm font-bold text-slate-800 block">Selling something not listed here?</span>
+                    <span className="text-[11px] text-slate-500">Submit any textbook, scientific calculator, cycle, gadgets, or dorm essentials as a custom listing!</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSellMode('custom')}
+                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 shadow-sm self-start sm:self-auto"
+                >
+                  <span>Sell Custom Item</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Search & Category Filter Strip */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                {/* Search Bar */}
+                <div className="relative flex-grow max-w-md">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search items we are buying (e.g. Casio, Math book)..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-campus-primary/30 focus:border-campus-primary"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
 
             {/* Category Pills */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
@@ -501,6 +876,8 @@ export const SellPage: React.FC = () => {
           )}
         </div>
       )}
+    </div>
+  )}
 
       {/* ============================================================== */}
       {/* VIEW 2: STEP-BY-STEP QUESTIONNAIRE (Next -> Next -> Image -> Payout) */}
@@ -704,42 +1081,15 @@ export const SellPage: React.FC = () => {
                 </p>
               </div>
 
-              {/* Upload Drop Zone & Thumbnails */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                {imageUrls.map((url, idx) => (
-                  <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden border border-slate-200 shadow-sm group">
-                    <img src={url} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(idx)}
-                      className="absolute top-1.5 right-1.5 p-1 rounded-full bg-slate-900/80 text-white hover:bg-rose-600 transition-colors shadow"
-                      title="Remove image"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                    <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/60 text-[9px] text-white font-bold">
-                      Photo {idx + 1}
-                    </span>
-                  </div>
-                ))}
-
-                {/* Add Photo Button Tile */}
-                <label className="aspect-square rounded-2xl border-2 border-dashed border-slate-300 hover:border-campus-primary hover:bg-campus-soft/30 flex flex-col items-center justify-center cursor-pointer transition-all bg-slate-50 p-2 text-center group">
-                  <Upload className="w-6 h-6 text-slate-400 group-hover:text-campus-primary group-hover:scale-110 transition-transform mb-1" />
-                  <span className="text-xs font-bold text-slate-700 group-hover:text-campus-primary">
-                    {uploading ? 'Uploading...' : '+ Add Photos'}
-                  </span>
-                  <span className="text-[10px] text-slate-400 mt-0.5">PNG, JPG or WebP</span>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    disabled={uploading}
-                    className="hidden"
-                  />
-                </label>
-              </div>
+              {/* Enhanced ImageUploader (1 to 5 images with drag-and-drop, primary selection & validation) */}
+              <ImageUploader
+                images={imageUrls}
+                onChange={setImageUrls}
+                maxImages={5}
+                minImages={1}
+                label="Photos of Your Item (1 to 5 images)"
+                helperText="Upload 1 to 5 clear photos. Click the star on any photo to set it as the primary cover photo."
+              />
 
               {/* Optional Notes */}
               <div className="pt-2">

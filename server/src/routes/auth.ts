@@ -21,15 +21,15 @@ router.post('/register', async (req: Request, res: Response) => {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Check if college exists
+    // Check if college exists and is active
     const college = await prisma.college.findUnique({
       where: { id: college_id },
     });
 
-    if (!college) {
+    if (!college || !college.is_active) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid college selected. Please select a valid college.',
+        message: 'The selected college is not currently active for registration.',
       });
     }
 
@@ -198,6 +198,31 @@ router.get('/me', authenticateToken, requireAuth, async (req: AuthRequest, res: 
       });
     }
 
+    let currentRole = user.role;
+    if (currentRole === 'USER') {
+      const approvedApp = await prisma.campusHeroApplication.findFirst({
+        where: { user_id: user.id, status: 'APPROVED' },
+      });
+      if (approvedApp) {
+        currentRole = 'CAMPUS_HERO';
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { role: 'CAMPUS_HERO' },
+        });
+      }
+    } else if (currentRole === 'CAMPUS_HERO') {
+      const rejectedApp = await prisma.campusHeroApplication.findFirst({
+        where: { user_id: user.id, status: 'REJECTED' },
+      });
+      if (rejectedApp) {
+        currentRole = 'USER';
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { role: 'USER' },
+        });
+      }
+    }
+
     return res.json({
       success: true,
       data: {
@@ -205,7 +230,7 @@ router.get('/me', authenticateToken, requireAuth, async (req: AuthRequest, res: 
         name: user.name,
         email: user.email,
         phone: user.phone,
-        role: user.role,
+        role: currentRole,
         college: {
           id: user.college.id,
           code: user.college.code,

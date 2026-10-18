@@ -8,7 +8,7 @@ const router = Router();
 // POST /api/buy-requests - Submit a request to buy a product
 router.post('/', authenticateToken, requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const { product_id, notes } = req.body;
+    const { product_id, notes, college_id } = req.body;
 
     if (!product_id) {
       return res.status(400).json({
@@ -28,11 +28,23 @@ router.post('/', authenticateToken, requireAuth, async (req: AuthRequest, res: R
       });
     }
 
-    // STRICT SECURITY RULE: college_id is locked to authenticated user's registered college
+    // Determine listing college: if a valid active college was explicitly targeted, use it.
+    // Otherwise fallback to user's registered home college.
+    let targetCollegeId = req.user!.college_id;
+    if (college_id && typeof college_id === 'string' && college_id.trim()) {
+      const explicitCollege = await prisma.college.findFirst({
+        where: { id: college_id.trim(), is_active: true },
+      });
+      if (explicitCollege) {
+        targetCollegeId = explicitCollege.id;
+      }
+    }
+
+    // STRICT SECURITY RULE: User account college_id remains immutable on `users` table.
     const buyRequest = await prisma.buyRequest.create({
       data: {
         user_id: req.user!.id,
-        college_id: req.user!.college_id, // Inherit user's locked college
+        college_id: targetCollegeId,
         product_id: product.id,
         status: 'PENDING',
         notes: notes?.trim() || null,

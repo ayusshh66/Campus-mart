@@ -22,6 +22,8 @@ model College {
   buy_requests             BuyRequest[]
   campus_hero_applications CampusHeroApplication[]
   delivery_tasks           DeliveryTask[]
+  custom_item_submissions  CustomItemSubmission[]
+  team_posts               TeamPost[]
 
   @@map("colleges")
 }
@@ -43,6 +45,10 @@ model User {
   hero_tasks               DeliveryTask[]          @relation("HeroTasks")
   sent_messages            Message[]               @relation("SentMessages")
   received_messages        Message[]               @relation("ReceivedMessages")
+  custom_item_submissions  CustomItemSubmission[]
+  hackathon_profile        HackathonProfile?
+  created_teams            TeamPost[]              @relation("CreatedTeams")
+  team_applications        TeamApplication[]       @relation("ApplicantApplications")
 
   @@map("users")
 }
@@ -73,6 +79,7 @@ model Product {
   sell_requests           SellRequest[]
   buy_requests            BuyRequest[]
   delivery_tasks          DeliveryTask[]
+  custom_item_submissions CustomItemSubmission[]
 
   @@map("products")
 }
@@ -96,8 +103,9 @@ model SellRequest {
   auto_matched     Boolean        @default(false)
   created_at       DateTime       @default(now())
   updated_at       DateTime       @updatedAt
-  delivery_tasks   DeliveryTask[]
-  messages         Message[]
+  delivery_tasks          DeliveryTask[]
+  messages                Message[]
+  custom_item_submissions CustomItemSubmission[]
 
   @@map("sell_requests")
 }
@@ -184,3 +192,87 @@ model Message {
 
   @@map("messages")
 }
+
+model CustomItemSubmission {
+  id                      String       @id @default(uuid())
+  user_id                 String
+  user                    User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  college_id              String
+  college                 College      @relation(fields: [college_id], references: [id], onDelete: Cascade)
+  name                    String
+  category                String
+  condition               String       // "Like New", "Good", "Used"
+  description             String
+  expected_price          Float
+  images                  String       @default("[]") // JSON array string of student uploaded image URLs
+  status                  String       @default("PENDING") // PENDING, APPROVED, REJECTED
+  rejection_reason        String?
+  admin_buy_price         Float?       // Approved platform buying price paid to seller
+  admin_sell_price        Float?       // Approved platform selling price for marketplace
+  created_product_id      String?
+  product                 Product?     @relation(fields: [created_product_id], references: [id], onDelete: SetNull)
+  created_sell_request_id String?
+  sell_request            SellRequest? @relation(fields: [created_sell_request_id], references: [id], onDelete: SetNull)
+  created_at              DateTime     @default(now())
+  updated_at              DateTime     @updatedAt
+
+  @@map("custom_item_submissions")
+}
+
+model HackathonProfile {
+  id               String   @id @default(uuid())
+  user_id          String   @unique
+  user             User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  bio              String   @default("")
+  skills           String   @default("[]") // JSON array string of skills
+  preferred_roles  String   @default("[]") // JSON array string of roles
+  github_url       String?
+  portfolio_url    String?
+  linkedin_url     String?
+  experience_level String   @default("Intermediate") // Beginner, Intermediate, Advanced
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  @@map("hackathon_profiles")
+}
+
+model TeamPost {
+  id                   String            @id @default(uuid())
+  creator_id           String
+  creator              User              @relation("CreatedTeams", fields: [creator_id], references: [id], onDelete: Cascade)
+  college_id           String
+  college              College           @relation(fields: [college_id], references: [id], onDelete: Cascade)
+  hackathon_name       String            // e.g. "Smart India Hackathon (SIH 2026)"
+  team_title           String            // e.g. "AI HealthCare Innovators"
+  description          String
+  skills_needed        String            @default("[]") // JSON array string
+  required_roles       String            @default("[]") // JSON array string
+  max_team_size        Int               @default(6)    // Configurable team capacity (e.g. SIH typically 6)
+  eligibility_rules    String            @default("OPEN_TO_ALL") // "OPEN_TO_ALL" or "SAME_COLLEGE_ONLY"
+  eligibility_notes    String?           // Freeform instructions, e.g. "Must have at least 1 female teammate as per SIH guidelines"
+  application_deadline DateTime
+  status               String            @default("OPEN") // "OPEN", "FULL", "CLOSED", "REMOVED"
+  created_at           DateTime          @default(now())
+  updated_at           DateTime          @updatedAt
+  applications         TeamApplication[]
+
+  @@map("team_posts")
+}
+
+model TeamApplication {
+  id               String   @id @default(uuid())
+  team_post_id     String
+  team_post        TeamPost @relation(fields: [team_post_id], references: [id], onDelete: Cascade)
+  applicant_id     String
+  applicant        User     @relation("ApplicantApplications", fields: [applicant_id], references: [id], onDelete: Cascade)
+  role_applied     String
+  message          String
+  status           String   @default("PENDING") // "PENDING", "ACCEPTED", "REJECTED"
+  rejection_reason String?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  @@unique([team_post_id, applicant_id])
+  @@map("team_applications")
+}
+

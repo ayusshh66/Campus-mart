@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { api, SellRequestItem, BuyRequestItem, CampusHeroItem, MessageItem } from '../services/api';
+import { api, SellRequestItem, BuyRequestItem, CampusHeroItem, MessageItem, CustomItemSubmissionItem } from '../services/api';
 import { 
   User as UserIcon, 
   MapPin, 
@@ -28,21 +28,23 @@ export const ProfilePage: React.FC = () => {
 
   const [sellRequests, setSellRequests] = useState<SellRequestItem[]>([]);
   const [buyRequests, setBuyRequests] = useState<BuyRequestItem[]>([]);
+  const [customSubmissions, setCustomSubmissions] = useState<CustomItemSubmissionItem[]>([]);
   const [heroApp, setHeroApp] = useState<CampusHeroItem | null>(null);
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [replyTextMap, setReplyTextMap] = useState<Record<string, string>>({});
   const [sendingTaskId, setSendingTaskId] = useState<string | null>(null);
   const [replyStatus, setReplyStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'sell' | 'buy' | 'hero' | 'messages' | 'empty'>('empty');
+  const [activeTab, setActiveTab] = useState<'sell' | 'buy' | 'hero' | 'messages' | 'custom' | 'empty'>('empty');
 
   const hasSell = sellRequests.length > 0;
   const hasBuy = buyRequests.length > 0;
+  const hasCustom = customSubmissions.length > 0;
   const hasHero = Boolean(heroApp !== null || user?.role === 'CAMPUS_HERO');
   const hasMessages = messages.length > 0;
 
   interface AvailableTab {
-    id: 'sell' | 'buy' | 'messages' | 'hero';
+    id: 'sell' | 'buy' | 'messages' | 'hero' | 'custom';
     label: string;
     icon: any;
     count?: number;
@@ -52,6 +54,9 @@ export const ProfilePage: React.FC = () => {
   const availableTabs: AvailableTab[] = [];
   if (hasSell) {
     availableTabs.push({ id: 'sell', label: 'My Sell Requests', icon: Tag, count: sellRequests.length });
+  }
+  if (hasCustom) {
+    availableTabs.push({ id: 'custom', label: 'Custom Submissions', icon: Sparkles, count: customSubmissions.length });
   }
   if (hasBuy) {
     availableTabs.push({ id: 'buy', label: 'My Buy Requests', icon: ShoppingBag, count: buyRequests.length });
@@ -79,7 +84,7 @@ export const ProfilePage: React.FC = () => {
         setActiveTab('empty');
       }
     }
-  }, [loading, hasSell, hasBuy, hasHero, hasMessages]);
+  }, [loading, hasSell, hasBuy, hasCustom, hasHero, hasMessages]);
 
   useEffect(() => {
     if (!user) {
@@ -89,16 +94,18 @@ export const ProfilePage: React.FC = () => {
 
     const fetchProfileData = async () => {
       try {
-        const [sells, buys, hero, userMsgs] = await Promise.all([
+        const [sells, buys, hero, userMsgs, customSubs] = await Promise.all([
           api.getMySellRequests(),
           api.getMyBuyRequests(),
           api.getMyCampusHeroApplication(),
           api.messages.getMyMessages().catch(() => [] as MessageItem[]),
+          api.getMyCustomSubmissions().catch(() => [] as CustomItemSubmissionItem[]),
         ]);
         setSellRequests(sells);
         setBuyRequests(buys);
         setHeroApp(hero);
         setMessages(userMsgs);
+        setCustomSubmissions(customSubs);
       } catch (err) {
         console.error('Failed to load profile data:', err);
       } finally {
@@ -537,6 +544,74 @@ export const ProfilePage: React.FC = () => {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Tab: Custom Item Submissions */}
+      {hasCustom && activeTab === 'custom' && (
+        <div className="space-y-4 animate-fade-in">
+          <div className="grid grid-cols-1 gap-4">
+            {customSubmissions.map((sub) => (
+              <div
+                key={sub.id}
+                className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+              >
+                <div className="flex items-start gap-4">
+                  {sub.images && sub.images.length > 0 ? (
+                    <img
+                      src={sub.images[0]}
+                      alt={sub.name}
+                      className="w-16 h-16 rounded-xl object-cover border border-slate-200 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                      <Sparkles className="w-6 h-6" />
+                    </div>
+                  )}
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-slate-900 text-base">{sub.name}</h4>
+                      <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                        {sub.category}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Condition: <span className="font-semibold text-slate-700">{sub.condition}</span> • Submitted {new Date(sub.created_at).toLocaleDateString()}
+                    </p>
+                    <p className="text-xs text-slate-600 italic line-clamp-1">"{sub.description}"</p>
+                    {sub.rejection_reason && sub.status === 'REJECTED' && (
+                      <p className="text-xs text-rose-600 font-medium bg-rose-50 p-2 rounded-lg border border-rose-100 mt-1">
+                        Reason: {sub.rejection_reason}
+                      </p>
+                    )}
+                    {sub.status === 'APPROVED' && (
+                      <p className="text-xs text-emerald-700 font-bold flex items-center gap-1 mt-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Published live to {sub.college_code || user?.college.code} Campus Marketplace</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100 gap-2 shrink-0">
+                  <div className="text-right">
+                    <span className="text-[11px] text-slate-400 uppercase font-semibold block">
+                      {sub.status === 'APPROVED' ? 'Approved Payout' : 'Asking Price'}
+                    </span>
+                    <span className="text-lg font-extrabold text-campus-dark">
+                      ₹{(sub.admin_buy_price || sub.expected_price).toLocaleString('en-IN')}
+                    </span>
+                    {sub.status === 'APPROVED' && sub.admin_sell_price && (
+                      <span className="text-[10px] text-slate-500 block">
+                        Catalog Price: ₹{sub.admin_sell_price}
+                      </span>
+                    )}
+                  </div>
+                  <div>{getStatusBadge(sub.status)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

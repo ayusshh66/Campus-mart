@@ -164,4 +164,147 @@ router.get('/my', authenticateToken, requireAuth, async (req: AuthRequest, res: 
   }
 });
 
+// POST /api/sell-requests/custom - Submit any custom item not in the catalog
+router.post('/custom', authenticateToken, requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { name, category, condition, description, expected_price, images } = req.body;
+
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Item name is required.',
+      });
+    }
+
+    if (!category || typeof category !== 'string' || !category.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Category is required.',
+      });
+    }
+
+    const validConditions = ['Like New', 'Good', 'Used'];
+    if (!condition || !validConditions.includes(condition)) {
+      return res.status(400).json({
+        success: false,
+        message: `Condition must be one of: ${validConditions.join(', ')}`,
+      });
+    }
+
+    if (!description || typeof description !== 'string' || description.trim().length < 5) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a clear description (at least 5 characters).',
+      });
+    }
+
+    const parsedPrice = parseFloat(expected_price);
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Expected price must be a valid positive amount.',
+      });
+    }
+
+    // Format images safely as JSON
+    let imagesJson = '[]';
+    if (images) {
+      if (typeof images === 'string') {
+        imagesJson = images.startsWith('[') ? images : JSON.stringify([images]);
+      } else if (Array.isArray(images)) {
+        imagesJson = JSON.stringify(images);
+      }
+    }
+
+    // SECURITY: College is strictly locked to authenticated user's registered college
+    const collegeId = req.user!.college_id;
+
+    const submission = await prisma.customItemSubmission.create({
+      data: {
+        user_id: req.user!.id,
+        college_id: collegeId,
+        name: name.trim(),
+        category: category.trim(),
+        condition,
+        description: description.trim(),
+        expected_price: parsedPrice,
+        images: imagesJson,
+        status: 'PENDING',
+      },
+      include: {
+        college: true,
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Your custom item has been submitted for review! Once approved by admin, it will be listed as available on your campus.',
+      data: {
+        id: submission.id,
+        name: submission.name,
+        category: submission.category,
+        condition: submission.condition,
+        expected_price: submission.expected_price,
+        college_id: submission.college_id,
+        college_code: submission.college.code,
+        college_name: submission.college.name,
+        college: submission.college,
+        images: JSON.parse(submission.images || '[]'),
+        status: submission.status,
+        created_at: submission.created_at,
+      },
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to submit custom item',
+      error: error.message,
+    });
+  }
+});
+
+// GET /api/sell-requests/custom/my - List student's own custom submissions
+router.get('/custom/my', authenticateToken, requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const submissions = await prisma.customItemSubmission.findMany({
+      where: { user_id: req.user!.id },
+      include: {
+        college: true,
+        product: true,
+      },
+      orderBy: { created_at: 'desc' },
+    });
+
+    const formatted = submissions.map((item) => ({
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      condition: item.condition,
+      description: item.description,
+      expected_price: item.expected_price,
+      images: JSON.parse(item.images || '[]'),
+      status: item.status,
+      rejection_reason: item.rejection_reason,
+      admin_buy_price: item.admin_buy_price,
+      admin_sell_price: item.admin_sell_price,
+      college_code: item.college.code,
+      college_name: item.college.name,
+      created_product_id: item.created_product_id,
+      created_at: item.created_at,
+      updated_at: item.updated_at,
+    }));
+
+    return res.json({
+      success: true,
+      data: formatted,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch your custom item submissions',
+      error: error.message,
+    });
+  }
+});
+
 export default router;

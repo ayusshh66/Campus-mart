@@ -12,8 +12,10 @@ import campusHeroRoutes from './routes/campusHeroes';
 import adminRoutes from './routes/admin';
 import heroRoutes from './routes/hero';
 import messageRoutes from './routes/messages';
-import { upload } from './middleware/upload';
+import teamRoutes from './routes/teams';
+import { handleSingleUpload, handleMultipleUpload } from './middleware/upload';
 import { authenticateToken, requireAuth } from './middleware/auth';
+import { storageService } from './services/storage';
 
 const app = express();
 
@@ -25,25 +27,48 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Static uploads serving
+// Static uploads serving (local development storage)
 if (!fs.existsSync(config.uploadDir)) {
   fs.mkdirSync(config.uploadDir, { recursive: true });
 }
 app.use('/uploads', express.static(config.uploadDir));
 
-// Image upload endpoint
-app.post('/api/upload', authenticateToken, requireAuth, upload.single('image'), (req: Request, res: Response) => {
+// Single image upload endpoint (JPEG, PNG, WebP only, max 5MB)
+app.post('/api/upload', authenticateToken, requireAuth, handleSingleUpload, async (req: Request, res: Response) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'No image file uploaded.' });
   }
-  const fileUrl = `/uploads/${req.file.filename}`;
+  const storageResult = await storageService.handleUploadedFile(req.file);
   return res.json({
     success: true,
     message: 'Image uploaded successfully',
     data: {
-      url: fileUrl,
-      filename: req.file.filename,
+      url: storageResult.url,
+      filename: storageResult.filename,
+      provider: storageResult.provider,
     },
+  });
+});
+
+// Multiple image upload endpoint (1 to 5 images per request)
+app.post('/api/upload/multiple', authenticateToken, requireAuth, handleMultipleUpload, async (req: Request, res: Response) => {
+  const files = (req.files as Express.Multer.File[]) || [];
+  if (files.length === 0) {
+    return res.status(400).json({ success: false, message: 'No image files uploaded.' });
+  }
+
+  const results = await Promise.all(
+    files.map((file) => storageService.handleUploadedFile(file))
+  );
+
+  return res.json({
+    success: true,
+    message: `${results.length} image${results.length !== 1 ? 's' : ''} uploaded successfully`,
+    data: results.map((r) => ({
+      url: r.url,
+      filename: r.filename,
+      provider: r.provider,
+    })),
   });
 });
 
@@ -66,6 +91,7 @@ app.use('/api/campus-heroes', campusHeroRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/hero', heroRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/teams', teamRoutes);
 
 // Error Handling Middleware
 app.use((err: any, _req: Request, res: Response, _next: any) => {
@@ -76,6 +102,13 @@ app.use((err: any, _req: Request, res: Response, _next: any) => {
   });
 });
 
-app.listen(config.port, () => {
-  console.log(`🚀 CampusMart Server running on http://localhost:${config.port}`);
-});
+export { app };
+
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(config.port, () => {
+    console.log(`🚀 CampusMart Server running on http://localhost:${config.port}`);
+  });
+}
+
+export default app;
+

@@ -10,7 +10,9 @@ import {
   Upload, 
   CheckCircle2, 
   AlertCircle,
-  HelpCircle
+  HelpCircle,
+  Search,
+  Filter
 } from 'lucide-react';
 
 export interface QuestionOption {
@@ -110,6 +112,12 @@ export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSav
   const [isActive, setIsActive] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Search & Filter state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
+  const [confirmDeactivateModal, setConfirmDeactivateModal] = useState<Product | null>(null);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -311,6 +319,25 @@ export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSav
     }
   };
 
+  const categories = Array.from(new Set(products.map((p) => p.category))).filter(Boolean);
+
+  const filteredProducts = products.filter((p) => {
+    const q = searchTerm.toLowerCase();
+    const matchesSearch =
+      searchTerm === '' ||
+      p.name.toLowerCase().includes(q) ||
+      p.category.toLowerCase().includes(q) ||
+      p.description.toLowerCase().includes(q);
+
+    const matchesCategory = categoryFilter === 'ALL' || p.category === categoryFilter;
+    const matchesStatus =
+      statusFilter === 'ALL' ||
+      (statusFilter === 'ACTIVE' && p.is_active) ||
+      (statusFilter === 'INACTIVE' && !p.is_active);
+
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+
   return (
     <div className="space-y-6">
       {/* Title & Actions */}
@@ -329,6 +356,54 @@ export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSav
           <PlusCircle className="w-4 h-4" />
           <span>Add New Product</span>
         </button>
+      </div>
+
+      {/* Filter and Search Bar */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="relative w-full md:w-80">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search catalog products..."
+            className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-campus-primary/20 outline-none"
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+          {/* Category Filter */}
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+            <Filter className="w-3.5 h-3.5 text-slate-400" />
+            <span>Category:</span>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold bg-slate-50 text-slate-800 outline-none"
+            >
+              <option value="ALL">All Categories</option>
+              {categories.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Status Filter */}
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+            <span>Status:</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold bg-slate-50 text-slate-800 outline-none"
+            >
+              <option value="ALL">All Statuses ({products.length})</option>
+              <option value="ACTIVE">Active ({products.filter((p) => p.is_active).length})</option>
+              <option value="INACTIVE">Inactive ({products.filter((p) => !p.is_active).length})</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Product Table */}
@@ -350,12 +425,12 @@ export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSav
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-slate-400">Loading catalog...</td>
                 </tr>
-              ) : products.length === 0 ? (
+              ) : filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">No products found. Click Add New Product above.</td>
+                  <td colSpan={6} className="py-8 text-center text-slate-400">No matching products found.</td>
                 </tr>
               ) : (
-                products.map((p) => (
+                filteredProducts.map((p) => (
                   <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
@@ -412,13 +487,24 @@ export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSav
                     </td>
 
                     <td className="py-4 px-6 text-right">
-                      <button
-                        onClick={() => openEditForm(p)}
-                        className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 font-semibold text-xs transition-colors inline-flex items-center gap-1"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                        <span>Edit</span>
-                      </button>
+                      <div className="inline-flex items-center gap-1.5">
+                        <button
+                          onClick={() => openEditForm(p)}
+                          className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 font-semibold text-xs transition-colors inline-flex items-center gap-1"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>Edit</span>
+                        </button>
+                        {p.is_active && (
+                          <button
+                            onClick={() => setConfirmDeactivateModal(p)}
+                            className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            title="Deactivate Product"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -786,6 +872,48 @@ export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSav
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal for Deactivation */}
+      {confirmDeactivateModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2.5 rounded-2xl bg-rose-100 text-rose-700">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm text-slate-900">Deactivate Product?</h3>
+                <p className="text-[11px] text-slate-500">Remove from active catalog</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 mb-5 leading-relaxed">
+              Are you sure you want to deactivate <strong className="text-slate-900">{confirmDeactivateModal.name}</strong>? Students will no longer see it in the buy/sell catalog.
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                onClick={() => setConfirmDeactivateModal(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const p = confirmDeactivateModal;
+                  setConfirmDeactivateModal(null);
+                  await handleToggleActive(p);
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white transition-all shadow-sm"
+              >
+                Confirm Deactivate
+              </button>
+            </div>
           </div>
         </div>
       )}

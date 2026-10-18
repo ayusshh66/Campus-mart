@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api, AdminStats } from '../../services/api';
 import { AdminSellRequests } from './AdminSellRequests';
@@ -8,382 +8,493 @@ import { AdminBuyingQueue } from './AdminBuyingQueue';
 import { AdminBuyRequests } from './AdminBuyRequests';
 import { AdminCampusHeroes } from './AdminCampusHeroes';
 import { AdminAutoMatching } from './AdminAutoMatching';
-import { 
-  Users, 
-  Tag, 
-  ShoppingBag, 
-  Package, 
-  ShieldCheck, 
-  ShieldAlert, 
-  PlusCircle, 
+import { AdminColleges } from './AdminColleges';
+import { AdminCustomSubmissions } from './AdminCustomSubmissions';
+import { AdminTeamModeration } from './AdminTeamModeration';
+import { AdminUserManagement } from './AdminUserManagement';
+import { AdminAnalytics } from './AdminAnalytics';
+import {
+  Users,
+  Tag,
+  ShoppingBag,
+  Package,
+  ShieldCheck,
+  ShieldAlert,
+  PlusCircle,
   Flame,
   Clock,
   ArrowRight,
-  TrendingDown,
   Layers,
   Sparkles,
-  Truck
+  Truck,
+  Building2,
+  Activity,
+  Menu,
+  X,
+  ChevronRight,
+  TrendingUp,
+  Sliders,
+  Award,
+  UserCog
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  
-  // Department mode: 'sell-dept' (Seller Operations), 'buy-dept' (Buyer Operations), 'catalog-dept' (Catalog & Heroes)
-  const currentDept = searchParams.get('dept') || 'sell-dept';
-  const tab = searchParams.get('tab') || (currentDept === 'buy-dept' ? 'buy-requests' : currentDept === 'catalog-dept' ? 'products' : 'sell-requests');
+
+  // Active Tab: Support legacy dept query param or modern tab query param
+  const currentTab = searchParams.get('tab') || (
+    searchParams.get('dept') === 'buy-dept' ? 'buy-requests' :
+    searchParams.get('dept') === 'catalog-dept' ? 'products' :
+    searchParams.get('dept') === 'automatch-dept' ? 'automatch' :
+    'analytics'
+  );
 
   const [stats, setStats] = useState<AdminStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const fetchStats = async () => {
+    try {
+      const data = await api.admin.getStats();
+      setStats(data);
+    } catch (err) {
+      console.error('Failed to load admin stats:', err);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
 
   useEffect(() => {
     if (!user || user.role !== 'ADMIN') {
       navigate('/login');
       return;
     }
-
-    const fetchStats = async () => {
-      try {
-        const data = await api.admin.getStats();
-        setStats(data);
-      } catch (err) {
-        console.error('Failed to load admin stats:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchStats();
-  }, [user, navigate, tab]);
+  }, [user, navigate, currentTab]);
 
   if (!user || user.role !== 'ADMIN') {
     return null;
   }
 
-  const setDepartment = (dept: 'sell-dept' | 'buy-dept' | 'catalog-dept' | 'automatch-dept', defaultTab: string) => {
-    setSearchParams({ dept, tab: defaultTab });
+  const setTab = (tabId: string) => {
+    setSearchParams({ tab: tabId });
+    setMobileMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const setTab = (newTab: string) => {
-    setSearchParams({ dept: currentDept, tab: newTab });
-  };
+  // Navigation Items
+  const navGroups = [
+    {
+      group: 'INSIGHTS & OVERVIEW',
+      items: [
+        {
+          id: 'analytics',
+          label: 'Platform Analytics',
+          icon: Activity,
+          badge: null,
+          color: 'text-emerald-600',
+        },
+      ],
+    },
+    {
+      group: 'ACQUISITIONS & INVENTORY',
+      items: [
+        {
+          id: 'sell-requests',
+          label: 'Catalog Sell Requests',
+          icon: Tag,
+          badge: stats && stats.pendingSellRequests > 0 ? `${stats.pendingSellRequests} new` : null,
+          badgeColor: 'bg-emerald-100 text-emerald-800',
+          color: 'text-emerald-600',
+        },
+        {
+          id: 'custom-submissions',
+          label: 'Custom Item Approvals',
+          icon: Sparkles,
+          badge: stats && (stats.pendingCustomSubmissions ?? 0) > 0 ? `${stats.pendingCustomSubmissions} new` : null,
+          badgeColor: 'bg-purple-100 text-purple-800',
+          color: 'text-purple-600',
+        },
+        {
+          id: 'buying-queue',
+          label: 'Buying Program Queue',
+          icon: Flame,
+          badge: null,
+          color: 'text-amber-600',
+        },
+        {
+          id: 'products',
+          label: 'Product Catalog',
+          icon: Package,
+          badge: stats ? `${stats.activeProducts}` : null,
+          badgeColor: 'bg-slate-100 text-slate-700',
+          color: 'text-blue-600',
+        },
+      ],
+    },
+    {
+      group: 'ORDERS & DISPATCH',
+      items: [
+        {
+          id: 'buy-requests',
+          label: 'Buyer Orders & Demand',
+          icon: ShoppingBag,
+          badge: stats && stats.pendingBuyRequests > 0 ? `${stats.pendingBuyRequests} new` : null,
+          badgeColor: 'bg-purple-100 text-purple-800',
+          color: 'text-purple-600',
+        },
+        {
+          id: 'automatch',
+          label: 'Auto-Matching & Dispatch',
+          icon: Sliders,
+          badge: null,
+          color: 'text-indigo-600',
+        },
+      ],
+    },
+    {
+      group: 'CAMPUSES & COMMUNITY',
+      items: [
+        {
+          id: 'colleges',
+          label: 'Campuses & Colleges',
+          icon: Building2,
+          badge: stats ? `${stats.activeColleges || stats.totalColleges}` : null,
+          badgeColor: 'bg-blue-100 text-blue-800',
+          color: 'text-blue-600',
+        },
+        {
+          id: 'heroes',
+          label: 'Campus Hero Approvals',
+          icon: ShieldCheck,
+          badge: stats && stats.pendingHeroApplications > 0 ? `${stats.pendingHeroApplications} new` : null,
+          badgeColor: 'bg-amber-100 text-amber-800',
+          color: 'text-amber-600',
+        },
+        {
+          id: 'teams',
+          label: 'Hackathon Teams',
+          icon: Award,
+          badge: null,
+          color: 'text-teal-600',
+        },
+        {
+          id: 'users',
+          label: 'User Directory & Roles',
+          icon: Users,
+          badge: stats ? `${stats.totalStudents}` : null,
+          badgeColor: 'bg-slate-100 text-slate-700',
+          color: 'text-slate-700',
+        },
+      ],
+    },
+  ];
+
+  const totalPendingBadges = (stats?.pendingSellRequests || 0) +
+    (stats?.pendingCustomSubmissions || 0) +
+    (stats?.pendingBuyRequests || 0) +
+    (stats?.pendingHeroApplications || 0);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-      {/* Admin Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-slate-200 gap-4">
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-bold mb-2">
-            <ShieldAlert className="w-3.5 h-3.5 text-amber-700" />
-            <span>CampusMart Admin Center</span>
-          </div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-            Operations Dashboard
-          </h1>
-          <p className="text-sm text-slate-500 mt-1">
-            Separate departments for Seller Acquisitions, Buyer Fulfillment, Catalog Management, and Auto-Matching Hero Dispatch.
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#F8FAF9]">
+      {/* Top Admin Sub-bar */}
+      <div className="bg-campus-dark text-white border-b border-white/10 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Mobile menu trigger */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="lg:hidden p-2 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors"
+              aria-label="Toggle Navigation"
+            >
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => {
-              setSearchParams({ dept: 'catalog-dept', tab: 'add-product' });
-            }}
-            className="px-4 py-2.5 rounded-xl bg-campus-primary hover:bg-campus-primary-hover text-white text-xs font-bold shadow-md transition-all flex items-center gap-1.5"
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="font-extrabold text-xs tracking-wider uppercase text-emerald-400">
+                Admin Console
+              </span>
+            </div>
+            <span className="hidden sm:inline-block text-white/40">•</span>
+            <span className="hidden sm:inline-block text-xs text-slate-300 font-medium">
+              Signed in as <strong className="text-white font-bold">{user.name}</strong>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {totalPendingBadges > 0 && (
+              <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30">
+                <Clock className="w-3.5 h-3.5" />
+                <span>{totalPendingBadges} Items Awaiting Review</span>
+              </span>
+            )}
+
+            <button
+              onClick={() => setTab('add-product')}
+              className="px-3.5 py-1.5 rounded-xl bg-campus-primary hover:bg-campus-primary-hover text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>Add Product</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Layout Container: Persistent Sidebar + Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="flex flex-col lg:flex-row items-start gap-8">
+          
+          {/* ======================================================== */}
+          {/* SIDEBAR NAVIGATION (Desktop persistent, Mobile drawer)   */}
+          {/* ======================================================== */}
+          
+          {/* Mobile Overlay */}
+          {mobileMenuOpen && (
+            <div
+              onClick={() => setMobileMenuOpen(false)}
+              className="fixed inset-0 bg-black/50 z-30 lg:hidden backdrop-blur-xs"
+            />
+          )}
+
+          <aside
+            className={`
+              fixed lg:static top-14 left-0 bottom-0 z-30 lg:z-auto
+              w-72 bg-white rounded-r-3xl lg:rounded-3xl border border-slate-200/90 shadow-sm
+              p-5 overflow-y-auto transition-transform duration-200 ease-in-out
+              ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+            `}
+            style={{ maxHeight: 'calc(100vh - 5rem)' }}
           >
-            <PlusCircle className="w-4 h-4" />
-            <span>Add Catalog Product</span>
-          </button>
-        </div>
-      </div>
-
-      {/* TOP-LEVEL DEPARTMENT SELECTOR */}
-      <div className="my-6 p-1.5 bg-slate-200/80 rounded-2xl flex flex-col sm:flex-row items-stretch gap-1">
-        
-        {/* Department 1: SELLER OPERATIONS */}
-        <button
-          onClick={() => setDepartment('sell-dept', 'sell-requests')}
-          className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-            currentDept === 'sell-dept'
-              ? 'bg-white text-campus-dark shadow-sm ring-1 ring-black/5'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-          }`}
-        >
-          <Tag className="w-4 h-4 text-emerald-600" />
-          <span>Seller Operations</span>
-          {stats && stats.pendingSellRequests > 0 && (
-            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold">
-              {stats.pendingSellRequests} pending
-            </span>
-          )}
-        </button>
-
-        {/* Department 2: BUYER OPERATIONS */}
-        <button
-          onClick={() => setDepartment('buy-dept', 'buy-requests')}
-          className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-            currentDept === 'buy-dept'
-              ? 'bg-white text-campus-dark shadow-sm ring-1 ring-black/5'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-          }`}
-        >
-          <ShoppingBag className="w-4 h-4 text-purple-600" />
-          <span>Buyer Operations</span>
-          {stats && stats.pendingBuyRequests > 0 && (
-            <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 text-[10px] font-extrabold">
-              {stats.pendingBuyRequests} new
-            </span>
-          )}
-        </button>
-
-        {/* Department 3: CATALOG & HEROES */}
-        <button
-          onClick={() => setDepartment('catalog-dept', 'products')}
-          className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-            currentDept === 'catalog-dept'
-              ? 'bg-white text-campus-dark shadow-sm ring-1 ring-black/5'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-          }`}
-        >
-          <Layers className="w-4 h-4 text-blue-600" />
-          <span>Catalog & Heroes</span>
-          {stats && stats.pendingHeroApplications > 0 && (
-            <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-[10px] font-extrabold">
-              {stats.pendingHeroApplications}
-            </span>
-          )}
-        </button>
-
-        {/* Department 4: AUTO-MATCHING & HERO DISPATCH */}
-        <button
-          onClick={() => setDepartment('automatch-dept', 'automatch')}
-          className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
-            currentDept === 'automatch-dept'
-              ? 'bg-white text-campus-dark shadow-sm ring-1 ring-black/5'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-          }`}
-        >
-          <Sparkles className="w-4 h-4 text-indigo-600" />
-          <span>Auto-Match & Hero Ops</span>
-        </button>
-
-      </div>
-
-      {/* DEPARTMENT-SPECIFIC METRIC CARDS & NAVIGATION */}
-
-      {/* 1. SELLER OPERATIONS VIEW */}
-      {currentDept === 'sell-dept' && (
-        <div className="space-y-6">
-          {/* Seller Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-emerald-50/70 p-5 rounded-2xl border border-emerald-200">
-              <div className="flex items-center justify-between text-emerald-800 mb-2 text-xs font-bold uppercase tracking-wider">
-                <span>Total Sell Submissions</span>
-                <Tag className="w-4 h-4 text-emerald-600" />
+            {/* Sidebar Header */}
+            <div className="pb-4 mb-4 border-b border-slate-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-900 tracking-tight">Navigation</h3>
+                  <p className="text-[11px] text-slate-500">CampusMart Control Center</p>
+                </div>
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="lg:hidden text-slate-400 hover:text-slate-600 p-1"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-              <div className="text-3xl font-extrabold text-emerald-950">
-                {loading ? '...' : stats?.totalSellRequests || 0}
-              </div>
-              <span className="text-[11px] text-emerald-700">Items submitted by college students</span>
             </div>
 
-            <div className="bg-amber-50 p-5 rounded-2xl border border-amber-200">
-              <div className="flex items-center justify-between text-amber-800 mb-2 text-xs font-bold uppercase tracking-wider">
-                <span>Pending Seller Reviews</span>
-                <Clock className="w-4 h-4 text-amber-600" />
-              </div>
-              <div className="text-3xl font-extrabold text-amber-950">
-                {loading ? '...' : stats?.pendingSellRequests || 0}
-              </div>
-              <span className="text-[11px] text-amber-700">Awaiting inspection & price lock</span>
+            {/* Navigation Groups */}
+            <div className="space-y-6">
+              {navGroups.map((group, gIdx) => (
+                <div key={gIdx} className="space-y-1.5">
+                  <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-3">
+                    {group.group}
+                  </div>
+                  <nav className="space-y-0.5">
+                    {group.items.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = currentTab === item.id || (item.id === 'products' && currentTab === 'add-product');
+
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => setTab(item.id)}
+                          className={`
+                            w-full flex items-center justify-between px-3 py-2.5 rounded-2xl text-xs font-bold transition-all text-left
+                            ${
+                              isActive
+                                ? 'bg-campus-dark text-white shadow-sm'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                            }
+                          `}
+                        >
+                          <div className="flex items-center gap-2.5 truncate">
+                            <Icon className={`w-4 h-4 ${isActive ? 'text-campus-primary' : item.color}`} />
+                            <span className="truncate">{item.label}</span>
+                          </div>
+
+                          {item.badge && (
+                            <span
+                              className={`
+                                text-[10px] font-extrabold px-2 py-0.5 rounded-full ml-1.5 flex-shrink-0
+                                ${isActive ? 'bg-white/20 text-white' : item.badgeColor || 'bg-slate-100 text-slate-700'}
+                              `}
+                            >
+                              {item.badge}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </nav>
+                </div>
+              ))}
             </div>
 
-            <div className="bg-white p-5 rounded-2xl border border-slate-200">
-              <div className="flex items-center justify-between text-slate-500 mb-2 text-xs font-bold uppercase tracking-wider">
-                <span>Active Buying Items</span>
-                <Flame className="w-4 h-4 text-emerald-500" />
+            {/* Platform Quick Links */}
+            <div className="pt-6 mt-6 border-t border-slate-100 space-y-2">
+              <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 px-3">
+                Live Platform
               </div>
-              <div className="text-3xl font-extrabold text-slate-900">
-                {loading ? '...' : stats?.activeProducts || 0}
-              </div>
-              <span className="text-[11px] text-slate-500">Products with "We Are Buying" enabled</span>
+              <Link
+                to="/find-teammates"
+                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+              >
+                <span>Find Teammates</span>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              </Link>
+              <Link
+                to="/hero/dashboard"
+                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+              >
+                <span>Campus Hero Ops</span>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              </Link>
+              <Link
+                to="/profile"
+                className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
+              >
+                <span>Admin Profile</span>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              </Link>
             </div>
-          </div>
+          </aside>
 
-          {/* Sub-tabs for Seller Operations */}
-          <div className="flex items-center gap-2 border-b border-slate-200 pb-2 text-xs sm:text-sm font-bold">
-            <button
-              onClick={() => setTab('sell-requests')}
-              className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
-                tab === 'sell-requests'
-                  ? 'bg-campus-dark text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <Clock className="w-4 h-4" />
-              <span>Pending Sell Requests ({stats?.pendingSellRequests || 0})</span>
-            </button>
-
-            <button
-              onClick={() => setTab('buying-queue')}
-              className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
-                tab === 'buying-queue'
-                  ? 'bg-campus-dark text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <Flame className="w-4 h-4 text-emerald-400" />
-              <span>"We Are Buying" Acquisition Queue</span>
-            </button>
-          </div>
-
-          {tab === 'sell-requests' && <AdminSellRequests onAction={() => setStats(null)} />}
-          {tab === 'buying-queue' && <AdminBuyingQueue />}
-        </div>
-      )}
-
-      {/* 2. BUYER OPERATIONS VIEW */}
-      {currentDept === 'buy-dept' && (
-        <div className="space-y-6">
-          {/* Buyer Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-purple-50 p-5 rounded-2xl border border-purple-200">
-              <div className="flex items-center justify-between text-purple-800 mb-2 text-xs font-bold uppercase tracking-wider">
-                <span>Total Purchase Inquiries</span>
-                <ShoppingBag className="w-4 h-4 text-purple-600" />
-              </div>
-              <div className="text-3xl font-extrabold text-purple-950">
-                {loading ? '...' : stats?.totalBuyRequests || 0}
-              </div>
-              <span className="text-[11px] text-purple-700">Total student buy requests placed</span>
-            </div>
-
-            <div className="bg-amber-50 p-5 rounded-2xl border border-amber-200">
-              <div className="flex items-center justify-between text-amber-800 mb-2 text-xs font-bold uppercase tracking-wider">
-                <span>Pending Orders To Fulfill</span>
-                <Clock className="w-4 h-4 text-amber-600" />
-              </div>
-              <div className="text-3xl font-extrabold text-amber-950">
-                {loading ? '...' : stats?.pendingBuyRequests || 0}
-              </div>
-              <span className="text-[11px] text-amber-700">Requires campus coordinator handover</span>
-            </div>
-
-            <div className="bg-white p-5 rounded-2xl border border-slate-200">
-              <div className="flex items-center justify-between text-slate-500 mb-2 text-xs font-bold uppercase tracking-wider">
-                <span>Registered Students</span>
-                <Users className="w-4 h-4 text-blue-500" />
-              </div>
-              <div className="text-3xl font-extrabold text-slate-900">
-                {loading ? '...' : stats?.totalStudents || 0}
-              </div>
-              <span className="text-[11px] text-slate-500">Active campus student pool</span>
-            </div>
-          </div>
-
-          {/* Sub-tabs for Buyer Operations */}
-          <div className="flex items-center gap-2 border-b border-slate-200 pb-2 text-xs sm:text-sm font-bold">
-            <button
-              onClick={() => setTab('buy-requests')}
-              className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
-                tab === 'buy-requests'
-                  ? 'bg-campus-dark text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <ShoppingBag className="w-4 h-4" />
-              <span>Buyer Purchase Orders & Demand Queue</span>
-            </button>
-          </div>
-
-          <AdminBuyRequests />
-        </div>
-      )}
-
-      {/* 3. CATALOG & CAMPUS HEROES VIEW */}
-      {currentDept === 'catalog-dept' && (
-        <div className="space-y-6">
-          {/* Catalog & Hero Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-blue-50 p-5 rounded-2xl border border-blue-200">
-              <div className="flex items-center justify-between text-blue-800 mb-2 text-xs font-bold uppercase tracking-wider">
-                <span>Catalog Products</span>
-                <Package className="w-4 h-4 text-blue-600" />
-              </div>
-              <div className="text-3xl font-extrabold text-blue-950">
-                {loading ? '...' : stats?.activeProducts || 0}
-              </div>
-              <span className="text-[11px] text-blue-700">Admin-controlled product catalog</span>
-            </div>
-
-            <div className="bg-emerald-50 p-5 rounded-2xl border border-emerald-200">
-              <div className="flex items-center justify-between text-emerald-800 mb-2 text-xs font-bold uppercase tracking-wider">
-                <span>Campus Hero Applicants</span>
-                <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              </div>
-              <div className="text-3xl font-extrabold text-emerald-950 flex items-baseline gap-2">
-                <span>{loading ? '...' : stats?.totalHeroApplications || 0}</span>
-                {stats && stats.pendingHeroApplications > 0 && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                    {stats.pendingHeroApplications} new
+          {/* ======================================================== */}
+          {/* MAIN WORKSPACE CONTENT AREA                              */}
+          {/* ======================================================== */}
+          <main className="flex-1 w-full min-w-0">
+            {/* Top Overview KPI Cards (Rendered across tabs for quick context) */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+              <div
+                onClick={() => setTab('sell-requests')}
+                className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-subtle hover:border-emerald-300 transition-all cursor-pointer group"
+              >
+                <div className="flex items-center justify-between text-slate-400 mb-1">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800">
+                    Sell Requests
                   </span>
-                )}
+                  <Tag className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition-transform" />
+                </div>
+                <div className="text-2xl font-black text-slate-900">
+                  {loadingStats ? '...' : stats?.totalSellRequests || 0}
+                </div>
+                <div className="text-[10px] text-slate-500 mt-0.5">
+                  <span className="font-bold text-emerald-700">{stats?.pendingSellRequests || 0}</span> pending review
+                </div>
               </div>
-              <span className="text-[11px] text-emerald-700">Student ambassador applications</span>
+
+              <div
+                onClick={() => setTab('custom-submissions')}
+                className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-subtle hover:border-purple-300 transition-all cursor-pointer group"
+              >
+                <div className="flex items-center justify-between text-slate-400 mb-1">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-purple-800">
+                    Custom Queue
+                  </span>
+                  <Sparkles className="w-3.5 h-3.5 text-purple-600 group-hover:scale-110 transition-transform" />
+                </div>
+                <div className="text-2xl font-black text-slate-900">
+                  {loadingStats ? '...' : stats?.totalCustomSubmissions || 0}
+                </div>
+                <div className="text-[10px] text-slate-500 mt-0.5">
+                  <span className="font-bold text-purple-700">{stats?.pendingCustomSubmissions || 0}</span> unlisted items
+                </div>
+              </div>
+
+              <div
+                onClick={() => setTab('buy-requests')}
+                className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-subtle hover:border-indigo-300 transition-all cursor-pointer group"
+              >
+                <div className="flex items-center justify-between text-slate-400 mb-1">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-indigo-800">
+                    Buyer Demand
+                  </span>
+                  <ShoppingBag className="w-3.5 h-3.5 text-indigo-600 group-hover:scale-110 transition-transform" />
+                </div>
+                <div className="text-2xl font-black text-slate-900">
+                  {loadingStats ? '...' : stats?.totalBuyRequests || 0}
+                </div>
+                <div className="text-[10px] text-slate-500 mt-0.5">
+                  <span className="font-bold text-indigo-700">{stats?.pendingBuyRequests || 0}</span> to fulfill
+                </div>
+              </div>
+
+              <div
+                onClick={() => setTab('colleges')}
+                className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-subtle hover:border-blue-300 transition-all cursor-pointer group"
+              >
+                <div className="flex items-center justify-between text-slate-400 mb-1">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-blue-800">
+                    Campuses
+                  </span>
+                  <Building2 className="w-3.5 h-3.5 text-blue-600 group-hover:scale-110 transition-transform" />
+                </div>
+                <div className="text-2xl font-black text-slate-900">
+                  {loadingStats ? '...' : stats?.totalColleges || 0}
+                </div>
+                <div className="text-[10px] text-slate-500 mt-0.5">
+                  <span className="font-bold text-blue-700">{stats?.activeColleges || stats?.totalColleges || 0}</span> active hubs
+                </div>
+              </div>
             </div>
 
-            <div className="bg-white p-5 rounded-2xl border border-slate-200">
-              <div className="flex items-center justify-between text-slate-500 mb-2 text-xs font-bold uppercase tracking-wider">
-                <span>Total Students</span>
-                <Users className="w-4 h-4 text-slate-400" />
-              </div>
-              <div className="text-3xl font-extrabold text-slate-900">
-                {loading ? '...' : stats?.totalStudents || 0}
-              </div>
-              <span className="text-[11px] text-slate-500">Across BPIT, MAIT, MSIT, USAR</span>
+            {/* DYNAMIC TAB COMPONENT RENDERING */}
+            <div className="transition-all duration-150">
+              {currentTab === 'analytics' && <AdminAnalytics />}
+
+              {currentTab === 'sell-requests' && (
+                <AdminSellRequests onAction={fetchStats} />
+              )}
+
+              {currentTab === 'custom-submissions' && (
+                <AdminCustomSubmissions onAction={fetchStats} />
+              )}
+
+              {currentTab === 'buying-queue' && (
+                <AdminBuyingQueue />
+              )}
+
+              {currentTab === 'products' && (
+                <AdminProducts onAddClick={() => setTab('add-product')} />
+              )}
+
+              {currentTab === 'add-product' && (
+                <AdminProducts
+                  onAddClick={() => {}}
+                  forceNewForm={true}
+                  onSaved={() => setTab('products')}
+                />
+              )}
+
+              {currentTab === 'buy-requests' && (
+                <AdminBuyRequests />
+              )}
+
+              {currentTab === 'automatch' && (
+                <AdminAutoMatching />
+              )}
+
+              {currentTab === 'colleges' && (
+                <AdminColleges onAction={fetchStats} />
+              )}
+
+              {currentTab === 'heroes' && (
+                <AdminCampusHeroes />
+              )}
+
+              {currentTab === 'teams' && (
+                <AdminTeamModeration />
+              )}
+
+              {currentTab === 'users' && (
+                <AdminUserManagement />
+              )}
             </div>
-          </div>
-
-          {/* Sub-tabs */}
-          <div className="flex items-center gap-2 border-b border-slate-200 pb-2 text-xs sm:text-sm font-bold">
-            <button
-              onClick={() => setTab('products')}
-              className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
-                tab === 'products'
-                  ? 'bg-campus-dark text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <Package className="w-4 h-4" />
-              <span>Product Catalog</span>
-            </button>
-
-            <button
-              onClick={() => setTab('heroes')}
-              className={`px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
-                tab === 'heroes'
-                  ? 'bg-campus-dark text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4" />
-              <span>Campus Hero Applications ({stats?.pendingHeroApplications || 0})</span>
-            </button>
-          </div>
-
-          {tab === 'products' && <AdminProducts onAddClick={() => setTab('add-product')} />}
-          {tab === 'add-product' && <AdminProducts onAddClick={() => {}} forceNewForm={true} onSaved={() => setTab('products')} />}
-          {tab === 'heroes' && <AdminCampusHeroes />}
+          </main>
         </div>
-      )}
-
-      {/* 4. AUTO-MATCHING & HERO DISPATCH OPERATIONS */}
-      {currentDept === 'automatch-dept' && (
-        <AdminAutoMatching />
-      )}
-
+      </div>
     </div>
   );
 };
