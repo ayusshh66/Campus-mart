@@ -1,15 +1,15 @@
+import { SmoothInput } from './motion/SmoothInput';
 import React, { useState, useRef } from 'react';
 import { 
   Upload, 
   X, 
   Star, 
-  Image as ImageIcon, 
   AlertCircle, 
   Check, 
-  Loader2, 
-  ArrowLeftRight 
+  Loader2 
 } from 'lucide-react';
 import { api } from '../services/api';
+import { resolveProductImageUrl, handleImageError } from '../utils/imageUtils';
 
 interface ImageUploaderProps {
   images: string[];
@@ -86,13 +86,12 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     const newUploadedUrls: string[] = [];
 
     try {
-      // If multiple upload endpoint available, try uploadMultipleImages first
       if (files.length > 1) {
         setUploadProgress(`Uploading ${files.length} images...`);
         try {
           const multiRes = await api.uploadMultipleImages(files);
           newUploadedUrls.push(...multiRes.map((r) => r.url));
-        } catch (multiErr: any) {
+        } catch {
           // Fallback to sequential uploads
           for (let i = 0; i < files.length; i++) {
             setUploadProgress(`Uploading image ${i + 1} of ${files.length}...`);
@@ -169,18 +168,18 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       {/* Header and counter */}
       <div className="flex items-center justify-between">
         <div>
-          <label className="text-xs sm:text-sm font-bold text-slate-800 block">
+          <label className="text-[13px] font-semibold text-shop-ink block tracking-tight">
             {label}
           </label>
-          <span className="text-[11px] text-slate-500 block mt-0.5">
+          <span className="text-[12px] text-shop-muted block mt-0.5 tracking-tight">
             {helperText}
           </span>
         </div>
         <span
-          className={`text-xs font-extrabold px-2.5 py-1 rounded-full ${
+          className={`text-[11px] font-semibold px-3 py-1 rounded-full ${
             images.length >= minImages
-              ? 'bg-emerald-100 text-emerald-800'
-              : 'bg-amber-100 text-amber-800'
+              ? 'bg-emerald-50 text-emerald-700'
+              : 'bg-amber-50 text-amber-800'
           }`}
         >
           {images.length} / {maxImages} Photos
@@ -189,7 +188,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
       {/* Validation Error Alert */}
       {errorMessage && (
-        <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-medium flex items-center justify-between gap-3 animate-fade-in">
+        <div className="p-3.5 rounded-[20px] bg-rose-50 border border-rose-200 text-rose-800 text-[12px] font-medium flex items-center justify-between gap-3 animate-fade-in">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
             <span>{errorMessage}</span>
@@ -211,13 +210,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => !uploading && fileInputRef.current?.click()}
-          className={`relative border-2 border-dashed rounded-3xl p-6 sm:p-8 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-3 ${
+          className={`relative border-2 border-dashed rounded-[28px] p-6 sm:p-8 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-3 ${
             isDragging
-              ? 'border-campus-primary bg-emerald-50/60 scale-[1.01]'
-              : 'border-slate-200 hover:border-campus-primary/60 bg-slate-50/60 hover:bg-white'
+              ? 'border-[#C6DE41] bg-[#C6DE41]/10 scale-[1.01]'
+              : 'border-white/10 hover:border-[#C6DE41]/50 bg-[#12160F] hover:bg-[#181D14]'
           } ${uploading ? 'pointer-events-none opacity-70' : ''}`}
         >
-          <input
+          <SmoothInput
             ref={fileInputRef}
             type="file"
             accept="image/jpeg,image/png,image/webp"
@@ -228,21 +227,21 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
           {uploading ? (
             <div className="py-2 flex flex-col items-center gap-2">
-              <Loader2 className="w-8 h-8 text-campus-primary animate-spin" />
-              <span className="text-xs font-bold text-slate-700">{uploadProgress}</span>
-              <span className="text-[11px] text-slate-400">Verifying safe image format...</span>
+              <Loader2 className="w-7 h-7 text-[#C6DE41] animate-spin" />
+              <span className="text-[13px] font-semibold text-white">{uploadProgress}</span>
+              <span className="text-[11px] text-slate-400">Validating and optimizing photo...</span>
             </div>
           ) : (
             <>
-              <div className="w-12 h-12 rounded-2xl bg-white shadow-sm border border-slate-200/80 text-campus-primary flex items-center justify-center">
-                <Upload className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-full bg-[#181D14] text-[#C6DE41] border border-[#C6DE41]/20 flex items-center justify-center shadow-[0_0_15px_rgba(198,222,65,0.15)]">
+                <Upload className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-xs sm:text-sm font-bold text-slate-800 block">
-                  Click to select photos or drag & drop here
+                <span className="text-[13px] font-bold text-white block tracking-tight">
+                  Click to choose photos or drag & drop here
                 </span>
-                <span className="text-[11px] text-slate-500 mt-1 block">
-                  Accepts JPEG, PNG, and WebP (up to 5MB per file • 1 to 5 images)
+                <span className="text-[11px] text-slate-400 mt-1 block">
+                  Supports JPEG, PNG, WebP (up to 5MB • 1 to 5 images)
                 </span>
               </div>
             </>
@@ -253,10 +252,10 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
       {/* Uploaded Images Preview Grid */}
       {images.length > 0 && (
         <div className="space-y-2">
-          <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 uppercase tracking-wider px-1">
-            <span>Uploaded Gallery (Click star to set main cover photo)</span>
+          <div className="flex items-center justify-between text-[11px] font-medium text-slate-400 uppercase tracking-wider px-1">
+            <span>Uploaded Gallery (Click star to set primary photo)</span>
             {images.length >= minImages && (
-              <span className="text-emerald-700 flex items-center gap-1 font-semibold">
+              <span className="text-[#C6DE41] flex items-center gap-1 font-semibold">
                 <Check className="w-3.5 h-3.5" /> Valid photo count
               </span>
             )}
@@ -269,25 +268,26 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               return (
                 <div
                   key={`${imgUrl}-${index}`}
-                  className={`group relative rounded-2xl overflow-hidden border-2 bg-slate-100 transition-all aspect-square flex flex-col justify-between ${
+                  className={`group relative rounded-[20px] overflow-hidden border-2 bg-[#12160F] transition-all aspect-square flex flex-col justify-between ${
                     isPrimary
-                      ? 'border-campus-primary shadow-md ring-2 ring-campus-primary/20'
-                      : 'border-slate-200 hover:border-slate-300'
+                      ? 'border-[#C6DE41] shadow-[0_0_15px_rgba(198,222,65,0.25)] ring-2 ring-[#C6DE41]/20'
+                      : 'border-white/10 hover:border-[#C6DE41]/40'
                   }`}
                 >
                   {/* Image */}
                   <img
-                    src={imgUrl}
+                    src={resolveProductImageUrl(imgUrl)}
                     alt={`Item ${index + 1}`}
                     className="w-full h-full object-cover"
+                    onError={handleImageError}
                   />
 
                   {/* Primary Badge or Set Primary Trigger */}
                   <div className="absolute top-2 left-2 right-2 flex items-center justify-between pointer-events-none">
                     {isPrimary ? (
-                      <span className="px-2 py-0.5 rounded-md bg-campus-primary text-white text-[10px] font-extrabold shadow-sm flex items-center gap-1 pointer-events-auto">
+                      <span className="px-2 py-0.5 rounded-full bg-[#C6DE41] text-[#090B09] text-[10px] font-black shadow-sm flex items-center gap-1 pointer-events-auto">
                         <Star className="w-3 h-3 fill-current" />
-                        <span>Primary Cover</span>
+                        <span>Cover</span>
                       </span>
                     ) : (
                       <button
@@ -296,11 +296,11 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                           e.stopPropagation();
                           handleSetPrimary(index);
                         }}
-                        className="px-2 py-0.5 rounded-md bg-white/90 backdrop-blur-sm hover:bg-white text-slate-700 hover:text-campus-primary text-[10px] font-bold shadow-sm flex items-center gap-1 pointer-events-auto transition-all"
+                        className="px-2 py-0.5 rounded-full bg-[#090B09]/80 border border-white/10 hover:border-[#C6DE41]/40 backdrop-blur-sm text-slate-200 hover:text-[#C6DE41] text-[10px] font-medium flex items-center gap-1 pointer-events-auto transition-all"
                         title="Set this as the primary cover photo for your listing"
                       >
-                        <Star className="w-3 h-3 text-amber-500" />
-                        <span>Set Primary</span>
+                        <Star className="w-3 h-3 text-[#C6DE41]" />
+                        <span>Set Cover</span>
                       </button>
                     )}
                   </div>
@@ -313,7 +313,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                         e.stopPropagation();
                         handleRemoveImage(index);
                       }}
-                      className="w-7 h-7 rounded-xl bg-black/60 hover:bg-rose-600 text-white flex items-center justify-center backdrop-blur-sm shadow-sm transition-all"
+                      className="w-7 h-7 rounded-full bg-black/60 hover:bg-rose-600 text-white flex items-center justify-center backdrop-blur-sm shadow-shop-pill transition-all"
                       title="Remove image"
                     >
                       <X className="w-3.5 h-3.5" />
@@ -322,7 +322,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
                   {/* Number Badge */}
                   <div className="absolute bottom-2 left-2">
-                    <span className="px-1.5 py-0.5 rounded bg-black/50 text-[9px] font-bold text-white backdrop-blur-sm">
+                    <span className="px-1.5 py-0.5 rounded-full bg-black/50 text-[9px] font-medium text-white backdrop-blur-sm">
                       #{index + 1}
                     </span>
                   </div>
@@ -335,3 +335,4 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     </div>
   );
 };
+

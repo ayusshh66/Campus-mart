@@ -136,7 +136,7 @@ export const AdminAnalytics: React.FC = () => {
             <span>•</span>
             <span className="text-amber-600 font-bold">{summary.heroUsers} Heroes</span>
             <span>•</span>
-            <span className="text-purple-600 font-bold">{summary.adminUsers} Admins</span>
+            <span className="text-[#181D14] font-bold">{summary.adminUsers} Admins</span>
           </div>
         </div>
 
@@ -144,7 +144,7 @@ export const AdminAnalytics: React.FC = () => {
         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-3 text-slate-500 text-xs font-bold uppercase tracking-wider">
             <span>Catalog Items</span>
-            <Package className="w-5 h-5 text-purple-500" />
+            <Package className="w-5 h-5 text-[#181D14]" />
           </div>
           <div className="text-3xl font-black text-slate-900 tracking-tight">
             {summary.totalProducts}
@@ -186,7 +186,7 @@ export const AdminAnalytics: React.FC = () => {
           </div>
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-subtle">
             <div className="text-2xl font-black text-slate-900">{summary.pendingCustomSubmissions}</div>
-            <div className="text-xs font-bold text-purple-800 mt-0.5">Custom Item Queue</div>
+            <div className="text-xs font-bold text-[#181D14] mt-0.5">Custom Item Queue</div>
             <div className="text-[10px] text-slate-400 mt-0.5">Unlisted gear approval</div>
           </div>
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-subtle">
@@ -229,7 +229,7 @@ export const AdminAnalytics: React.FC = () => {
                     <div className="flex items-center gap-3 font-bold text-slate-600 text-[11px]">
                       <span>{c.users} users</span>
                       <span className="text-emerald-600">{c.sellRequests} sells</span>
-                      <span className="text-purple-600">{c.buyRequests} buys</span>
+                      <span className="text-[#181D14]">{c.buyRequests} buys</span>
                     </div>
                   </div>
 
@@ -250,7 +250,7 @@ export const AdminAnalytics: React.FC = () => {
         <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-purple-600" />
+              <Layers className="w-4 h-4 text-[#181D14]" />
               <h3 className="font-extrabold text-sm text-slate-900">Top Categories by Demand</h3>
             </div>
             <span className="text-xs text-slate-400 font-bold">{categoryBreakdown.length} Categories</span>
@@ -271,7 +271,7 @@ export const AdminAnalytics: React.FC = () => {
                   <div className="text-right">
                     <div className="text-xs font-black text-slate-900">{totalTrades} Total Trades</div>
                     <div className="text-[10px] text-slate-500 mt-0.5">
-                      <span className="text-emerald-600 font-bold">{cat.sellCount} submitted</span> • <span className="text-purple-600 font-bold">{cat.buyCount} requested</span>
+                      <span className="text-emerald-600 font-bold">{cat.sellCount} submitted</span> • <span className="text-[#181D14] font-bold">{cat.buyCount} requested</span>
                     </div>
                   </div>
                 </div>

@@ -1,3 +1,4 @@
+import { SmoothInput } from '../../components/motion/SmoothInput';
 import React, { useEffect, useState, useMemo } from 'react';
 import { api, College } from '../../services/api';
 import { 
@@ -238,11 +239,11 @@ export const AdminColleges: React.FC<Props> = ({ onAction }) => {
         </div>
 
         <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-subtle flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-[#C6DE41]/15 text-[#181D14] flex items-center justify-center shrink-0">
             <Users className="w-5 h-5" />
           </div>
           <div>
-            <div className="text-xl font-black text-purple-700">{totalStudents}</div>
+            <div className="text-xl font-black text-[#181D14]">{totalStudents}</div>
             <div className="text-[11px] font-semibold text-slate-500 uppercase">Enrolled Students</div>
           </div>
         </div>
@@ -276,7 +277,7 @@ export const AdminColleges: React.FC<Props> = ({ onAction }) => {
         {/* Search */}
         <div className="relative w-full md:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
+          <SmoothInput
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -394,7 +395,7 @@ export const AdminColleges: React.FC<Props> = ({ onAction }) => {
                     </td>
 
                     {/* Buy Requests Count */}
-                    <td className="py-3.5 px-4 text-center font-semibold text-purple-700">
+                    <td className="py-3.5 px-4 text-center font-bold text-[#181D14]">
                       {col._count?.buy_requests || 0}
                     </td>
 
@@ -458,7 +459,7 @@ export const AdminColleges: React.FC<Props> = ({ onAction }) => {
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                   College Code <span className="text-rose-500">*</span>
                 </label>
-                <input
+                <SmoothInput
                   type="text"
                   required
                   placeholder="e.g. DTU, NSUT, IITD"
@@ -473,7 +474,7 @@ export const AdminColleges: React.FC<Props> = ({ onAction }) => {
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                   Full College Name <span className="text-rose-500">*</span>
                 </label>
-                <input
+                <SmoothInput
                   type="text"
                   required
                   placeholder="e.g. Delhi Technological University"
@@ -486,7 +487,7 @@ export const AdminColleges: React.FC<Props> = ({ onAction }) => {
 
               <div className="pt-2">
                 <label className="flex items-center gap-2.5 cursor-pointer">
-                  <input
+                  <SmoothInput
                     type="checkbox"
                     checked={isActive}
                     onChange={(e) => setIsActive(e.target.checked)}
@@ -546,7 +547,7 @@ export const AdminColleges: React.FC<Props> = ({ onAction }) => {
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                   College Code <span className="text-rose-500">*</span>
                 </label>
-                <input
+                <SmoothInput
                   type="text"
                   required
                   value={code}
@@ -559,7 +560,7 @@ export const AdminColleges: React.FC<Props> = ({ onAction }) => {
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                   Full College Name <span className="text-rose-500">*</span>
                 </label>
-                <input
+                <SmoothInput
                   type="text"
                   required
                   value={name}
@@ -570,7 +571,7 @@ export const AdminColleges: React.FC<Props> = ({ onAction }) => {
 
               <div className="pt-2">
                 <label className="flex items-center gap-2.5 cursor-pointer">
-                  <input
+                  <SmoothInput
                     type="checkbox"
                     checked={isActive}
                     onChange={(e) => setIsActive(e.target.checked)}

@@ -1,13 +1,13 @@
+import { SmoothInput } from '../components/motion/SmoothInput';
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api, College } from '../services/api';
-import { UserPlus, AlertTriangle, AlertCircle, ArrowRight, MapPin, ShieldAlert } from 'lucide-react';
+import { ArrowRight, UserPlus, AlertTriangle, AlertCircle, GraduationCap } from 'lucide-react';
 
 export const SignupPage: React.FC = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
-
   const [colleges, setColleges] = useState<College[]>([]);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -18,188 +18,137 @@ export const SignupPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchColleges = async () => {
-      try {
-        const list = await api.getColleges();
+    let active = true;
+    api.getColleges().then(list => {
+      if (active) {
         setColleges(list);
-        if (list.length > 0) {
-          setCollegeId(list[0].id);
-        }
-      } catch (err) {
-        console.error('Failed to load colleges:', err);
+        if (list.length) setCollegeId(list[0].id);
       }
-    };
-    fetchColleges();
+    }).catch(() => {
+      if (active) setError('Unable to load colleges. Please try again later.');
+    });
+    return () => { active = false; };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !phone || !password || !collegeId) {
-      setError('Please fill in all required fields.');
+      setError('Please complete all fields.');
       return;
     }
-
     setLoading(true);
     setError(null);
-
     try {
-      await register({
-        name,
-        email,
-        phone,
-        password,
-        college_id: collegeId,
-      });
+      await register({ name, email, phone, password, college_id: collegeId });
       navigate('/buy');
     } catch (err: any) {
-      setError(err.message || 'Registration failed. Please try again.');
+      setError(err.message || 'Registration failed.');
     } finally {
       setLoading(false);
     }
   };
 
-  const selectedCollegeObj = colleges.find((c) => c.id === collegeId);
+  const field = 'w-full rounded-2xl border border-white/15 bg-[#12160F] px-4 py-3.5 text-sm text-white outline-none transition focus:border-[#C6DE41] focus:ring-2 focus:ring-[#C6DE41]/20 placeholder:text-zinc-500';
 
   return (
-    <div className="max-w-md mx-auto px-4 py-8 sm:py-14">
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-subtle">
-        
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-campus-soft text-campus-primary flex items-center justify-center mx-auto mb-3">
-            <UserPlus className="w-6 h-6" />
-          </div>
-          <h1 className="text-2xl font-extrabold text-campus-dark tracking-tight">
-            Create Student Account
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Join your college's exclusive student recommerce network.
-          </p>
-        </div>
+    <main className="min-h-screen bg-[#090B09] text-white flex items-center justify-center px-5 py-12 lg:py-20">
+      <div className="mx-auto max-w-5xl w-full">
+        <div className="grid overflow-hidden rounded-[32px] border border-[#C6DE41]/25 bg-[#12160F] shadow-2xl lg:grid-cols-[.8fr_1.2fr]">
+          <aside className="relative bg-[#0E120A] p-8 text-white sm:p-12 border-b lg:border-b-0 lg:border-r border-white/10">
+            <div className="absolute right-0 top-0 h-72 w-72 rounded-full bg-[#C6DE41]/10 blur-3xl" />
+            <div className="relative flex items-center gap-2 text-sm font-bold text-[#C6DE41]">
+              <GraduationCap size={20} /> JOIN YOUR CAMPUS
+            </div>
+            <h1 className="relative mt-20 text-4xl font-bold leading-tight tracking-tight text-white">
+              Good gear.<br />Great people.<br /><span className="text-[#C6DE41]">One campus.</span>
+            </h1>
+            <p className="relative mt-5 max-w-xs text-sm leading-7 text-zinc-300">
+              Join a student community for trusted buying, selling, and hackathon collaboration.
+            </p>
+            <div className="relative mt-20 border-t border-white/15 pt-5 text-xs text-zinc-400">
+              Choose your college carefully — it is permanently linked to your student account.
+            </div>
+          </aside>
 
-        {error && (
-          <div className="mb-6 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
+          <section className="p-7 sm:p-11">
+            <div className="mb-7 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#C6DE41]/15 text-[#C6DE41] border border-[#C6DE41]/30">
+                <UserPlus size={20} />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight text-white">
+                  Create your account<span className="text-[#C6DE41]">.</span>
+                </h2>
+                <p className="text-sm text-zinc-400">A few details and you're in.</p>
+              </div>
+            </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          
-          {/* Full Name */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-              Full Name
-            </label>
-            <input
-              type="text"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Rahul Sharma"
-              className="w-full p-3.5 text-xs sm:text-sm rounded-xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30 focus:border-campus-primary"
-            />
-          </div>
+            {error && (
+              <div role="alert" className="mb-5 flex gap-2 rounded-xl border border-rose-500/40 bg-rose-900/30 p-3 text-sm text-rose-300">
+                <AlertCircle size={18} />
+                {error}
+              </div>
+            )}
 
-          {/* Email */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-              Email Address
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="rahul@example.com"
-              className="w-full p-3.5 text-xs sm:text-sm rounded-xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30 focus:border-campus-primary"
-            />
-          </div>
+            <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
+              <label className="text-sm font-semibold text-zinc-300">
+                Full name
+                <SmoothInput required autoComplete="name" value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" className={'mt-2 ' + field} />
+              </label>
 
-          {/* Phone */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-              Phone Number
-            </label>
-            <input
-              type="tel"
-              required
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="98XXXXXXXX"
-              className="w-full p-3.5 text-xs sm:text-sm rounded-xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30 focus:border-campus-primary"
-            />
-          </div>
+              <label className="text-sm font-semibold text-zinc-300">
+                Email address
+                <SmoothInput required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@college.edu" className={'mt-2 ' + field} />
+              </label>
 
-          {/* Password */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-              Create Password
-            </label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Minimum 6 characters"
-              className="w-full p-3.5 text-xs sm:text-sm rounded-xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30 focus:border-campus-primary"
-            />
-          </div>
+              <label className="text-sm font-semibold text-zinc-300">
+                Phone number
+                <SmoothInput required type="tel" autoComplete="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Your phone number" className={'mt-2 ' + field} />
+              </label>
 
-          {/* College Dropdown */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-              Select Your College
-            </label>
-            <div className="relative">
-              <select
-                value={collegeId}
-                onChange={(e) => setCollegeId(e.target.value)}
-                className="w-full p-3.5 pl-10 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30 focus:border-campus-primary cursor-pointer"
+              <label className="text-sm font-semibold text-zinc-300">
+                Password
+                <SmoothInput required type="password" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Create a password" className={'mt-2 ' + field} />
+              </label>
+
+              <label className="text-sm font-semibold text-zinc-300 sm:col-span-2">
+                Your college
+                <select required value={collegeId} onChange={e => setCollegeId(e.target.value)} className={'mt-2 ' + field}>
+                  <option value="" disabled className="bg-[#12160F] text-white">Select a college</option>
+                  {colleges.map(c => (
+                    <option key={c.id} value={c.id} className="bg-[#12160F] text-white">
+                      {c.code} — {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="flex gap-3 rounded-2xl border border-amber-500/40 bg-amber-900/20 p-4 text-sm text-amber-300 sm:col-span-2">
+                <AlertTriangle className="mt-0.5 shrink-0" size={18} />
+                <p>
+                  <strong>College selection is permanent.</strong> Make sure you select the correct college before continuing.
+                </p>
+              </div>
+
+              <button
+                disabled={loading || !collegeId}
+                type="submit"
+                className="flex items-center justify-center gap-2 rounded-2xl bg-[#C6DE41] hover:bg-[#D7EF59] px-5 py-4 text-sm font-bold text-[#090B09] shadow-lg shadow-[#C6DE41]/25 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 sm:col-span-2 transition-all"
               >
-                {colleges.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.code} — {c.name}
-                  </option>
-                ))}
-              </select>
-              <MapPin className="w-4 h-4 text-campus-primary absolute left-3.5 top-4" />
-            </div>
-          </div>
+                {loading ? 'Creating account…' : 'Create account'}
+                <ArrowRight size={18} />
+              </button>
+            </form>
 
-          {/* MANDATORY WARNING BEFORE CONFIRMATION */}
-          <div className="p-4 rounded-2xl bg-amber-50/90 border border-amber-200/80 text-amber-900 text-xs flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-extrabold text-amber-950">Important Notice:</p>
-              <p className="mt-0.5 leading-relaxed font-medium">
-                Choose your college carefully. Your college can only be selected once and cannot be changed later.
-              </p>
-            </div>
-          </div>
-
-          {/* Confirm & Create Account Button */}
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-4 rounded-xl bg-campus-primary hover:bg-campus-primary-hover text-white font-bold text-sm shadow-hero hover:shadow transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              <span>{loading ? 'Creating Account...' : 'Confirm & Create Account'}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-
-        </form>
-
-        <div className="mt-6 text-center text-xs text-slate-500">
-          Already have an account?{' '}
-          <Link to="/login" className="text-campus-primary font-bold hover:underline">
-            Log in
-          </Link>
+            <p className="mt-6 text-center text-sm text-zinc-400">
+              Already a member?{' '}
+              <Link to="/login" className="font-bold text-[#C6DE41] hover:underline">
+                Sign in
+              </Link>
+            </p>
+          </section>
         </div>
-
       </div>
-    </div>
+    </main>
   );
 };

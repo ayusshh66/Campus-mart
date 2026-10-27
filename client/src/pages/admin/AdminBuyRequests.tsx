@@ -1,3 +1,4 @@
+import { SmoothInput } from '../../components/motion/SmoothInput';
 import React, { useEffect, useState } from 'react';
 import { api, BuyRequestItem } from '../../services/api';
 import {
@@ -88,8 +89,8 @@ export const AdminBuyRequests: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 text-purple-800 text-xs font-bold mb-2">
-            <ShoppingBag className="w-3.5 h-3.5 text-purple-600" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C6DE41]/15 text-[#181D14] border border-[#C6DE41]/30 text-xs font-bold mb-2">
+            <ShoppingBag className="w-3.5 h-3.5 text-[#181D14]" />
             <span>Buyer Demand & Fulfillment</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
@@ -111,7 +112,7 @@ export const AdminBuyRequests: React.FC = () => {
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
+          <SmoothInput
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

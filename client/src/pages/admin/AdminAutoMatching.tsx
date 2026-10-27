@@ -1,3 +1,4 @@
+import { SmoothInput } from '../../components/motion/SmoothInput';
 import React, { useEffect, useState } from 'react';
 import { api, AutoMatchRule } from '../../services/api';
 import { 
@@ -325,7 +326,7 @@ export const AdminAutoMatching: React.FC = () => {
                           Auto-match stops once college stock hits this quota (e.g. max 10 calculators).
                         </p>
                         <div className="flex items-center gap-2">
-                          <input
+                          <SmoothInput
                             type="number"
                             min="1"
                             max="100"
@@ -383,7 +384,7 @@ export const AdminAutoMatching: React.FC = () => {
                           </p>
                         </div>
                         <label className="flex items-center gap-2.5 cursor-pointer bg-white px-3 py-2 rounded-xl border border-slate-200">
-                          <input
+                          <SmoothInput
                             type="checkbox"
                             checked={reqPhotos}
                             onChange={(e) =>

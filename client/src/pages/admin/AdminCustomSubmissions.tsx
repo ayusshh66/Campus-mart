@@ -1,3 +1,4 @@
+import { SmoothInput } from '../../components/motion/SmoothInput';
 import React, { useEffect, useState } from 'react';
 import { api, CustomItemSubmissionItem } from '../../services/api';
 import { 
@@ -208,7 +209,7 @@ export const AdminCustomSubmissions: React.FC<Props> = ({ onAction }) => {
       {/* Search Bar */}
       <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-subtle flex items-center gap-3">
         <Search className="w-4 h-4 text-slate-400 shrink-0" />
-        <input
+        <SmoothInput
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -372,7 +373,7 @@ export const AdminCustomSubmissions: React.FC<Props> = ({ onAction }) => {
                           <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">
                             Pay Seller (₹)
                           </label>
-                          <input
+                          <SmoothInput
                             type="number"
                             min="1"
                             value={draft.buy}
@@ -385,7 +386,7 @@ export const AdminCustomSubmissions: React.FC<Props> = ({ onAction }) => {
                           <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">
                             Catalog Price (₹)
                           </label>
-                          <input
+                          <SmoothInput
                             type="number"
                             min="1"
                             value={draft.sell}

@@ -1,3 +1,4 @@
+import { SmoothInput } from '../../components/motion/SmoothInput';
 import React, { useEffect, useState } from 'react';
 import { api, Product } from '../../services/api';
 import { 
@@ -362,7 +363,7 @@ export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSav
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
         <div className="relative w-full md:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
+          <SmoothInput
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -540,7 +541,7 @@ export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSav
               {/* Product Name */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">Product Name</label>
-                <input
+                <SmoothInput
                   type="text"
                   required
                   value={name}
@@ -610,7 +611,7 @@ export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSav
                     <span className="text-[9px] font-bold text-slate-500 mt-0.5">
                       {uploadingImage ? '...' : '+ Upload'}
                     </span>
-                    <input
+                    <SmoothInput
                       type="file"
                       accept="image/*"
                       onChange={handleAdminImageUpload}
@@ -621,7 +622,7 @@ export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSav
                 </div>
 
                 <div className="flex gap-2">
-                  <input
+                  <SmoothInput
                     type="url"
                     value={imageUrl}
                     onChange={(e) => setImageUrl(e.target.value)}
@@ -649,7 +650,7 @@ export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSav
                     Base Buy (₹)
                     <span className="block text-[9px] text-slate-400 font-normal">Min payout</span>
                   </label>
-                  <input
+                  <SmoothInput
                     type="number"
                     required
                     value={buyPrice}
@@ -663,7 +664,7 @@ export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSav
                     Up To Buy (₹)
                     <span className="block text-[9px] text-slate-400 font-normal">Max payout</span>
                   </label>
-                  <input
+                  <SmoothInput
                     type="number"
                     required
                     value={uptoBuyPrice}
@@ -677,7 +678,7 @@ export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSav
                     Sell Price (₹)
                     <span className="block text-[9px] text-slate-400 font-normal">Buyer pays</span>
                   </label>
-                  <input
+                  <SmoothInput
                     type="number"
                     required
                     value={sellPrice}
@@ -690,7 +691,7 @@ export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSav
               {/* Toggles */}
               <div className="space-y-3 pt-2">
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <input
+                  <SmoothInput
                     type="checkbox"
                     checked={isBuyingEnabled}
                     onChange={(e) => setIsBuyingEnabled(e.target.checked)}
@@ -703,7 +704,7 @@ export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSav
                 </label>
 
                 <label className="flex items-center gap-3 cursor-pointer">
-                  <input
+                  <SmoothInput
                     type="checkbox"
                     checked={isActive}
                     onChange={(e) => setIsActive(e.target.checked)}
@@ -769,7 +770,7 @@ export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSav
                         <label className="block text-[11px] font-bold text-slate-700 mb-1">
                           Question Prompt
                         </label>
-                        <input
+                        <SmoothInput
                           type="text"
                           required
                           value={q.question}
@@ -797,7 +798,7 @@ export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSav
                         {q.options.map((opt, oIdx) => (
                           <div key={oIdx} className="p-2.5 rounded-xl bg-white border border-slate-200 grid grid-cols-1 sm:grid-cols-12 gap-2 items-center text-xs">
                             <div className="sm:col-span-5">
-                              <input
+                              <SmoothInput
                                 type="text"
                                 required
                                 placeholder="Option label (e.g. Flawless)"
@@ -807,7 +808,7 @@ export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSav
                               />
                             </div>
                             <div className="sm:col-span-4">
-                              <input
+                              <SmoothInput
                                 type="text"
                                 placeholder="Subtitle (e.g. No scratches)"
                                 value={opt.description || ''}
@@ -817,7 +818,7 @@ export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSav
                             </div>
                             <div className="sm:col-span-2 flex items-center gap-1">
                               <span className="text-[10px] font-bold text-slate-400">Deduct ₹</span>
-                              <input
+                              <SmoothInput
                                 type="number"
                                 min={0}
                                 value={opt.deduction}

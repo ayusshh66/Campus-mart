@@ -1,3 +1,4 @@
+import { SmoothInput } from '../../components/motion/SmoothInput';
 import React, { useEffect, useState } from 'react';
 import { api, AdminUserItem, College } from '../../services/api';
 import {
@@ -154,7 +155,7 @@ export const AdminUserManagement: React.FC = () => {
         {/* Search */}
         <form onSubmit={handleSearchSubmit} className="relative w-full md:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
+          <SmoothInput
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -271,8 +272,8 @@ export const AdminUserManagement: React.FC = () => {
                       {/* Role Badge */}
                       <td className="py-4 px-4">
                         {u.role === 'ADMIN' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-100 text-purple-800 text-[11px] font-extrabold border border-purple-200">
-                            <ShieldAlert className="w-3 h-3 text-purple-600" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#C6DE41]/20 text-[#181D14] text-[11px] font-extrabold border border-[#C6DE41]/40">
+                            <ShieldAlert className="w-3 h-3 text-[#181D14]" />
                             Administrator
                           </span>
                         ) : u.role === 'CAMPUS_HERO' ? (
@@ -297,7 +298,7 @@ export const AdminUserManagement: React.FC = () => {
                             </span>
                           )}
                           {u._count.buy_requests > 0 && (
-                            <span className="px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-100" title="Buy Requests">
+                            <span className="px-2 py-0.5 rounded-md bg-[#C6DE41]/15 text-[#181D14] border border-[#C6DE41]/30" title="Buy Requests">
                               {u._count.buy_requests} bought
                             </span>
                           )}
@@ -403,7 +404,7 @@ export const AdminUserManagement: React.FC = () => {
                           : 'border-slate-200 hover:bg-slate-50'
                       }`}
                     >
-                      <input
+                      <SmoothInput
                         type="radio"
                         name="roleSelection"
                         value={r.id}

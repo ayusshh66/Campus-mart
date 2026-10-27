@@ -1,9 +1,9 @@
+import { SmoothInput } from '../components/motion/SmoothInput';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api, SellRequestItem, BuyRequestItem, CampusHeroItem, MessageItem, CustomItemSubmissionItem } from '../services/api';
 import { 
-  User as UserIcon, 
   MapPin, 
   Mail, 
   Phone, 
@@ -146,21 +146,21 @@ export const ProfilePage: React.FC = () => {
     switch (status) {
       case 'APPROVED':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#C6DE41]/20 text-[#C6DE41] border border-[#C6DE41]/30">
             <CheckCircle2 className="w-3.5 h-3.5" />
             Approved
           </span>
         );
       case 'REJECTED':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
             <XCircle className="w-3.5 h-3.5" />
             Rejected
           </span>
         );
       case 'COMPLETED':
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30">
             <CheckCircle2 className="w-3.5 h-3.5" />
             Completed
           </span>
@@ -168,7 +168,7 @@ export const ProfilePage: React.FC = () => {
       case 'PENDING':
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
             <Clock className="w-3.5 h-3.5" />
             Pending Review
           </span>
@@ -177,45 +177,45 @@ export const ProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-6 bg-[#090B09] text-[#F5F7F0] min-h-screen">
       {/* Profile Header Card */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-subtle mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-[#12160F] rounded-[28px] p-6 sm:p-8 border border-white/10 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-6">
         
         {/* User Info */}
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-campus-primary to-campus-dark text-white flex items-center justify-center font-extrabold text-2xl sm:text-3xl shadow-md">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#C6DE41] text-[#090B09] flex items-center justify-center font-black text-2xl sm:text-3xl shadow-[0_0_20px_rgba(198,222,65,0.3)] shrink-0">
             {user.name.charAt(0).toUpperCase()}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-extrabold text-campus-dark tracking-tight">
+              <h1 className="text-2xl font-extrabold tracking-tight text-white">
                 {user.name}
               </h1>
               {user.role === 'ADMIN' && (
-                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold">
+                <span className="px-2.5 py-0.5 rounded-full bg-[#C6DE41]/15 text-[#C6DE41] border border-[#C6DE41]/30 text-[11px] font-bold">
                   Admin
                 </span>
               )}
             </div>
 
-            {/* Permanent College Display (NO edit button) */}
+            {/* Permanent College Display */}
             <div className="mt-1.5 flex items-center gap-2">
-              <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-campus-soft border border-campus-primary/30 text-campus-dark text-xs font-bold">
-                <MapPin className="w-3.5 h-3.5 text-campus-primary" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#181D14] border border-white/10 text-white text-[12px] font-semibold">
+                <MapPin className="w-3.5 h-3.5 text-[#C6DE41]" />
                 <span>{user.college.code} — {user.college.name}</span>
                 <span title="College is permanently bound and immutable">
-                  <Lock className="w-3 h-3 text-slate-400 ml-1" />
+                  <Lock className="w-3 h-3 text-stone-400 ml-1" />
                 </span>
               </div>
             </div>
 
-            <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-slate-500 font-medium">
-              <span className="flex items-center gap-1">
-                <Mail className="w-3.5 h-3.5 text-slate-400" />
+            <div className="mt-2 flex flex-wrap items-center gap-4 text-[12px] text-stone-400 font-medium">
+              <span className="flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-stone-500" />
                 {user.email}
               </span>
-              <span className="flex items-center gap-1">
-                <Phone className="w-3.5 h-3.5 text-slate-400" />
+              <span className="flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5 text-stone-500" />
                 {user.phone}
               </span>
             </div>
@@ -223,21 +223,21 @@ export const ProfilePage: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           {(user.role === 'CAMPUS_HERO' || heroApp?.status === 'APPROVED' || user.role === 'ADMIN') && (
             <Link
               to="/hero-dashboard"
-              className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
+              className="px-4 py-2 rounded-full bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] text-[12px] font-bold transition-all shadow-[0_0_15px_rgba(198,222,65,0.25)] flex items-center gap-1.5"
             >
-              <Truck className="w-3.5 h-3.5" />
-              <span>Hero Operations Center</span>
+              <Truck className="w-3.5 h-3.5 text-[#090B09]" />
+              <span>Hero Operations</span>
             </Link>
           )}
 
           {user.role === 'ADMIN' && (
             <Link
               to="/admin"
-              className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-sm"
+              className="px-4 py-2 rounded-full bg-[#181D14] hover:bg-white/10 text-white border border-white/15 text-[12px] font-bold transition-all"
             >
               Admin Dashboard
             </Link>
@@ -247,18 +247,18 @@ export const ProfilePage: React.FC = () => {
               logout();
               navigate('/login');
             }}
-            className="px-4 py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold transition-all flex items-center gap-1.5"
+            className="px-4 py-2 rounded-full border border-white/15 text-stone-300 hover:text-white hover:bg-white/5 text-[12px] font-semibold transition-all flex items-center gap-1.5"
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span>Log Out</span>
+            <span>Sign Out</span>
           </button>
         </div>
       </div>
 
-      {/* Dynamic Tabs Bar - ONLY show tabs the user has registered for */}
+      {/* Dynamic Tabs Bar */}
       {availableTabs.length > 0 ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 mb-6 pb-2 text-sm font-bold">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="inline-flex p-1 bg-[#12160F] rounded-full border border-white/10 shadow-sm gap-1 flex-wrap">
             {availableTabs.map((tabItem) => {
               const Icon = tabItem.icon;
               const isSelected = activeTab === tabItem.id;
@@ -266,13 +266,13 @@ export const ProfilePage: React.FC = () => {
                 <button
                   key={tabItem.id}
                   onClick={() => setActiveTab(tabItem.id)}
-                  className={`px-4 py-2 rounded-xl transition-all flex items-center gap-2 relative ${
+                  className={`px-4 py-2 rounded-full text-[12px] font-bold transition-all flex items-center gap-2 relative ${
                     isSelected
-                      ? 'bg-campus-primary text-white shadow-sm'
-                      : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                      ? 'bg-[#C6DE41] text-[#090B09] shadow-[0_0_12px_rgba(198,222,65,0.25)]'
+                      : 'text-stone-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className="w-3.5 h-3.5" />
                   <span>
                     {tabItem.label} {tabItem.count !== undefined && `(${tabItem.count})`}
                   </span>
@@ -284,67 +284,67 @@ export const ProfilePage: React.FC = () => {
             })}
           </div>
 
-          {/* Quick Actions to register for other activities */}
+          {/* Quick Actions */}
           <div className="flex flex-wrap items-center gap-2">
             {!hasSell && (
               <Link
                 to="/sell"
-                className="px-3 py-1.5 rounded-lg border border-slate-200 hover:border-campus-primary/50 text-slate-600 hover:text-campus-primary text-xs font-semibold transition-all flex items-center gap-1"
+                className="px-3.5 py-1.5 rounded-full border border-white/15 bg-[#12160F] hover:bg-white/10 text-white text-[12px] font-semibold transition-all flex items-center gap-1 shadow-sm"
               >
-                <Tag className="w-3.5 h-3.5" />
+                <Tag className="w-3.5 h-3.5 text-[#C6DE41]" />
                 <span>+ Sell Item</span>
               </Link>
             )}
             {!hasBuy && (
               <Link
                 to="/buy"
-                className="px-3 py-1.5 rounded-lg border border-slate-200 hover:border-campus-primary/50 text-slate-600 hover:text-campus-primary text-xs font-semibold transition-all flex items-center gap-1"
+                className="px-3.5 py-1.5 rounded-full border border-white/15 bg-[#12160F] hover:bg-white/10 text-white text-[12px] font-semibold transition-all flex items-center gap-1 shadow-sm"
               >
-                <ShoppingBag className="w-3.5 h-3.5" />
+                <ShoppingBag className="w-3.5 h-3.5 text-[#C6DE41]" />
                 <span>+ Buy Catalog</span>
               </Link>
             )}
             {!hasHero && (
               <Link
                 to="/campus-heroes"
-                className="px-3 py-1.5 rounded-lg border border-slate-200 hover:border-campus-primary/50 text-slate-600 hover:text-campus-primary text-xs font-semibold transition-all flex items-center gap-1"
+                className="px-3.5 py-1.5 rounded-full border border-white/15 bg-[#12160F] hover:bg-white/10 text-white text-[12px] font-semibold transition-all flex items-center gap-1 shadow-sm"
               >
-                <ShieldCheck className="w-3.5 h-3.5" />
+                <ShieldCheck className="w-3.5 h-3.5 text-[#C6DE41]" />
                 <span>+ Hero Apply</span>
               </Link>
             )}
           </div>
         </div>
       ) : (
-        /* Empty / Onboarding State when user has not registered for any requests yet */
-        <div className="bg-white rounded-3xl p-8 sm:p-10 border border-slate-200/80 shadow-subtle text-center space-y-6 mb-8">
+        /* Empty / Onboarding State */
+        <div className="bg-[#12160F] rounded-[28px] p-8 sm:p-12 border border-white/10 shadow-2xl text-center space-y-8">
           <div className="max-w-md mx-auto">
-            <div className="w-16 h-16 rounded-2xl bg-campus-soft text-campus-primary flex items-center justify-center mx-auto mb-4 shadow-sm">
-              <Sparkles className="w-8 h-8" />
+            <div className="w-14 h-14 rounded-full bg-[#C6DE41]/15 text-[#C6DE41] border border-[#C6DE41]/30 flex items-center justify-center mx-auto mb-4">
+              <Sparkles className="w-6 h-6" />
             </div>
-            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-              Welcome to Your Dashboard
+            <h2 className="text-2xl font-extrabold tracking-tight text-white">
+              Welcome to Your Campus Account
             </h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-2 leading-relaxed">
+            <p className="text-[13px] text-stone-300 mt-2 leading-relaxed">
               You haven't submitted any requests yet. Once you submit a buy or sell request, or apply as a Campus Hero, your personalized tracking tabs will appear here automatically!
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 text-left">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
             <Link
               to="/sell"
-              className="p-5 rounded-2xl border border-slate-200 hover:border-emerald-500/50 hover:bg-emerald-50/20 transition-all group flex flex-col justify-between"
+              className="p-6 rounded-[24px] bg-[#181D14] border border-white/10 hover:border-[#C6DE41]/50 hover:shadow-[0_0_25px_rgba(198,222,65,0.1)] transition-all group flex flex-col justify-between"
             >
               <div>
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                  <Tag className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-full bg-[#12160F] text-[#C6DE41] border border-white/10 flex items-center justify-center mb-3 group-hover:bg-[#C6DE41] group-hover:text-[#090B09] transition-colors">
+                  <Tag className="w-4 h-4" />
                 </div>
-                <h3 className="font-bold text-slate-900 text-sm">Sell an Item</h3>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                <h3 className="font-bold text-white text-[14px] tracking-tight">Sell an Item</h3>
+                <p className="text-[12px] text-stone-400 mt-1.5 leading-relaxed">
                   Turn your used calculators, books, or drafters into instant cash with college pickup.
                 </p>
               </div>
-              <span className="text-xs font-bold text-emerald-700 mt-4 flex items-center gap-1">
+              <span className="text-[12px] font-bold text-[#C6DE41] mt-4 flex items-center gap-1">
                 <span>Start Selling</span>
                 <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
               </span>
@@ -352,18 +352,18 @@ export const ProfilePage: React.FC = () => {
 
             <Link
               to="/buy"
-              className="p-5 rounded-2xl border border-slate-200 hover:border-purple-500/50 hover:bg-purple-50/20 transition-all group flex flex-col justify-between"
+              className="p-6 rounded-[24px] bg-[#181D14] border border-white/10 hover:border-[#C6DE41]/50 hover:shadow-[0_0_25px_rgba(198,222,65,0.1)] transition-all group flex flex-col justify-between"
             >
               <div>
-                <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                  <ShoppingBag className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-full bg-[#12160F] text-[#C6DE41] border border-white/10 flex items-center justify-center mb-3 group-hover:bg-[#C6DE41] group-hover:text-[#090B09] transition-colors">
+                  <ShoppingBag className="w-4 h-4" />
                 </div>
-                <h3 className="font-bold text-slate-900 text-sm">Buy on Campus</h3>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                <h3 className="font-bold text-white text-[14px] tracking-tight">Buy on Campus</h3>
+                <p className="text-[12px] text-stone-400 mt-1.5 leading-relaxed">
                   Get verified college essentials at student-friendly prices with free campus handover.
                 </p>
               </div>
-              <span className="text-xs font-bold text-purple-700 mt-4 flex items-center gap-1">
+              <span className="text-[12px] font-bold text-[#C6DE41] mt-4 flex items-center gap-1">
                 <span>Browse Catalog</span>
                 <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
               </span>
@@ -371,18 +371,18 @@ export const ProfilePage: React.FC = () => {
 
             <Link
               to="/campus-heroes"
-              className="p-5 rounded-2xl border border-slate-200 hover:border-blue-500/50 hover:bg-blue-50/20 transition-all group flex flex-col justify-between"
+              className="p-6 rounded-[24px] bg-[#181D14] border border-white/10 hover:border-[#C6DE41]/50 hover:shadow-[0_0_25px_rgba(198,222,65,0.1)] transition-all group flex flex-col justify-between"
             >
               <div>
-                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
-                  <ShieldCheck className="w-5 h-5" />
+                <div className="w-10 h-10 rounded-full bg-[#12160F] text-[#C6DE41] border border-white/10 flex items-center justify-center mb-3 group-hover:bg-[#C6DE41] group-hover:text-[#090B09] transition-colors">
+                  <ShieldCheck className="w-4 h-4" />
                 </div>
-                <h3 className="font-bold text-slate-900 text-sm">Become a Campus Hero</h3>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                <h3 className="font-bold text-white text-[14px] tracking-tight">Become a Campus Hero</h3>
+                <p className="text-[12px] text-stone-400 mt-1.5 leading-relaxed">
                   Represent CampusMart at {user.college.code}, gain leadership credentials, and earn per transaction.
                 </p>
               </div>
-              <span className="text-xs font-bold text-blue-700 mt-4 flex items-center gap-1">
+              <span className="text-[12px] font-bold text-[#C6DE41] mt-4 flex items-center gap-1">
                 <span>Apply as Hero</span>
                 <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
               </span>
@@ -391,19 +391,19 @@ export const ProfilePage: React.FC = () => {
         </div>
       )}
 
-      {/* Tab 1: My Sell Requests - ONLY if user registered sell requests */}
+      {/* Tab 1: My Sell Requests */}
       {hasSell && activeTab === 'sell' && (
         <div className="space-y-4">
           {sellRequests.length === 0 ? (
-            <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80">
-              <Tag className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <h3 className="font-bold text-slate-800 text-lg">No Sell Requests Yet</h3>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1 mb-6">
+            <div className="bg-[#12160F] rounded-3xl p-12 text-center border border-white/10">
+              <Tag className="w-12 h-12 text-stone-500 mx-auto mb-3" />
+              <h3 className="font-bold text-white text-lg">No Sell Requests Yet</h3>
+              <p className="text-xs sm:text-sm text-stone-400 mt-1 mb-6">
                 Turn your used calculators, books, and gadgets into instant cash.
               </p>
               <Link
                 to="/sell"
-                className="px-5 py-2.5 bg-campus-primary hover:bg-campus-primary-hover text-white text-xs font-bold rounded-xl shadow-sm transition-all"
+                className="px-5 py-2.5 bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] text-xs font-bold rounded-full shadow-[0_0_15px_rgba(198,222,65,0.25)] transition-all"
               >
                 Submit an Item to Sell
               </Link>
@@ -413,40 +413,40 @@ export const ProfilePage: React.FC = () => {
               {sellRequests.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  className="bg-[#12160F] rounded-2xl p-5 border border-white/10 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                 >
                   <div className="flex items-center gap-4">
                     {item.images && item.images.length > 0 ? (
                       <img
                         src={item.images[0]}
                         alt={item.product_name}
-                        className="w-16 h-16 rounded-xl object-cover border border-slate-200"
+                        className="w-16 h-16 rounded-xl object-cover border border-white/10"
                       />
                     ) : (
-                      <div className="w-16 h-16 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400">
+                      <div className="w-16 h-16 rounded-xl bg-[#181D14] flex items-center justify-center text-stone-400">
                         <Tag className="w-6 h-6" />
                       </div>
                     )}
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-slate-900 text-base">{item.product_name}</h4>
+                        <h4 className="font-bold text-white text-base">{item.product_name}</h4>
                         {(item as any).auto_matched && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
-                            <Sparkles className="w-3 h-3 text-purple-600" />
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#C6DE41]/15 text-[#C6DE41] border border-[#C6DE41]/30">
+                            <Sparkles className="w-3 h-3 text-[#C6DE41]" />
                             Auto-Matched
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Condition: <span className="font-semibold text-slate-700">{item.condition}</span> • Submitted {new Date(item.created_at).toLocaleDateString()}
+                      <p className="text-xs text-stone-400 mt-0.5">
+                        Condition: <span className="font-semibold text-white">{item.condition}</span> • Submitted {new Date(item.created_at).toLocaleDateString()}
                       </p>
                       {item.description && (
-                        <p className="text-xs text-slate-500 italic mt-1 line-clamp-1">"{item.description}"</p>
+                        <p className="text-xs text-stone-400 italic mt-1 line-clamp-1">"{item.description}"</p>
                       )}
                       {(item as any).auto_matched && (
                         <button
                           onClick={() => setActiveTab('messages')}
-                          className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-campus-primary hover:text-campus-primary-hover"
+                          className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[#C6DE41] hover:underline"
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
                           <span>View Operations Messages from Campus Hero</span>
@@ -455,12 +455,12 @@ export const ProfilePage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100 gap-2">
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 pt-3 sm:pt-0 border-white/10 gap-2">
                     <div>
-                      <span className="text-[11px] text-slate-400 uppercase font-semibold block text-right">
+                      <span className="text-[11px] text-stone-400 uppercase font-semibold block text-right">
                         Estimated Payout
                       </span>
-                      <span className="text-lg font-extrabold text-campus-dark">
+                      <span className="text-lg font-black text-[#C6DE41]">
                         ₹{item.admin_buy_price}
                       </span>
                     </div>
@@ -473,19 +473,19 @@ export const ProfilePage: React.FC = () => {
         </div>
       )}
 
-      {/* Tab 2: My Buy Requests - ONLY if user registered buy requests */}
+      {/* Tab 2: My Buy Requests */}
       {hasBuy && activeTab === 'buy' && (
         <div className="space-y-4">
           {buyRequests.length === 0 ? (
-            <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80">
-              <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <h3 className="font-bold text-slate-800 text-lg">No Buy Requests Yet</h3>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1 mb-6">
+            <div className="bg-[#12160F] rounded-3xl p-12 text-center border border-white/10">
+              <ShoppingBag className="w-12 h-12 text-stone-500 mx-auto mb-3" />
+              <h3 className="font-bold text-white text-lg">No Buy Requests Yet</h3>
+              <p className="text-xs sm:text-sm text-stone-400 mt-1 mb-6">
                 You haven't requested anything yet. Check out what is available on your campus.
               </p>
               <Link
                 to="/buy"
-                className="px-5 py-2.5 bg-campus-primary hover:bg-campus-primary-hover text-white text-xs font-bold rounded-xl shadow-sm transition-all"
+                className="px-5 py-2.5 bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] text-xs font-bold rounded-full shadow-[0_0_15px_rgba(198,222,65,0.25)] transition-all"
               >
                 Browse Campus Catalog
               </Link>
@@ -495,32 +495,32 @@ export const ProfilePage: React.FC = () => {
               {buyRequests.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  className="bg-[#12160F] rounded-2xl p-5 border border-white/10 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-campus-soft flex items-center justify-center text-campus-primary">
+                    <div className="w-14 h-14 rounded-xl bg-[#181D14] flex items-center justify-center text-[#C6DE41] border border-white/10">
                       <ShoppingBag className="w-6 h-6" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-slate-900 text-base">{item.product_name}</h4>
+                        <h4 className="font-bold text-white text-base">{item.product_name}</h4>
                         {(item as any).auto_matched && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
-                            <Sparkles className="w-3 h-3 text-purple-600" />
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#C6DE41]/15 text-[#C6DE41] border border-[#C6DE41]/30">
+                            <Sparkles className="w-3 h-3 text-[#C6DE41]" />
                             Auto-Matched
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-stone-400 mt-0.5">
                         Requested on {new Date(item.created_at).toLocaleDateString()} • Campus: {item.college_code}
                       </p>
                       {item.notes && (
-                        <p className="text-xs text-slate-500 italic mt-1 line-clamp-1">Note: "{item.notes}"</p>
+                        <p className="text-xs text-stone-400 italic mt-1 line-clamp-1">Note: "{item.notes}"</p>
                       )}
                       {(item as any).auto_matched && (
                         <button
                           onClick={() => setActiveTab('messages')}
-                          className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-campus-primary hover:text-campus-primary-hover"
+                          className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[#C6DE41] hover:underline"
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
                           <span>View Operations Messages from Campus Hero</span>
@@ -529,12 +529,12 @@ export const ProfilePage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100 gap-2">
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 pt-3 sm:pt-0 border-white/10 gap-2">
                     <div>
-                      <span className="text-[11px] text-slate-400 uppercase font-semibold block text-right">
+                      <span className="text-[11px] text-stone-400 uppercase font-semibold block text-right">
                         Price
                       </span>
-                      <span className="text-lg font-extrabold text-campus-dark">
+                      <span className="text-lg font-black text-[#C6DE41]">
                         ₹{item.selling_price}
                       </span>
                     </div>
@@ -554,38 +554,38 @@ export const ProfilePage: React.FC = () => {
             {customSubmissions.map((sub) => (
               <div
                 key={sub.id}
-                className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                className="bg-[#12160F] rounded-2xl p-5 border border-white/10 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4"
               >
                 <div className="flex items-start gap-4">
                   {sub.images && sub.images.length > 0 ? (
                     <img
                       src={sub.images[0]}
                       alt={sub.name}
-                      className="w-16 h-16 rounded-xl object-cover border border-slate-200 shrink-0"
+                      className="w-16 h-16 rounded-xl object-cover border border-white/10 shrink-0"
                     />
                   ) : (
-                    <div className="w-16 h-16 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                    <div className="w-16 h-16 rounded-xl bg-[#181D14] text-[#C6DE41] border border-white/10 flex items-center justify-center shrink-0">
                       <Sparkles className="w-6 h-6" />
                     </div>
                   )}
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-slate-900 text-base">{sub.name}</h4>
-                      <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                      <h4 className="font-bold text-white text-base">{sub.name}</h4>
+                      <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#181D14] text-stone-200 border border-white/10">
                         {sub.category}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500">
-                      Condition: <span className="font-semibold text-slate-700">{sub.condition}</span> • Submitted {new Date(sub.created_at).toLocaleDateString()}
+                    <p className="text-xs text-stone-400">
+                      Condition: <span className="font-semibold text-white">{sub.condition}</span> • Submitted {new Date(sub.created_at).toLocaleDateString()}
                     </p>
-                    <p className="text-xs text-slate-600 italic line-clamp-1">"{sub.description}"</p>
+                    <p className="text-xs text-stone-400 italic line-clamp-1">"{sub.description}"</p>
                     {sub.rejection_reason && sub.status === 'REJECTED' && (
-                      <p className="text-xs text-rose-600 font-medium bg-rose-50 p-2 rounded-lg border border-rose-100 mt-1">
+                      <p className="text-xs text-rose-300 font-medium bg-rose-500/10 p-2 rounded-lg border border-rose-500/30 mt-1">
                         Reason: {sub.rejection_reason}
                       </p>
                     )}
                     {sub.status === 'APPROVED' && (
-                      <p className="text-xs text-emerald-700 font-bold flex items-center gap-1 mt-1">
+                      <p className="text-xs text-[#C6DE41] font-bold flex items-center gap-1 mt-1">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Published live to {sub.college_code || user?.college.code} Campus Marketplace</span>
                       </p>
@@ -593,16 +593,16 @@ export const ProfilePage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100 gap-2 shrink-0">
+                <div className="flex sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 pt-3 sm:pt-0 border-white/10 gap-2 shrink-0">
                   <div className="text-right">
-                    <span className="text-[11px] text-slate-400 uppercase font-semibold block">
+                    <span className="text-[11px] text-stone-400 uppercase font-semibold block">
                       {sub.status === 'APPROVED' ? 'Approved Payout' : 'Asking Price'}
                     </span>
-                    <span className="text-lg font-extrabold text-campus-dark">
+                    <span className="text-lg font-black text-[#C6DE41]">
                       ₹{(sub.admin_buy_price || sub.expected_price).toLocaleString('en-IN')}
                     </span>
                     {sub.status === 'APPROVED' && sub.admin_sell_price && (
-                      <span className="text-[10px] text-slate-500 block">
+                      <span className="text-[10px] text-stone-400 block">
                         Catalog Price: ₹{sub.admin_sell_price}
                       </span>
                     )}
@@ -615,24 +615,24 @@ export const ProfilePage: React.FC = () => {
         </div>
       )}
 
-      {/* Tab: Operations & Campus Hero Messages - ONLY if user has active messages */}
+      {/* Tab: Operations & Campus Hero Messages */}
       {hasMessages && activeTab === 'messages' && (
         <div className="space-y-6">
           {/* Official Operations Banner */}
-          <div className="bg-gradient-to-r from-emerald-900 to-teal-950 text-white rounded-3xl p-6 sm:p-7 shadow-md relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="bg-[#12160F] text-white rounded-3xl p-6 sm:p-7 shadow-xl border border-[#C6DE41]/20 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#C6DE41]/10 rounded-full blur-3xl pointer-events-none"></div>
             <div className="flex items-start gap-4 relative z-10">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-700/60 border border-emerald-400/30 flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-6 h-6 text-emerald-300" />
+              <div className="w-12 h-12 rounded-2xl bg-[#C6DE41]/15 border border-[#C6DE41]/30 flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-6 h-6 text-[#C6DE41]" />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
                   CampusMart Operations & Hero Desk
-                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-400/20 text-emerald-200 border border-emerald-400/30">
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#C6DE41]/15 text-[#C6DE41] border border-[#C6DE41]/30">
                     Official College Ops
                   </span>
                 </h3>
-                <p className="text-xs text-emerald-200/90 mt-1 max-w-2xl leading-relaxed">
+                <p className="text-xs text-stone-300 mt-1 max-w-2xl leading-relaxed">
                   All messages sent here are coordinated by your campus designated <strong className="text-white">Operations Team — Campus Hero</strong>. Coordinate product handover, inspection, and verification directly within CampusMart.
                 </p>
               </div>
@@ -640,23 +640,22 @@ export const ProfilePage: React.FC = () => {
           </div>
 
           {replyStatus && (
-            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 animate-fade-in">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <div className="p-4 rounded-2xl bg-[#C6DE41]/15 border border-[#C6DE41]/30 text-[#C6DE41] text-xs font-bold flex items-center gap-2 animate-fade-in">
+              <CheckCircle2 className="w-4 h-4 text-[#C6DE41] shrink-0" />
               <span>{replyStatus}</span>
             </div>
           )}
 
           {messages.length === 0 ? (
-            <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80 shadow-subtle">
-              <MessageSquare className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <h3 className="font-bold text-slate-800 text-lg">No Operations Messages Yet</h3>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-md mx-auto">
+            <div className="bg-[#12160F] rounded-3xl p-12 text-center border border-white/10 shadow-lg">
+              <MessageSquare className="w-12 h-12 text-stone-500 mx-auto mb-3" />
+              <h3 className="font-bold text-white text-lg">No Operations Messages Yet</h3>
+              <p className="text-xs sm:text-sm text-stone-400 mt-1 max-w-md mx-auto">
                 When you submit a sell or buy request and your Campus Hero begins pickup or drop verification, you'll receive real-time instructions and updates right here.
               </p>
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Group messages by task or render distinct operational threads */}
               {Object.entries(
                 messages.reduce((acc, msg) => {
                   const key = msg.task_id || 'general';
@@ -671,33 +670,33 @@ export const ProfilePage: React.FC = () => {
                 return (
                   <div
                     key={taskId}
-                    className="bg-white rounded-3xl border border-slate-200/90 shadow-subtle overflow-hidden"
+                    className="bg-[#12160F] rounded-3xl border border-white/10 shadow-xl overflow-hidden"
                   >
                     {/* Thread Header */}
-                    <div className="bg-slate-50/80 px-6 py-4 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-3">
+                    <div className="bg-[#181D14] px-6 py-4 border-b border-white/10 flex flex-wrap items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
-                          <Truck className="w-5 h-5 text-emerald-700" />
+                        <div className="w-10 h-10 rounded-xl bg-[#C6DE41]/15 text-[#C6DE41] border border-[#C6DE41]/25 flex items-center justify-center font-bold text-xs">
+                          <Truck className="w-5 h-5 text-[#C6DE41]" />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-extrabold text-sm text-slate-900">{productName}</span>
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                            <span className="font-extrabold text-sm text-white">{productName}</span>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#C6DE41]/15 text-[#C6DE41] border border-[#C6DE41]/30">
                               Active Task Thread
                             </span>
                           </div>
-                          <span className="text-[11px] text-slate-500">
-                            Coordinated by <strong className="text-slate-700">Operations Team — Campus Hero</strong>
+                          <span className="text-[11px] text-stone-400">
+                            Coordinated by <strong className="text-white">Operations Team — Campus Hero</strong>
                           </span>
                         </div>
                       </div>
-                      <span className="text-xs text-slate-400 font-medium">
+                      <span className="text-xs text-stone-400 font-medium">
                         {threadMsgs.length} {threadMsgs.length === 1 ? 'message' : 'messages'}
                       </span>
                     </div>
 
                     {/* Messages Scroll Area */}
-                    <div className="p-6 space-y-4 max-h-[380px] overflow-y-auto bg-gradient-to-b from-white to-slate-50/30">
+                    <div className="p-6 space-y-4 max-h-[380px] overflow-y-auto bg-[#090B09]">
                       {threadMsgs.map((msg) => {
                         const isHeroSender = Boolean(
                           msg.sender_display_name?.includes('Hero') || 
@@ -713,17 +712,17 @@ export const ProfilePage: React.FC = () => {
                           >
                             <div className="flex items-center gap-1.5 mb-1 text-[11px]">
                               {isHeroSender ? (
-                                <span className="font-bold text-emerald-800 flex items-center gap-1 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/80 shadow-xs">
-                                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                                <span className="font-bold text-[#C6DE41] flex items-center gap-1 bg-[#181D14] px-2.5 py-0.5 rounded-full border border-[#C6DE41]/30 shadow-xs">
+                                  <ShieldCheck className="w-3.5 h-3.5 text-[#C6DE41]" />
                                   <span>Operations Team — Campus Hero</span>
-                                  {isMine && <span className="text-[10px] text-emerald-600 font-semibold">(Sent by Hero)</span>}
+                                  {isMine && <span className="text-[10px] text-[#C6DE41] font-semibold">(Sent by Hero)</span>}
                                 </span>
                               ) : (
-                                <span className="font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+                                <span className="font-bold text-stone-300 bg-[#181D14] px-2 py-0.5 rounded-md border border-white/10">
                                   You (Student)
                                 </span>
                               )}
-                              <span className="text-slate-400">
+                              <span className="text-stone-500">
                                 • {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
                             </div>
@@ -731,20 +730,20 @@ export const ProfilePage: React.FC = () => {
                             <div
                               className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 text-xs leading-relaxed shadow-sm ${
                                 isHeroSender
-                                  ? 'bg-white border border-emerald-200 text-slate-800 rounded-tl-sm'
-                                  : 'bg-campus-primary text-white rounded-tr-sm'
+                                  ? 'bg-[#181D14] border border-[#C6DE41]/30 text-white rounded-tl-sm'
+                                  : 'bg-[#C6DE41] text-[#090B09] font-bold rounded-tr-sm'
                               }`}
                             >
-                              <p className="whitespace-pre-line font-medium">{msg.content}</p>
+                              <p className="whitespace-pre-line">{msg.content}</p>
                             </div>
                           </div>
                         );
                       })}
                     </div>
 
-                    {/* Inline Reply Form (Direct communication with Hero) */}
+                    {/* Inline Reply Form */}
                     {taskId !== 'general' && (
-                      <div className="p-4 sm:p-5 bg-white border-t border-slate-100">
+                      <div className="p-4 sm:p-5 bg-[#12160F] border-t border-white/10">
                         {/* Quick Reply Preset Chips */}
                         <div className="flex flex-wrap gap-1.5 mb-3">
                           {[
@@ -762,7 +761,7 @@ export const ProfilePage: React.FC = () => {
                                   [taskId]: chip,
                                 }))
                               }
-                              className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300 text-slate-600 border border-slate-200/80 transition-colors"
+                              className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[#181D14] hover:bg-[#C6DE41]/10 hover:text-[#C6DE41] text-stone-300 border border-white/10 transition-colors"
                             >
                               {chip}
                             </button>
@@ -776,7 +775,7 @@ export const ProfilePage: React.FC = () => {
                           }}
                           className="flex items-center gap-2"
                         >
-                          <input
+                          <SmoothInput
                             type="text"
                             value={replyTextMap[taskId] || ''}
                             onChange={(e) =>
@@ -786,12 +785,12 @@ export const ProfilePage: React.FC = () => {
                               }))
                             }
                             placeholder="Reply to Operations Team — Campus Hero..."
-                            className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none bg-slate-50/50"
+                            className="flex-1 px-4 py-2.5 rounded-full border border-white/15 text-xs text-white placeholder:text-stone-500 focus:border-[#C6DE41] outline-none bg-[#181D14]"
                           />
                           <button
                             type="submit"
                             disabled={sendingTaskId === taskId || !replyTextMap[taskId]?.trim()}
-                            className="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all shrink-0"
+                            className="px-5 py-2.5 rounded-full bg-[#C6DE41] hover:bg-[#D7EF59] disabled:opacity-50 text-[#090B09] text-xs font-bold flex items-center gap-1.5 shadow-[0_0_15px_rgba(198,222,65,0.25)] transition-all shrink-0"
                           >
                             {sendingTaskId === taskId ? (
                               <span>Sending...</span>
@@ -813,59 +812,59 @@ export const ProfilePage: React.FC = () => {
         </div>
       )}
 
-      {/* Tab 3: Campus Hero Status - ONLY if user registered for Campus Hero */}
+      {/* Tab 3: Campus Hero Status */}
       {hasHero && activeTab === 'hero' && (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-subtle">
+        <div className="bg-[#12160F] rounded-3xl p-6 sm:p-8 border border-white/10 shadow-xl">
           {heroApp ? (
             <div className="space-y-4">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center justify-between pb-4 border-b border-white/10">
                 <div>
-                  <h3 className="text-lg font-bold text-campus-dark">Campus Hero Application</h3>
-                  <p className="text-xs text-slate-500">Submitted on {new Date(heroApp.created_at).toLocaleDateString()}</p>
+                  <h3 className="text-lg font-bold text-white">Campus Hero Application</h3>
+                  <p className="text-xs text-stone-400">Submitted on {new Date(heroApp.created_at).toLocaleDateString()}</p>
                 </div>
                 <div>{getStatusBadge(heroApp.status)}</div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div>
-                  <span className="text-slate-400 block font-semibold uppercase tracking-wider text-[10px]">Branch & Year</span>
-                  <span className="font-bold text-slate-800 text-sm">{heroApp.branch} • {heroApp.year}</span>
+                  <span className="text-stone-400 block font-semibold uppercase tracking-wider text-[10px]">Branch & Year</span>
+                  <span className="font-bold text-white text-sm">{heroApp.branch} • {heroApp.year}</span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block font-semibold uppercase tracking-wider text-[10px]">Phone Number</span>
-                  <span className="font-bold text-slate-800 text-sm">{heroApp.phone}</span>
+                  <span className="text-stone-400 block font-semibold uppercase tracking-wider text-[10px]">Phone Number</span>
+                  <span className="font-bold text-white text-sm">{heroApp.phone}</span>
                 </div>
                 {heroApp.instagram && (
                   <div>
-                    <span className="text-slate-400 block font-semibold uppercase tracking-wider text-[10px]">Instagram</span>
-                    <span className="font-bold text-slate-800 text-sm">{heroApp.instagram}</span>
+                    <span className="text-stone-400 block font-semibold uppercase tracking-wider text-[10px]">Instagram</span>
+                    <span className="font-bold text-white text-sm">{heroApp.instagram}</span>
                   </div>
                 )}
                 {heroApp.linkedin && (
                   <div>
-                    <span className="text-slate-400 block font-semibold uppercase tracking-wider text-[10px]">LinkedIn</span>
-                    <span className="font-bold text-slate-800 text-sm truncate">{heroApp.linkedin}</span>
+                    <span className="text-stone-400 block font-semibold uppercase tracking-wider text-[10px]">LinkedIn</span>
+                    <span className="font-bold text-white text-sm truncate">{heroApp.linkedin}</span>
                   </div>
                 )}
               </div>
 
               <div className="pt-2">
-                <span className="text-slate-400 block font-semibold uppercase tracking-wider text-[10px]">Reason for Joining</span>
-                <p className="text-xs text-slate-600 mt-1 leading-relaxed bg-[#F8FAF9] p-3 rounded-xl border border-slate-100">
+                <span className="text-stone-400 block font-semibold uppercase tracking-wider text-[10px]">Reason for Joining</span>
+                <p className="text-xs text-stone-300 mt-1 leading-relaxed bg-[#181D14] p-3 rounded-xl border border-white/10">
                   {heroApp.reason}
                 </p>
               </div>
             </div>
           ) : (
             <div className="text-center py-8">
-              <ShieldCheck className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <h3 className="font-bold text-slate-800 text-lg">No Application Submitted Yet</h3>
-              <p className="text-xs sm:text-sm text-slate-500 mt-1 mb-6 max-w-sm mx-auto">
+              <ShieldCheck className="w-12 h-12 text-stone-500 mx-auto mb-3" />
+              <h3 className="font-bold text-white text-lg">No Application Submitted Yet</h3>
+              <p className="text-xs sm:text-sm text-stone-400 mt-1 mb-6 max-w-sm mx-auto">
                 Represent CampusMart at {user.college.code}, gain leadership credentials, and connect your campus.
               </p>
               <Link
                 to="/campus-heroes"
-                className="px-5 py-2.5 bg-campus-primary hover:bg-campus-primary-hover text-white text-xs font-bold rounded-xl shadow-sm transition-all"
+                className="px-5 py-2.5 bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] text-xs font-bold rounded-full shadow-[0_0_15px_rgba(198,222,65,0.25)] transition-all"
               >
                 Apply to Become a Campus Hero
               </Link>

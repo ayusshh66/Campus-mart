@@ -1,3 +1,4 @@
+import { SmoothInput } from '../components/motion/SmoothInput';
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -5,22 +6,12 @@ import { api, TeamPostItem, TeamApplicationItem, HackathonProfile } from '../ser
 import {
   Users,
   Award,
-  Calendar,
-  Clock,
-  MapPin,
   PlusCircle,
   CheckCircle2,
-  XCircle,
-  AlertCircle,
   Github,
   Globe,
-  Linkedin,
-  Mail,
-  UserCheck,
   Edit3,
-  Layers,
   ChevronRight,
-  ExternalLink,
   Sparkles
 } from 'lucide-react';
 
@@ -64,7 +55,7 @@ export const MyTeamsPage: React.FC = () => {
 
   const [createdTeams, setCreatedTeams] = useState<TeamPostItem[]>([]);
   const [appliedTeams, setAppliedTeams] = useState<TeamApplicationItem[]>([]);
-  const [profile, setProfile] = useState<HackathonProfile | null>(null);
+  const [, setProfile] = useState<HackathonProfile | null>(null);
 
   // Skill Profile form state
   const [bio, setBio] = useState('');
@@ -162,79 +153,79 @@ export const MyTeamsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen bg-[#090B09] text-[#F5F7F0] py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold mb-2 border border-emerald-200">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C6DE41]/10 text-[#C6DE41] border border-[#C6DE41]/20 text-[11px] font-bold mb-2">
+              <Sparkles className="w-3.5 h-3.5" />
               <span>Hackathon Hub</span>
             </div>
-            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-              My Teams & Applications
+            <h1 className="text-3xl font-extrabold tracking-tight text-white">
+              My Teams & Applications<span className="text-[#C6DE41]">.</span>
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-[13px] text-stone-300 mt-1 leading-relaxed">
               Manage teams you lead, track statuses of your submitted applications, and update your skill profile.
             </p>
           </div>
 
           <Link
             to="/teams/create"
-            className="px-5 py-2.5 rounded-xl bg-campus-primary hover:bg-campus-primary-hover text-white text-xs font-bold shadow-md shadow-campus-primary/25 transition-all flex items-center gap-2 shrink-0 self-start sm:self-auto"
+            className="px-5 py-2.5 rounded-full bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] text-[12px] font-bold shadow-[0_0_20px_rgba(198,222,65,0.25)] transition-all flex items-center gap-2 shrink-0 self-start sm:self-auto"
           >
-            <PlusCircle className="w-4 h-4" />
+            <PlusCircle className="w-4 h-4 text-[#090B09]" />
             <span>Create New Team Post</span>
           </Link>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex border-b border-slate-200 gap-2 text-xs sm:text-sm font-bold">
+        {/* Pill Tab Navigation */}
+        <div className="inline-flex p-1 bg-[#12160F] rounded-full border border-white/10 shadow-sm gap-1">
           <button
             onClick={() => setTab('created')}
-            className={`py-3 px-4 border-b-2 transition-all flex items-center gap-2 ${
+            className={`py-2 px-5 rounded-full text-[12px] font-semibold transition-all flex items-center gap-2 ${
               activeTab === 'created'
-                ? 'border-campus-primary text-campus-primary'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'bg-[#C6DE41] text-[#090B09] shadow-[0_0_12px_rgba(198,222,65,0.25)]'
+                : 'text-stone-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Users className="w-4 h-4" />
+            <Users className="w-3.5 h-3.5" />
             <span>Teams I Lead ({createdTeams.length})</span>
           </button>
 
           <button
             onClick={() => setTab('applied')}
-            className={`py-3 px-4 border-b-2 transition-all flex items-center gap-2 ${
+            className={`py-2 px-5 rounded-full text-[12px] font-semibold transition-all flex items-center gap-2 ${
               activeTab === 'applied'
-                ? 'border-campus-primary text-campus-primary'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'bg-[#C6DE41] text-[#090B09] shadow-[0_0_12px_rgba(198,222,65,0.25)]'
+                : 'text-stone-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Award className="w-4 h-4" />
+            <Award className="w-3.5 h-3.5" />
             <span>My Applications ({appliedTeams.length})</span>
           </button>
 
           <button
             onClick={() => setTab('profile')}
-            className={`py-3 px-4 border-b-2 transition-all flex items-center gap-2 ${
+            className={`py-2 px-5 rounded-full text-[12px] font-semibold transition-all flex items-center gap-2 ${
               activeTab === 'profile'
-                ? 'border-campus-primary text-campus-primary'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
+                ? 'bg-[#C6DE41] text-[#090B09] shadow-[0_0_12px_rgba(198,222,65,0.25)]'
+                : 'text-stone-400 hover:text-white hover:bg-white/5'
             }`}
           >
-            <Edit3 className="w-4 h-4" />
+            <Edit3 className="w-3.5 h-3.5" />
             <span>My Skill Profile</span>
           </button>
         </div>
 
         {/* Loading / Error States */}
         {loading ? (
-          <div className="py-20 text-center">
-            <div className="inline-block w-8 h-8 border-4 border-campus-primary border-t-transparent rounded-full animate-spin"></div>
-            <p className="mt-3 text-xs text-slate-500">Loading your hackathon activities...</p>
+          <div className="py-24 text-center">
+            <div className="inline-block w-8 h-8 border-3 border-[#C6DE41] border-t-transparent rounded-full animate-spin"></div>
+            <p className="mt-3 text-[13px] text-stone-400 font-medium">Loading your hackathon activities...</p>
           </div>
         ) : error ? (
-          <div className="p-6 rounded-2xl bg-rose-50 border border-rose-200 text-center text-xs text-rose-700">
+          <div className="p-6 rounded-[28px] bg-rose-500/10 border border-rose-500/30 text-center text-[12px] text-rose-300 font-semibold">
             {error}
           </div>
         ) : (
@@ -243,17 +234,17 @@ export const MyTeamsPage: React.FC = () => {
             {activeTab === 'created' && (
               <div className="space-y-6">
                 {createdTeams.length === 0 ? (
-                  <div className="bg-white rounded-3xl p-12 text-center border border-slate-200">
-                    <Users className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-                    <h3 className="text-base font-bold text-slate-900">You haven't posted any hackathon teams yet</h3>
-                    <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                  <div className="bg-[#12160F] rounded-[28px] p-12 text-center border border-white/10 shadow-xl">
+                    <Users className="w-12 h-12 text-stone-500 mx-auto mb-3" />
+                    <h3 className="text-base font-bold tracking-tight text-white">You haven't posted any hackathon teams yet</h3>
+                    <p className="text-[13px] text-stone-400 mt-1 max-w-sm mx-auto leading-relaxed">
                       Have a great project idea or want to assemble a team for SIH 2026? Create your recruitment post now.
                     </p>
                     <Link
                       to="/teams/create"
-                      className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-campus-primary text-white text-xs font-bold hover:bg-campus-primary-hover shadow-md"
+                      className="mt-5 inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] text-[12px] font-bold shadow-[0_0_15px_rgba(198,222,65,0.25)] transition-all"
                     >
-                      <PlusCircle className="w-4 h-4" />
+                      <PlusCircle className="w-4 h-4 text-[#090B09]" />
                       <span>Post a Team Request</span>
                     </Link>
                   </div>
@@ -261,54 +252,53 @@ export const MyTeamsPage: React.FC = () => {
                   <div className="grid grid-cols-1 gap-6">
                     {createdTeams.map((post) => {
                       const pendingApps = post.applications?.filter((a) => a.status === 'PENDING') || [];
-                      const acceptedApps = post.applications?.filter((a) => a.status === 'ACCEPTED') || [];
 
                       return (
                         <div
                           key={post.id}
-                          className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-4"
+                          className="bg-[#12160F] rounded-[28px] p-6 sm:p-8 border border-white/10 shadow-xl space-y-4"
                         >
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
                             <div>
                               <div className="flex items-center gap-2 mb-1.5">
-                                <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200">
+                                <span className="px-3 py-0.5 rounded-full bg-[#181D14] text-stone-200 text-[11px] font-medium border border-white/10">
                                   {post.hackathon_name}
                                 </span>
-                                <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold">
+                                <span className="px-2.5 py-0.5 rounded-full bg-white/5 text-stone-400 text-[10px] font-semibold border border-white/10">
                                   Status: {post.status}
                                 </span>
                               </div>
-                              <h2 className="text-xl font-bold text-slate-900">{post.team_title}</h2>
+                              <h2 className="text-xl font-bold tracking-tight text-white">{post.team_title}</h2>
                             </div>
 
                             <Link
                               to={`/teams/${post.id}`}
-                              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 self-start sm:self-auto"
+                              className="px-4 py-2 bg-[#181D14] hover:bg-white/10 text-white border border-white/15 rounded-full text-[12px] font-semibold transition-colors flex items-center gap-1.5 self-start sm:self-auto"
                             >
                               <span>Manage Post & Roster</span>
-                              <ChevronRight className="w-3.5 h-3.5" />
+                              <ChevronRight className="w-3.5 h-3.5 text-[#C6DE41]" />
                             </Link>
                           </div>
 
                           {/* Stats row */}
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                              <div className="text-xs text-slate-400 font-semibold uppercase">Capacity</div>
-                              <div className="text-lg font-extrabold text-slate-800">
+                            <div className="p-3 bg-[#181D14] rounded-2xl border border-white/10">
+                              <div className="text-[10px] text-stone-400 font-semibold uppercase">Capacity</div>
+                              <div className="text-lg font-bold text-white">
                                 {post.current_team_size} / {post.max_team_size}
                               </div>
                             </div>
-                            <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
-                              <div className="text-xs text-emerald-700 font-semibold uppercase">Open Seats</div>
-                              <div className="text-lg font-extrabold text-emerald-900">{post.open_seats}</div>
+                            <div className="p-3 bg-[#C6DE41]/10 rounded-2xl border border-[#C6DE41]/20">
+                              <div className="text-[10px] text-[#C6DE41] font-bold uppercase">Open Seats</div>
+                              <div className="text-lg font-bold text-[#C6DE41]">{post.open_seats}</div>
                             </div>
-                            <div className="p-3 bg-amber-50 rounded-xl border border-amber-100">
-                              <div className="text-xs text-amber-700 font-semibold uppercase">Pending Applicants</div>
-                              <div className="text-lg font-extrabold text-amber-900">{pendingApps.length}</div>
+                            <div className="p-3 bg-amber-500/10 rounded-2xl border border-amber-500/20">
+                              <div className="text-[10px] text-amber-300 font-bold uppercase">Pending Applicants</div>
+                              <div className="text-lg font-bold text-amber-300">{pendingApps.length}</div>
                             </div>
-                            <div className="p-3 bg-purple-50 rounded-xl border border-purple-100">
-                              <div className="text-xs text-purple-700 font-semibold uppercase">Total Applications</div>
-                              <div className="text-lg font-extrabold text-purple-900">
+                            <div className="p-3 bg-[#181D14] rounded-2xl border border-white/10">
+                              <div className="text-[10px] text-stone-400 font-semibold uppercase">Total Applications</div>
+                              <div className="text-lg font-bold text-white">
                                 {post.applications?.length || 0}
                               </div>
                             </div>
@@ -316,10 +306,10 @@ export const MyTeamsPage: React.FC = () => {
 
                           {/* Pending Applications preview */}
                           {pendingApps.length > 0 && (
-                            <div className="pt-3 border-t border-slate-100">
-                              <div className="text-xs font-bold text-slate-700 mb-3 flex items-center justify-between">
+                            <div className="pt-3 border-t border-white/10">
+                              <div className="text-[12px] font-semibold text-white mb-3 flex items-center justify-between">
                                 <span>Pending Applications Requiring Your Review:</span>
-                                <Link to={`/teams/${post.id}`} className="text-campus-primary hover:underline text-[11px]">
+                                <Link to={`/teams/${post.id}`} className="text-[#C6DE41] hover:underline text-[11px] font-bold">
                                   View all ({pendingApps.length})
                                 </Link>
                               </div>
@@ -328,19 +318,19 @@ export const MyTeamsPage: React.FC = () => {
                                 {pendingApps.slice(0, 3).map((app) => (
                                   <div
                                     key={app.id}
-                                    className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                                    className="p-3.5 rounded-2xl bg-[#181D14] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
                                   >
                                     <div>
-                                      <div className="font-bold text-slate-900 flex items-center gap-2">
+                                      <div className="font-semibold text-white flex items-center gap-2">
                                         <span>{app.applicant?.name}</span>
-                                        <span className="text-[10px] text-slate-500 font-normal">
+                                        <span className="text-[10px] text-stone-400 font-normal">
                                           📍 {app.applicant?.college?.code}
                                         </span>
                                       </div>
-                                      <div className="text-[11px] text-campus-primary font-semibold">
+                                      <div className="text-[11px] text-[#C6DE41] font-semibold">
                                         Applied for: {app.role_applied}
                                       </div>
-                                      <p className="text-slate-500 text-[11px] mt-0.5 line-clamp-1 italic">
+                                      <p className="text-stone-400 text-[11px] mt-0.5 line-clamp-1 italic">
                                         "{app.message}"
                                       </p>
                                     </div>
@@ -349,14 +339,14 @@ export const MyTeamsPage: React.FC = () => {
                                       <button
                                         onClick={() => handleQuickDecision(post.id, app.id, 'ACCEPTED')}
                                         disabled={actionLoadingId === app.id || post.open_seats <= 0}
-                                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[11px] shadow-sm disabled:opacity-50"
+                                        className="px-4 py-1.5 bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] rounded-full font-bold text-[11px] shadow-sm disabled:opacity-50 transition-all"
                                       >
                                         Accept
                                       </button>
                                       <button
                                         onClick={() => handleQuickDecision(post.id, app.id, 'REJECTED')}
                                         disabled={actionLoadingId === app.id}
-                                        className="px-3 py-1.5 border border-slate-200 hover:bg-rose-50 hover:text-rose-600 text-slate-600 rounded-lg font-semibold text-[11px]"
+                                        className="px-4 py-1.5 border border-white/15 hover:bg-rose-500/20 hover:text-rose-300 text-stone-300 rounded-full font-semibold text-[11px] transition-colors"
                                       >
                                         Reject
                                       </button>
@@ -378,15 +368,15 @@ export const MyTeamsPage: React.FC = () => {
             {activeTab === 'applied' && (
               <div className="space-y-4">
                 {appliedTeams.length === 0 ? (
-                  <div className="bg-white rounded-3xl p-12 text-center border border-slate-200">
-                    <Award className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-                    <h3 className="text-base font-bold text-slate-900">You haven't applied to any teams yet</h3>
-                    <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                  <div className="bg-[#12160F] rounded-[28px] p-12 text-center border border-white/10 shadow-xl">
+                    <Award className="w-12 h-12 text-stone-500 mx-auto mb-3" />
+                    <h3 className="text-base font-bold tracking-tight text-white">You haven't applied to any teams yet</h3>
+                    <p className="text-[13px] text-stone-400 mt-1 max-w-sm mx-auto leading-relaxed">
                       Explore open hackathon teams from student leaders across campuses and apply to build great projects together!
                     </p>
                     <Link
                       to="/find-teammates"
-                      className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-campus-primary text-white text-xs font-bold hover:bg-campus-primary-hover shadow-md"
+                      className="mt-5 inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] text-[12px] font-bold shadow-[0_0_15px_rgba(198,222,65,0.25)] transition-all"
                     >
                       <span>Browse Open Teams</span>
                     </Link>
@@ -397,68 +387,67 @@ export const MyTeamsPage: React.FC = () => {
                       const post = app.team_post;
                       const isAccepted = app.status === 'ACCEPTED';
                       const isRejected = app.status === 'REJECTED';
-                      const isPending = app.status === 'PENDING';
 
                       return (
                         <div
                           key={app.id}
-                          className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-sm flex flex-col justify-between space-y-3"
+                          className="bg-[#12160F] rounded-[28px] p-6 border border-white/10 shadow-xl flex flex-col justify-between space-y-3"
                         >
                           <div>
                             <div className="flex items-center justify-between gap-2 mb-2">
-                              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/60 truncate max-w-[200px]">
+                              <span className="text-[11px] font-medium px-3 py-0.5 rounded-full bg-[#181D14] text-stone-200 border border-white/10 truncate max-w-[200px]">
                                 {post?.hackathon_name}
                               </span>
                               <span
-                                className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full ${
+                                className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
                                   isAccepted
-                                    ? 'bg-emerald-100 text-emerald-800'
+                                    ? 'bg-[#C6DE41]/20 text-[#C6DE41] border border-[#C6DE41]/30'
                                     : isRejected
-                                    ? 'bg-rose-100 text-rose-800'
-                                    : 'bg-amber-100 text-amber-800'
+                                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                    : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                                 }`}
                               >
                                 {app.status}
                               </span>
                             </div>
 
-                            <h3 className="text-base font-bold text-slate-900 line-clamp-1">
+                            <h3 className="text-base font-bold tracking-tight text-white line-clamp-1">
                               {post?.team_title}
                             </h3>
 
-                            <div className="text-xs text-campus-primary font-semibold mt-1">
+                            <div className="text-[12px] text-[#C6DE41] font-semibold mt-1">
                               Applied Role: {app.role_applied}
                             </div>
 
-                            <p className="text-xs text-slate-500 mt-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 line-clamp-2 italic">
+                            <p className="text-[12px] text-stone-300 mt-2 bg-[#181D14] p-3 rounded-2xl border border-white/10 line-clamp-2 italic leading-relaxed">
                               "{app.message}"
                             </p>
 
                             {isAccepted && (
-                              <div className="mt-3 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs">
-                                <strong>🎉 You are in!</strong> Contact team lead{' '}
+                              <div className="mt-3 p-3 rounded-2xl bg-[#C6DE41]/10 border border-[#C6DE41]/20 text-white text-[12px]">
+                                <strong className="text-[#C6DE41]">You are in!</strong> Contact team lead{' '}
                                 <strong>{post?.creator?.name}</strong> at{' '}
-                                <a href={`mailto:${post?.creator?.email}`} className="underline font-bold">
+                                <a href={`mailto:${post?.creator?.email}`} className="underline font-semibold text-[#C6DE41]">
                                   {post?.creator?.email}
                                 </a>
                               </div>
                             )}
 
                             {isRejected && app.rejection_reason && (
-                              <div className="mt-3 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs">
+                              <div className="mt-3 p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-[12px]">
                                 <strong>Note from lead:</strong> {app.rejection_reason}
                               </div>
                             )}
                           </div>
 
-                          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                            <span className="text-slate-400 text-[11px]">
+                          <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs">
+                            <span className="text-stone-400 text-[11px]">
                               Applied {new Date(app.created_at).toLocaleDateString()}
                             </span>
                             {post && (
                               <Link
                                 to={`/teams/${post.id}`}
-                                className="text-campus-primary font-bold hover:underline flex items-center gap-1"
+                                className="text-[#C6DE41] font-bold hover:underline flex items-center gap-1 text-[12px]"
                               >
                                 <span>View Team</span>
                                 <ChevronRight className="w-3.5 h-3.5" />
@@ -475,17 +464,17 @@ export const MyTeamsPage: React.FC = () => {
 
             {/* TAB 3: MY SKILL PROFILE */}
             {activeTab === 'profile' && (
-              <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-sm max-w-3xl">
-                <div className="border-b border-slate-100 pb-4 mb-6">
-                  <h2 className="text-xl font-bold text-slate-900">Your Student Skill Profile</h2>
-                  <p className="text-xs text-slate-500 mt-1">
+              <div className="bg-[#12160F] rounded-[28px] p-6 sm:p-10 border border-white/10 shadow-xl max-w-3xl">
+                <div className="border-b border-white/10 pb-4 mb-6">
+                  <h2 className="text-xl font-bold tracking-tight text-white">Your Student Skill Profile</h2>
+                  <p className="text-[13px] text-stone-300 mt-1 leading-relaxed">
                     When you apply to hackathon teams, team leads review your technical skills, experience level, and GitHub portfolio.
                   </p>
                 </div>
 
                 {profileSuccessMsg && (
-                  <div className="mb-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <div className="mb-6 p-4 rounded-2xl bg-[#C6DE41]/15 border border-[#C6DE41]/30 text-[#C6DE41] text-[12px] font-bold flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#C6DE41]" />
                     <span>{profileSuccessMsg}</span>
                   </div>
                 )}
@@ -493,7 +482,7 @@ export const MyTeamsPage: React.FC = () => {
                 <form onSubmit={handleSaveProfile} className="space-y-5">
                   {/* Bio */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
+                    <label className="block text-[11px] font-semibold text-stone-300 uppercase tracking-wider mb-1.5">
                       Short Bio / Hackathon Pitch
                     </label>
                     <textarea
@@ -501,37 +490,37 @@ export const MyTeamsPage: React.FC = () => {
                       value={bio}
                       onChange={(e) => setBio(e.target.value)}
                       placeholder="e.g. 3rd year CSE student interested in deep learning & distributed systems. Built 2 projects in React & FastAPI."
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-campus-primary/20 focus:border-campus-primary outline-none"
+                      className="w-full px-4 py-3 rounded-2xl bg-[#181D14] border border-white/15 focus:border-[#C6DE41] text-[13px] text-white outline-none transition-all leading-relaxed placeholder:text-stone-500"
                     />
                   </div>
 
                   {/* Experience Level */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
+                    <label className="block text-[11px] font-semibold text-stone-300 uppercase tracking-wider mb-1.5">
                       Hackathon Experience Level
                     </label>
                     <select
                       value={experienceLevel}
                       onChange={(e) => setExperienceLevel(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-campus-primary/20 focus:border-campus-primary outline-none font-medium"
+                      className="w-full px-4 py-3 rounded-full bg-[#181D14] border border-white/15 focus:border-[#C6DE41] text-[13px] text-white outline-none transition-all font-medium"
                     >
-                      <option value="Beginner">Beginner (1st or 2nd Hackathon)</option>
-                      <option value="Intermediate">Intermediate (Participated in 2-4 Hackathons)</option>
-                      <option value="Advanced">Advanced (Hackathon Winner / Seasoned Hacker)</option>
+                      <option value="Beginner" className="bg-[#12160F] text-white">Beginner (1st or 2nd Hackathon)</option>
+                      <option value="Intermediate" className="bg-[#12160F] text-white">Intermediate (Participated in 2-4 Hackathons)</option>
+                      <option value="Advanced" className="bg-[#12160F] text-white">Advanced (Hackathon Winner / Seasoned Hacker)</option>
                     </select>
                   </div>
 
                   {/* Skills Comma Separated */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
+                    <label className="block text-[11px] font-semibold text-stone-300 uppercase tracking-wider mb-1.5">
                       Technical Skills (comma separated)
                     </label>
-                    <input
+                    <SmoothInput
                       type="text"
                       value={skillsInput}
                       onChange={(e) => setSkillsInput(e.target.value)}
                       placeholder="e.g. React, Node.js, Python, PyTorch, Figma, Solidity"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-campus-primary/20 focus:border-campus-primary outline-none font-medium"
+                      className="w-full px-4 py-3 rounded-full bg-[#181D14] border border-white/15 focus:border-[#C6DE41] text-[13px] text-white outline-none transition-all font-medium placeholder:text-stone-500"
                     />
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {COMMON_SKILLS.map((sk) => (
@@ -544,7 +533,7 @@ export const MyTeamsPage: React.FC = () => {
                               setSkillsInput(current.length > 0 ? `${skillsInput}, ${sk}` : sk);
                             }
                           }}
-                          className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-600"
+                          className="text-[10px] px-2.5 py-1 rounded-full bg-[#181D14] hover:bg-[#C6DE41]/10 hover:text-[#C6DE41] text-stone-300 border border-white/10 transition-colors"
                         >
                           + {sk}
                         </button>
@@ -554,20 +543,20 @@ export const MyTeamsPage: React.FC = () => {
 
                   {/* Preferred Roles */}
                   <div>
-                    <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
+                    <label className="block text-[11px] font-semibold text-stone-300 uppercase tracking-wider mb-1.5">
                       Preferred Roles
                     </label>
-                    <div className="grid grid-cols-2 gap-2 p-3 rounded-2xl bg-slate-50 border border-slate-100 max-h-40 overflow-y-auto">
+                    <div className="grid grid-cols-2 gap-2 p-3 rounded-2xl bg-[#181D14] border border-white/10 max-h-40 overflow-y-auto">
                       {COMMON_ROLES.map((role) => (
                         <label
                           key={role}
-                          className="flex items-center gap-2 text-slate-700 cursor-pointer select-none text-xs font-medium"
+                          className="flex items-center gap-2 text-stone-300 cursor-pointer select-none text-[12px] font-medium"
                         >
-                          <input
+                          <SmoothInput
                             type="checkbox"
                             checked={selectedRoles.includes(role)}
                             onChange={() => toggleRoleSelection(role)}
-                            className="rounded text-campus-primary focus:ring-campus-primary/30 w-3.5 h-3.5"
+                            className="rounded accent-[#C6DE41] text-[#090B09] w-3.5 h-3.5 border-white/20"
                           />
                           <span>{role}</span>
                         </label>
@@ -578,39 +567,39 @@ export const MyTeamsPage: React.FC = () => {
                   {/* External Links */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                     <div>
-                      <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                        <Github className="w-3.5 h-3.5" />
+                      <label className="block text-[11px] font-semibold text-stone-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                        <Github className="w-3.5 h-3.5 text-[#C6DE41]" />
                         <span>GitHub Profile URL</span>
                       </label>
-                      <input
+                      <SmoothInput
                         type="url"
                         value={githubUrl}
                         onChange={(e) => setGithubUrl(e.target.value)}
                         placeholder="https://github.com/username"
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-campus-primary/20 focus:border-campus-primary outline-none"
+                        className="w-full px-4 py-2.5 rounded-full bg-[#181D14] border border-white/15 focus:border-[#C6DE41] text-[12px] text-white outline-none transition-all placeholder:text-stone-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                        <Globe className="w-3.5 h-3.5" />
+                      <label className="block text-[11px] font-semibold text-stone-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                        <Globe className="w-3.5 h-3.5 text-[#C6DE41]" />
                         <span>Portfolio / Website URL</span>
                       </label>
-                      <input
+                      <SmoothInput
                         type="url"
                         value={portfolioUrl}
                         onChange={(e) => setPortfolioUrl(e.target.value)}
                         placeholder="https://myportfolio.dev"
-                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-campus-primary/20 focus:border-campus-primary outline-none"
+                        className="w-full px-4 py-2.5 rounded-full bg-[#181D14] border border-white/15 focus:border-[#C6DE41] text-[12px] text-white outline-none transition-all placeholder:text-stone-500"
                       />
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
+                  <div className="pt-4 border-t border-white/10 flex items-center justify-end">
                     <button
                       type="submit"
                       disabled={savingProfile}
-                      className="px-6 py-2.5 rounded-xl bg-campus-primary hover:bg-campus-primary-hover text-white text-xs font-bold shadow-md shadow-campus-primary/25 transition-all disabled:opacity-50"
+                      className="px-6 py-2.5 rounded-full bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] text-[12px] font-bold shadow-[0_0_15px_rgba(198,222,65,0.25)] transition-all disabled:opacity-50"
                     >
                       {savingProfile ? 'Saving Changes...' : 'Save Skill Profile'}
                     </button>

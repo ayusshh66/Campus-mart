@@ -1,0 +1,50 @@
+/* CampusMart dark theme with black & #C6DE41 aesthetic */
+.campus-home-dark { color: #F5F7F0; }
+
+/* Deliberately subtle translucent surfaces with #C6DE41 hairline accents */
+.campus-home-dark .home-glass-section {
+  background: rgba(18, 22, 15, 0.75);
+  border: 1px solid rgba(198, 222, 65, 0.16);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.campus-home-dark .home-info-card {
+  background: rgba(22, 28, 18, 0.92);
+  color: #F5F7F0;
+  border: 1px solid rgba(198, 222, 65, 0.22);
+  box-shadow: 0 15px 36px rgba(0,0,0,0.4);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+/* Footer overrides */
+body:has(.campus-home-dark) footer {
+  position: relative;
+  z-index: 1;
+  background-color: #090B09 !important;
+  color: #F5F7F0 !important;
+  border-top: 1px solid rgba(198, 222, 65, 0.2) !important;
+}
+body:has(.campus-home-dark) footer :is(h1,h2,h3,h4,h5,h6,strong) {
+  color: #F5F7F0 !important;
+}
+body:has(.campus-home-dark) footer :is(p,li,small) {
+  color: #B5B9AB !important;
+}
+body:has(.campus-home-dark) footer a {
+  color: #E2E6D8 !important;
+  text-decoration-color: rgba(198,222,65,0.4);
+}
+body:has(.campus-home-dark) footer a:hover {
+  color: #C6DE41 !important;
+}
+body:has(.campus-home-dark) footer svg {
+  color: #C6DE41;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .campus-home-dark *, .campus-home-dark *::before, .campus-home-dark *::after {
+    scroll-behavior: auto !important;
+  }
+}

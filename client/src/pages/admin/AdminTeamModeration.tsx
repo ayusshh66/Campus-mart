@@ -1,3 +1,4 @@
+import { SmoothInput } from '../../components/motion/SmoothInput';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, TeamPostItem } from '../../services/api';
@@ -76,7 +77,7 @@ export const AdminTeamModeration: React.FC = () => {
       <div className="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
+          <SmoothInput
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -184,7 +185,7 @@ export const AdminTeamModeration: React.FC = () => {
                             post.status === 'OPEN'
                               ? 'bg-emerald-100 text-emerald-800'
                               : post.status === 'FULL'
-                              ? 'bg-purple-100 text-purple-800'
+                              ? 'bg-[#C6DE41]/20 text-[#181D14] border border-[#C6DE41]/40'
                               : post.status === 'REMOVED'
                               ? 'bg-rose-100 text-rose-800'
                               : 'bg-slate-100 text-slate-700'

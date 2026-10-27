@@ -1,7 +1,8 @@
+import { SmoothInput } from '../components/motion/SmoothInput';
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { api, HeroDashboardData, DeliveryTaskItem, MessageItem } from '../services/api';
+import { api, HeroDashboardData, DeliveryTaskItem } from '../services/api';
 import { 
   ShieldCheck, 
   MapPin, 
@@ -9,23 +10,15 @@ import {
   Mail, 
   Package, 
   CheckCircle2, 
-  Clock, 
   MessageSquare, 
   Send, 
-  ArrowRight, 
   Check, 
   X, 
   Sparkles, 
   UserCheck, 
-  Tag, 
   AlertCircle,
   Truck,
-  RotateCcw,
-  ExternalLink,
-  ChevronRight,
-  HandMetal,
   Lock,
-  Unlock,
   RefreshCw
 } from 'lucide-react';
 
@@ -47,7 +40,7 @@ export const CampusHeroDashboardPage: React.FC = () => {
   const [chatRecipient, setChatRecipient] = useState<{ id: string; name: string; role: 'SELLER' | 'BUYER' } | null>(null);
   const [chatMessage, setChatMessage] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
-  const [chatError, setChatError] = useState<string | null>(null);
+  const [, setChatError] = useState<string | null>(null);
 
   // Photo viewer modal state
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
@@ -153,9 +146,9 @@ export const CampusHeroDashboardPage: React.FC = () => {
   if (loading) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-24 text-center">
-        <div className="w-10 h-10 border-4 border-campus-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <h2 className="text-sm font-bold text-slate-700">Loading Campus Hero Operations Hub...</h2>
-        <p className="text-xs text-slate-400 mt-1">Verifying campus credentials and active tasks...</p>
+        <div className="w-10 h-10 border-2 border-[#C6DE41] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <h2 className="text-base font-bold text-white tracking-tight">Loading Campus Hero Operations Hub...</h2>
+        <p className="text-xs text-stone-400 mt-1">Verifying campus credentials and active tasks...</p>
       </div>
     );
   }
@@ -163,24 +156,24 @@ export const CampusHeroDashboardPage: React.FC = () => {
   if (error || !data) {
     return (
       <div className="max-w-xl mx-auto px-4 py-20 text-center">
-        <div className="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-subtle space-y-4">
-          <div className="w-14 h-14 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+        <div className="bg-[#12160F] rounded-[28px] p-8 sm:p-10 border border-white/10 shadow-2xl space-y-4">
+          <div className="w-14 h-14 rounded-full bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto border border-rose-500/20">
             <AlertCircle className="w-7 h-7" />
           </div>
-          <h2 className="text-xl font-extrabold text-campus-dark">Campus Hero Access Protected</h2>
-          <p className="text-xs text-slate-500 leading-relaxed">
+          <h2 className="text-xl font-bold text-white tracking-tight">Campus Hero Access Protected</h2>
+          <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
             {error || 'This dashboard is reserved strictly for approved student Campus Heroes and platform administrators.'}
           </p>
           <div className="pt-3 flex flex-col sm:flex-row gap-2 justify-center">
             <Link
               to="/campus-heroes"
-              className="px-5 py-2.5 bg-campus-primary hover:bg-campus-primary-hover text-white text-xs font-bold rounded-xl shadow-sm transition-all"
+              className="px-6 py-2.5 bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] text-xs font-bold rounded-full shadow-[0_0_15px_rgba(198,222,65,0.25)] transition-all"
             >
               Check Application Status
             </Link>
             <button
               onClick={() => fetchDashboard()}
-              className="px-5 py-2.5 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-50 transition-colors"
+              className="px-6 py-2.5 border border-white/15 text-stone-300 text-xs font-semibold rounded-full hover:bg-white/5 transition-colors"
             >
               Retry
             </button>
@@ -205,58 +198,58 @@ export const CampusHeroDashboardPage: React.FC = () => {
       : data.tasks;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
+    <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
       
       {/* Hero Identity Banner */}
-      <div className="bg-gradient-to-br from-campus-dark via-[#083e35] to-[#04241e] text-white rounded-3xl p-6 sm:p-8 shadow-card border border-emerald-900/40 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-campus-primary/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="bg-[#12160F] text-white rounded-[28px] p-6 sm:p-8 shadow-2xl border border-[#C6DE41]/20 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-[#C6DE41]/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="space-y-2 relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-campus-light border border-emerald-500/30 text-[11px] font-extrabold uppercase tracking-wider">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C6DE41]/10 text-[#C6DE41] border border-[#C6DE41]/30 text-[11px] font-bold uppercase tracking-wider">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#C6DE41]" />
             <span>Official Campus Operations Command</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
             {data.hero.college_code} Hero Operations Hub
           </h1>
-          <p className="text-xs sm:text-sm text-slate-300 max-w-xl">
+          <p className="text-xs sm:text-sm text-stone-300 max-w-xl">
             Managing student pickups, quality verifications, and safe handovers for {data.hero.college_name}.
           </p>
-          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 pt-1 font-medium">
+          <div className="flex flex-wrap items-center gap-4 text-xs text-stone-300 pt-1 font-medium">
             <span className="flex items-center gap-1.5">
-              <UserCheck className="w-3.5 h-3.5 text-campus-light" />
-              <span>Hero: <strong>{data.hero.name}</strong></span>
+              <UserCheck className="w-3.5 h-3.5 text-[#C6DE41]" />
+              <span>Hero: <strong className="text-white">{data.hero.name}</strong></span>
             </span>
             <span className="flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-campus-light" />
+              <MapPin className="w-3.5 h-3.5 text-[#C6DE41]" />
               <span>{data.hero.college_code} Campus</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <Phone className="w-3.5 h-3.5 text-campus-light" />
+              <Phone className="w-3.5 h-3.5 text-[#C6DE41]" />
               <span>{data.hero.phone}</span>
             </span>
           </div>
         </div>
 
         {/* Messaging Identity Callout */}
-        <div className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/15 max-w-sm text-xs space-y-1.5 relative z-10">
+        <div className="bg-[#181D14] backdrop-blur-md p-4 rounded-[20px] border border-white/10 max-w-sm text-xs space-y-1.5 relative z-10">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase font-bold text-campus-light block tracking-wider">
+            <span className="text-[10px] uppercase font-bold text-stone-400 block tracking-wider">
               In-Website Coordination Identity
             </span>
             <button
               onClick={() => fetchDashboard(true)}
-              className="text-slate-300 hover:text-white transition-colors"
+              className="text-stone-400 hover:text-[#C6DE41] transition-colors"
               title="Refresh Tasks"
             >
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
           </div>
-          <p className="text-slate-200 leading-snug">
+          <p className="text-stone-300 leading-snug text-[11px]">
             All messages sent through this dashboard appear to students with the official shield:
           </p>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-campus-primary text-white font-extrabold text-[11px] shadow-sm">
-            <ShieldCheck className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C6DE41] text-[#090B09] font-bold text-xs shadow-sm">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#090B09]" />
             <span>Operations Team — Campus Hero</span>
           </div>
         </div>
@@ -267,88 +260,88 @@ export const CampusHeroDashboardPage: React.FC = () => {
         {/* Metric 1: Available to Claim */}
         <div
           onClick={() => setActiveTab('available')}
-          className={`cursor-pointer rounded-2xl p-4 sm:p-5 border transition-all ${
+          className={`cursor-pointer rounded-[24px] p-4 sm:p-5 border transition-all ${
             activeTab === 'available'
-              ? 'bg-purple-50/80 border-purple-300 ring-2 ring-purple-500/20 shadow-sm'
-              : 'bg-white border-slate-200/80 hover:border-purple-200'
+              ? 'bg-[#181D14] border-[#C6DE41] ring-2 ring-[#C6DE41]/20 shadow-[0_0_20px_rgba(198,222,65,0.15)]'
+              : 'bg-[#12160F] border-white/10 hover:border-white/25 shadow-sm'
           }`}
         >
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-purple-700 block">
-            ⚡ Available to Claim
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#C6DE41] block">
+            ⚡ Available
           </span>
-          <span className="text-2xl sm:text-3xl font-black text-purple-950 mt-1 block">
+          <span className="text-2xl sm:text-3xl font-black text-white mt-1 block tracking-tight">
             {availableTasks.length}
           </span>
-          <span className="text-[11px] text-purple-600 mt-0.5 block font-medium">Unassigned in {data.hero.college_code}</span>
+          <span className="text-[11px] text-stone-400 mt-0.5 block font-medium">Unassigned</span>
         </div>
 
         {/* Metric 2: My Claimed Tasks */}
         <div
           onClick={() => setActiveTab('active')}
-          className={`cursor-pointer rounded-2xl p-4 sm:p-5 border transition-all ${
+          className={`cursor-pointer rounded-[24px] p-4 sm:p-5 border transition-all ${
             activeTab === 'active'
-              ? 'bg-emerald-50/80 border-emerald-300 ring-2 ring-emerald-500/20 shadow-sm'
-              : 'bg-white border-slate-200/80 hover:border-emerald-200'
+              ? 'bg-[#181D14] border-[#C6DE41] ring-2 ring-[#C6DE41]/20 shadow-[0_0_20px_rgba(198,222,65,0.15)]'
+              : 'bg-[#12160F] border-white/10 hover:border-white/25 shadow-sm'
           }`}
         >
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 block">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-white block">
             My Active Tasks
           </span>
-          <span className="text-2xl sm:text-3xl font-black text-emerald-950 mt-1 block">
+          <span className="text-2xl sm:text-3xl font-black text-white mt-1 block tracking-tight">
             {myClaimedTasks.length}
           </span>
-          <span className="text-[11px] text-emerald-600 mt-0.5 block font-medium">Claimed by you</span>
+          <span className="text-[11px] text-stone-400 mt-0.5 block font-medium">Claimed by you</span>
         </div>
 
         {/* Metric 3: Pickups Needed */}
-        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-subtle">
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 block">
+        <div className="bg-[#12160F] rounded-[24px] p-4 sm:p-5 border border-white/10 shadow-sm">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 block">
             Pickups Needed
           </span>
-          <span className="text-2xl sm:text-3xl font-black text-amber-600 mt-1 block">
+          <span className="text-2xl sm:text-3xl font-black text-white mt-1 block tracking-tight">
             {data.stats.pending_pickups_count}
           </span>
-          <span className="text-[11px] text-slate-500 mt-0.5 block">From Campus Sellers</span>
+          <span className="text-[11px] text-stone-400 mt-0.5 block">From Sellers</span>
         </div>
 
         {/* Metric 4: Drops Ready */}
-        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-subtle">
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-700 block">
+        <div className="bg-[#12160F] rounded-[24px] p-4 sm:p-5 border border-white/10 shadow-sm">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400 block">
             Drops Ready
           </span>
-          <span className="text-2xl sm:text-3xl font-black text-blue-600 mt-1 block">
+          <span className="text-2xl sm:text-3xl font-black text-white mt-1 block tracking-tight">
             {data.stats.pending_drops_count}
           </span>
-          <span className="text-[11px] text-slate-500 mt-0.5 block">To Student Buyers</span>
+          <span className="text-[11px] text-stone-400 mt-0.5 block">To Buyers</span>
         </div>
 
         {/* Metric 5: Completed */}
         <div
           onClick={() => setActiveTab('completed')}
-          className={`cursor-pointer rounded-2xl p-4 sm:p-5 border transition-all col-span-2 sm:col-span-1 ${
+          className={`cursor-pointer rounded-[24px] p-4 sm:p-5 border transition-all col-span-2 sm:col-span-1 ${
             activeTab === 'completed'
-              ? 'bg-slate-100 border-slate-300 ring-2 ring-slate-400/20 shadow-sm'
-              : 'bg-white border-slate-200/80 hover:border-slate-300'
+              ? 'bg-[#181D14] border-[#C6DE41] ring-2 ring-[#C6DE41]/20 shadow-[0_0_20px_rgba(198,222,65,0.15)]'
+              : 'bg-[#12160F] border-white/10 hover:border-white/25 shadow-sm'
           }`}
         >
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block">
             Completed
           </span>
-          <span className="text-2xl sm:text-3xl font-black text-slate-800 mt-1 block">
+          <span className="text-2xl sm:text-3xl font-black text-white mt-1 block tracking-tight">
             {data.stats.completed_tasks_count}
           </span>
-          <span className="text-[11px] text-slate-500 mt-0.5 block font-medium">Handed Over</span>
+          <span className="text-[11px] text-stone-400 mt-0.5 block font-medium">Handed Over</span>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-2">
+      <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-3">
         <button
           onClick={() => setActiveTab('available')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+          className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
             activeTab === 'available'
-              ? 'bg-purple-700 text-white shadow-md shadow-purple-700/20'
-              : 'text-purple-700 bg-purple-50 hover:bg-purple-100'
+              ? 'bg-[#C6DE41] text-[#090B09] shadow-[0_0_15px_rgba(198,222,65,0.25)]'
+              : 'text-stone-400 bg-[#12160F] border border-white/10 hover:text-white'
           }`}
         >
           <Sparkles className="w-3.5 h-3.5" />
@@ -357,10 +350,10 @@ export const CampusHeroDashboardPage: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('active')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+          className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
             activeTab === 'active'
-              ? 'bg-campus-primary text-white shadow-md shadow-campus-primary/20'
-              : 'text-slate-600 hover:bg-slate-100'
+              ? 'bg-[#C6DE41] text-[#090B09] shadow-[0_0_15px_rgba(198,222,65,0.25)]'
+              : 'text-stone-400 bg-[#12160F] border border-white/10 hover:text-white'
           }`}
         >
           <Truck className="w-3.5 h-3.5" />
@@ -369,10 +362,10 @@ export const CampusHeroDashboardPage: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('completed')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+          className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
             activeTab === 'completed'
-              ? 'bg-campus-dark text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
+              ? 'bg-[#C6DE41] text-[#090B09] shadow-[0_0_15px_rgba(198,222,65,0.25)]'
+              : 'text-stone-400 bg-[#12160F] border border-white/10 hover:text-white'
           }`}
         >
           <CheckCircle2 className="w-3.5 h-3.5" />
@@ -381,10 +374,10 @@ export const CampusHeroDashboardPage: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('all')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+          className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
             activeTab === 'all'
-              ? 'bg-slate-800 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
+              ? 'bg-[#C6DE41] text-[#090B09] shadow-[0_0_15px_rgba(198,222,65,0.25)]'
+              : 'text-stone-400 bg-[#12160F] border border-white/10 hover:text-white'
           }`}
         >
           <span>All Tasks ({data.tasks.length})</span>
@@ -394,9 +387,9 @@ export const CampusHeroDashboardPage: React.FC = () => {
       {/* Tasks Queue */}
       <div className="space-y-6">
         {displayedTasks.length === 0 ? (
-          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80 shadow-sm">
-            <Package className="w-14 h-14 text-slate-300 mx-auto mb-3" />
-            <h3 className="font-extrabold text-slate-800 text-base">
+          <div className="bg-[#12160F] rounded-[28px] p-12 text-center border border-white/10 shadow-lg">
+            <Package className="w-12 h-12 text-stone-500 mx-auto mb-3" />
+            <h3 className="font-bold text-white text-base tracking-tight">
               {activeTab === 'available'
                 ? 'No unassigned tasks right now!'
                 : activeTab === 'active'
@@ -405,7 +398,7 @@ export const CampusHeroDashboardPage: React.FC = () => {
                 ? 'No completed tasks yet.'
                 : 'No delivery tasks recorded for your campus.'}
             </h3>
-            <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto leading-relaxed">
+            <p className="text-xs sm:text-sm text-stone-400 mt-1 max-w-md mx-auto leading-relaxed">
               {activeTab === 'available'
                 ? 'All pickup and drop tasks in your college are currently claimed and covered by student heroes.'
                 : activeTab === 'active'
@@ -415,7 +408,7 @@ export const CampusHeroDashboardPage: React.FC = () => {
             {activeTab === 'active' && availableTasks.length > 0 && (
               <button
                 onClick={() => setActiveTab('available')}
-                className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-xl text-xs font-bold hover:bg-purple-700 transition-colors shadow-sm"
+                className="mt-4 px-5 py-2.5 bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] rounded-full text-xs font-bold shadow-[0_0_15px_rgba(198,222,65,0.25)] transition-all"
               >
                 View {availableTasks.length} Available Task{availableTasks.length !== 1 ? 's' : ''}
               </button>
@@ -424,7 +417,6 @@ export const CampusHeroDashboardPage: React.FC = () => {
         ) : (
           displayedTasks.map((task) => {
             const isPickup = task.task_type === 'PICKUP' || task.task_type === 'MATCHED_EXCHANGE';
-            const isDrop = task.task_type === 'DROP' || task.task_type === 'MATCHED_EXCHANGE';
             const isClaimedByMe = task.assigned_hero_id === currentHeroId || task.is_assigned_to_me;
             const isUnassigned = !task.assigned_hero_id || task.is_unassigned;
             const isClaiming = claimingTaskId === task.id;
@@ -433,23 +425,23 @@ export const CampusHeroDashboardPage: React.FC = () => {
             return (
               <div
                 key={task.id}
-                className={`bg-white rounded-3xl border shadow-subtle overflow-hidden transition-all ${
+                className={`bg-[#12160F] rounded-[28px] border shadow-xl overflow-hidden transition-all ${
                   isUnassigned
-                    ? 'border-purple-200 ring-1 ring-purple-100 hover:border-purple-400'
+                    ? 'border-[#C6DE41]/40 ring-1 ring-[#C6DE41]/20 hover:border-[#C6DE41]'
                     : isClaimedByMe
-                    ? 'border-emerald-200/90 hover:border-campus-primary/50'
-                    : 'border-slate-200'
+                    ? 'border-[#C6DE41]/30 hover:border-[#C6DE41]/60'
+                    : 'border-white/10'
                 }`}
               >
                 {/* Task Header Bar */}
-                <div className="p-4 sm:p-5 bg-[#F8FAF9] border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="p-4 sm:p-5 bg-[#181D14] border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                       task.task_type === 'MATCHED_EXCHANGE'
-                        ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                        ? 'bg-[#C6DE41]/20 text-[#C6DE41] border border-[#C6DE41]/40'
                         : task.task_type === 'PICKUP'
-                        ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                        : 'bg-blue-100 text-blue-800 border border-blue-200'
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                        : 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
                     }`}>
                       {task.task_type === 'MATCHED_EXCHANGE'
                         ? '⚡ Direct Student Exchange'
@@ -458,33 +450,33 @@ export const CampusHeroDashboardPage: React.FC = () => {
                         : '📤 Buyer Delivery'}
                     </span>
 
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold ${
                       task.status === 'COMPLETED'
-                        ? 'bg-emerald-100 text-emerald-800'
+                        ? 'bg-[#C6DE41]/20 text-[#C6DE41] border border-[#C6DE41]/40'
                         : task.status === 'PICKED_UP'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-amber-100 text-amber-800'
+                        ? 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+                        : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
                     }`}>
                       {task.status}
                     </span>
 
                     {/* Ownership badge */}
                     {isUnassigned ? (
-                      <span className="px-2.5 py-1 rounded-full bg-purple-100 text-purple-800 text-[10px] font-extrabold border border-purple-200 animate-pulse">
+                      <span className="px-3 py-1 rounded-full bg-[#C6DE41]/10 text-[#C6DE41] text-[10px] font-bold border border-[#C6DE41]/30">
                         ⚡ Available to Claim
                       </span>
                     ) : isClaimedByMe ? (
-                      <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold flex items-center gap-1">
+                      <span className="px-3 py-1 rounded-full bg-[#C6DE41]/20 text-[#C6DE41] text-[10px] font-bold border border-[#C6DE41]/40 flex items-center gap-1">
                         <Check className="w-3 h-3" /> Assigned to You
                       </span>
                     ) : (
-                      <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-semibold">
+                      <span className="px-3 py-1 rounded-full bg-white/5 text-stone-400 text-[10px] font-semibold border border-white/10">
                         Assigned to another Hero
                       </span>
                     )}
                   </div>
 
-                  <span className="text-[11px] text-slate-400">
+                  <span className="text-[11px] text-stone-400">
                     Created on {new Date(task.created_at).toLocaleDateString()} at {new Date(task.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -494,14 +486,14 @@ export const CampusHeroDashboardPage: React.FC = () => {
                   
                   {/* Unassigned Warning & Claim Callout Banner */}
                   {isUnassigned && (
-                    <div className="p-4 rounded-2xl bg-purple-50/80 border border-purple-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="p-4 rounded-[20px] bg-[#181D14] border border-[#C6DE41]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[0_0_20px_rgba(198,222,65,0.08)]">
                       <div className="flex items-start gap-2.5">
-                        <Lock className="w-4 h-4 text-purple-700 shrink-0 mt-0.5" />
+                        <Lock className="w-4 h-4 text-[#C6DE41] shrink-0 mt-0.5" />
                         <div>
-                          <h4 className="text-xs font-bold text-purple-950">
+                          <h4 className="text-xs font-bold text-white">
                             Unassigned Task — Student Contact Details Hidden
                           </h4>
-                          <p className="text-[11px] text-purple-800 mt-0.5">
+                          <p className="text-[11px] text-stone-400 mt-0.5">
                             To protect student privacy, phone numbers and messaging are unlocked once you claim this task.
                           </p>
                         </div>
@@ -511,40 +503,40 @@ export const CampusHeroDashboardPage: React.FC = () => {
                         type="button"
                         onClick={() => handleClaimTask(task.id)}
                         disabled={isClaiming}
-                        className="px-5 py-2.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-extrabold shadow-md shadow-purple-700/20 transition-all flex items-center justify-center gap-1.5 shrink-0 disabled:opacity-50"
+                        className="px-5 py-2.5 rounded-full bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] text-xs font-bold shadow-[0_0_15px_rgba(198,222,65,0.25)] transition-all flex items-center justify-center gap-1.5 shrink-0 disabled:opacity-50"
                       >
-                        <Sparkles className="w-4 h-4 text-amber-300" />
+                        <Sparkles className="w-4 h-4 text-[#090B09]" />
                         <span>{isClaiming ? 'Claiming Task...' : 'Claim This Task'}</span>
                       </button>
                     </div>
                   )}
 
                   {/* Product Strip */}
-                  <div className="flex items-center gap-4 bg-slate-50/70 p-3.5 rounded-2xl border border-slate-100">
+                  <div className="flex items-center gap-4 bg-[#181D14] p-3.5 rounded-[20px] border border-white/10">
                     <img
                       src={task.product.image_url}
                       alt={task.product.name}
-                      className="w-14 h-14 rounded-xl object-cover border border-slate-200 shrink-0 bg-white"
+                      className="w-14 h-14 rounded-[16px] object-cover border border-white/10 shrink-0 bg-[#090B09]"
                     />
                     <div className="flex-grow min-w-0">
-                      <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                      <span className="text-[10px] uppercase font-bold text-[#C6DE41] block tracking-wider">
                         {task.product.category}
                       </span>
-                      <h3 className="font-extrabold text-slate-900 text-sm truncate">
+                      <h3 className="font-bold text-white text-sm truncate tracking-tight">
                         {task.product.name}
                       </h3>
                     </div>
                     <div className="text-right shrink-0">
                       {task.seller && (
                         <div className="text-xs">
-                          <span className="text-slate-400 block text-[10px]">Pay Seller:</span>
-                          <span className="font-extrabold text-amber-700">₹{task.seller.estimated_payout}</span>
+                          <span className="text-stone-400 block text-[10px]">Pay Seller:</span>
+                          <span className="font-bold text-amber-400">₹{task.seller.estimated_payout}</span>
                         </div>
                       )}
                       {task.buyer && (
                         <div className="text-xs mt-0.5">
-                          <span className="text-slate-400 block text-[10px]">Collect from Buyer:</span>
-                          <span className="font-extrabold text-emerald-700">₹{task.buyer.price_to_collect}</span>
+                          <span className="text-stone-400 block text-[10px]">Collect from Buyer:</span>
+                          <span className="font-bold text-[#C6DE41]">₹{task.buyer.price_to_collect}</span>
                         </div>
                       )}
                     </div>
@@ -555,16 +547,16 @@ export const CampusHeroDashboardPage: React.FC = () => {
                     
                     {/* Seller Details Card */}
                     {task.seller ? (
-                      <div className="p-4 rounded-2xl border border-slate-200 bg-white space-y-3">
+                      <div className="p-4 sm:p-5 rounded-[20px] border border-white/10 bg-[#181D14] space-y-3 shadow-sm">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-50 px-2 py-0.5 rounded">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 rounded-full">
                             Seller (Pickup)
                           </span>
                           {isClaimedByMe && (
                             <button
                               type="button"
                               onClick={() => handleOpenChat(task, { id: task.seller!.id, name: task.seller!.name, role: 'SELLER' })}
-                              className="px-2.5 py-1 rounded-lg bg-campus-primary hover:bg-campus-primary-hover text-white text-[11px] font-bold transition-all flex items-center gap-1 shadow-sm"
+                              className="px-3 py-1 rounded-full bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] text-[11px] font-bold transition-all flex items-center gap-1 shadow-sm"
                             >
                               <MessageSquare className="w-3 h-3" />
                               <span>Message Seller</span>
@@ -573,32 +565,32 @@ export const CampusHeroDashboardPage: React.FC = () => {
                         </div>
 
                         <div>
-                          <div className="font-bold text-slate-900 text-sm">{task.seller.name}</div>
-                          <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
+                          <div className="font-bold text-white text-sm tracking-tight">{task.seller.name}</div>
+                          <div className="text-xs text-stone-400 flex items-center gap-2 mt-0.5">
                             <span className="flex items-center gap-1">
-                              <Phone className="w-3 h-3 text-slate-400" />
-                              <span className={task.seller.phone.includes('Claim') ? 'italic text-purple-700 font-semibold' : ''}>
+                              <Phone className="w-3 h-3 text-stone-500" />
+                              <span className={task.seller.phone.includes('Claim') ? 'italic text-[#C6DE41] font-semibold' : ''}>
                                 {task.seller.phone}
                               </span>
                             </span>
                             {!task.seller.email.includes('Claim') && (
                               <span className="flex items-center gap-1">
-                                <Mail className="w-3 h-3 text-slate-400" /> {task.seller.email}
+                                <Mail className="w-3 h-3 text-stone-500" /> {task.seller.email}
                               </span>
                             )}
                           </div>
                         </div>
 
                         {/* Condition & Assessment */}
-                        <div className="text-xs space-y-1 bg-[#F8FAF9] p-2.5 rounded-xl border border-slate-100">
-                          <div className="font-semibold text-slate-700">
-                            Declared Condition: <span className="font-bold text-slate-900">{task.seller.condition}</span>
+                        <div className="text-xs space-y-1 bg-[#12160F] p-3 rounded-[16px] border border-white/10">
+                          <div className="font-semibold text-stone-400">
+                            Declared Condition: <span className="font-bold text-white">{task.seller.condition}</span>
                           </div>
                           {task.seller.quality_answers && Object.keys(task.seller.quality_answers).length > 0 && (
-                            <div className="text-[11px] text-slate-600 space-y-0.5 pt-1">
+                            <div className="text-[11px] text-stone-400 space-y-0.5 pt-1">
                               {Object.entries(task.seller.quality_answers).map(([k, val]) => (
                                 <div key={k} className="flex items-start gap-1">
-                                  <span className="text-campus-primary font-bold">•</span>
+                                  <span className="text-[#C6DE41] font-bold">•</span>
                                   <span>{val}</span>
                                 </div>
                               ))}
@@ -609,7 +601,7 @@ export const CampusHeroDashboardPage: React.FC = () => {
                         {/* Photos Uploaded by Seller */}
                         {task.seller.images && task.seller.images.length > 0 && (
                           <div className="pt-1">
-                            <span className="text-[10px] uppercase font-bold text-slate-400 block mb-1">
+                            <span className="text-[10px] uppercase font-semibold text-stone-400 block mb-1.5">
                               Seller's Photos ({task.seller.images.length}):
                             </span>
                             <div className="flex gap-2 overflow-x-auto pb-1">
@@ -618,7 +610,7 @@ export const CampusHeroDashboardPage: React.FC = () => {
                                   type="button"
                                   key={iIdx}
                                   onClick={() => setPreviewPhoto(img)}
-                                  className="w-12 h-12 rounded-lg border border-slate-200 overflow-hidden hover:border-campus-primary shrink-0 transition-colors"
+                                  className="w-12 h-12 rounded-[12px] border border-white/10 overflow-hidden hover:border-[#C6DE41] shrink-0 transition-colors"
                                 >
                                   <img src={img} alt="" className="w-full h-full object-cover" />
                                 </button>
@@ -628,23 +620,23 @@ export const CampusHeroDashboardPage: React.FC = () => {
                         )}
                       </div>
                     ) : (
-                      <div className="p-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-xs text-slate-400">
+                      <div className="p-4 rounded-[20px] border border-dashed border-white/10 bg-[#181D14]/50 flex items-center justify-center text-xs text-stone-400">
                         Item ready from Campus Inventory
                       </div>
                     )}
 
                     {/* Buyer Details Card */}
                     {task.buyer ? (
-                      <div className="p-4 rounded-2xl border border-slate-200 bg-white space-y-3">
+                      <div className="p-4 sm:p-5 rounded-[20px] border border-white/10 bg-[#181D14] space-y-3 shadow-sm">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-800 bg-blue-50 px-2 py-0.5 rounded">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-sky-300 bg-sky-500/15 border border-sky-500/30 px-2.5 py-0.5 rounded-full">
                             Buyer (Delivery)
                           </span>
                           {isClaimedByMe && (
                             <button
                               type="button"
                               onClick={() => handleOpenChat(task, { id: task.buyer!.id, name: task.buyer!.name, role: 'BUYER' })}
-                              className="px-2.5 py-1 rounded-lg bg-campus-primary hover:bg-campus-primary-hover text-white text-[11px] font-bold transition-all flex items-center gap-1 shadow-sm"
+                              className="px-3 py-1 rounded-full bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] text-[11px] font-bold transition-all flex items-center gap-1 shadow-sm"
                             >
                               <MessageSquare className="w-3 h-3" />
                               <span>Message Buyer</span>
@@ -653,35 +645,35 @@ export const CampusHeroDashboardPage: React.FC = () => {
                         </div>
 
                         <div>
-                          <div className="font-bold text-slate-900 text-sm">{task.buyer.name}</div>
-                          <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
+                          <div className="font-bold text-white text-sm tracking-tight">{task.buyer.name}</div>
+                          <div className="text-xs text-stone-400 flex items-center gap-2 mt-0.5">
                             <span className="flex items-center gap-1">
-                              <Phone className="w-3 h-3 text-slate-400" />
-                              <span className={task.buyer.phone.includes('Claim') ? 'italic text-purple-700 font-semibold' : ''}>
+                              <Phone className="w-3 h-3 text-stone-500" />
+                              <span className={task.buyer.phone.includes('Claim') ? 'italic text-[#C6DE41] font-semibold' : ''}>
                                 {task.buyer.phone}
                               </span>
                             </span>
                             {!task.buyer.email.includes('Claim') && (
                               <span className="flex items-center gap-1">
-                                <Mail className="w-3 h-3 text-slate-400" /> {task.buyer.email}
+                                <Mail className="w-3 h-3 text-stone-500" /> {task.buyer.email}
                               </span>
                             )}
                           </div>
                         </div>
 
-                        <div className="bg-[#F8FAF9] p-2.5 rounded-xl border border-slate-100 text-xs">
-                          <span className="text-[10px] text-slate-400 uppercase font-bold block">Collect On Handover</span>
-                          <span className="text-base font-extrabold text-slate-900">₹{task.buyer.price_to_collect}</span>
+                        <div className="bg-[#12160F] p-3 rounded-[16px] border border-white/10 text-xs">
+                          <span className="text-[10px] text-stone-400 uppercase font-semibold block">Collect On Handover</span>
+                          <span className="text-base font-black text-[#C6DE41]">₹{task.buyer.price_to_collect}</span>
                         </div>
 
                         {task.buyer.notes && (
-                          <p className="text-xs text-slate-500 italic bg-slate-50 p-2 rounded-xl">
+                          <p className="text-xs text-stone-400 italic bg-[#12160F] p-2.5 rounded-[14px]">
                             "{task.buyer.notes}"
                           </p>
                         )}
                       </div>
                     ) : (
-                      <div className="p-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 flex items-center justify-center text-xs text-slate-400">
+                      <div className="p-4 rounded-[20px] border border-dashed border-white/10 bg-[#181D14]/50 flex items-center justify-center text-xs text-stone-400">
                         No buyer matched yet. Pick up and hold in campus inventory.
                       </div>
                     )}
@@ -690,15 +682,15 @@ export const CampusHeroDashboardPage: React.FC = () => {
 
                   {/* Operational Verification & Action Controls (For Claimed Tasks) */}
                   {isClaimedByMe && (
-                    <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       
                       {/* Quality Check Verification Toggle */}
-                      <label className="flex items-center gap-2.5 cursor-pointer text-xs font-bold text-slate-700 select-none">
-                        <input
+                      <label className="flex items-center gap-2.5 cursor-pointer text-xs font-semibold text-white select-none">
+                        <SmoothInput
                           type="checkbox"
                           checked={task.quality_verified}
                           onChange={(e) => handleUpdateStatus(task.id, task.status, e.target.checked)}
-                          className="w-4 h-4 rounded text-campus-primary focus:ring-campus-primary"
+                          className="w-4 h-4 rounded accent-[#C6DE41] text-[#090B09] focus:ring-[#C6DE41]"
                         />
                         <span>Item Physically Inspected & Quality Verified by Hero</span>
                       </label>
@@ -710,7 +702,7 @@ export const CampusHeroDashboardPage: React.FC = () => {
                             type="button"
                             disabled={isUpdating}
                             onClick={() => handleUpdateStatus(task.id, 'PICKED_UP', true)}
-                            className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50"
+                            className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-[#090B09] text-xs font-bold rounded-full shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50"
                           >
                             <Check className="w-3.5 h-3.5" />
                             <span>Mark Picked Up from Seller</span>
@@ -722,7 +714,7 @@ export const CampusHeroDashboardPage: React.FC = () => {
                             type="button"
                             disabled={isUpdating}
                             onClick={() => handleUpdateStatus(task.id, 'COMPLETED', true)}
-                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50"
+                            className="px-5 py-2.5 bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] text-xs font-bold rounded-full shadow-[0_0_15px_rgba(198,222,65,0.25)] transition-all flex items-center gap-1.5 disabled:opacity-50"
                           >
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             <span>Complete & Close Handover</span>
@@ -730,7 +722,7 @@ export const CampusHeroDashboardPage: React.FC = () => {
                         )}
 
                         {task.status === 'COMPLETED' && (
-                          <span className="inline-flex items-center gap-1 text-xs font-extrabold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-xl">
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-[#C6DE41] bg-[#C6DE41]/15 px-3.5 py-1.5 rounded-full border border-[#C6DE41]/30">
                             <Check className="w-3.5 h-3.5" /> Completed Handover
                           </span>
                         )}
@@ -741,14 +733,14 @@ export const CampusHeroDashboardPage: React.FC = () => {
 
                   {/* Messages Preview on Task */}
                   {isClaimedByMe && task.messages && task.messages.length > 0 && (
-                    <div className="bg-campus-soft/40 p-3 rounded-2xl border border-campus-primary/20 text-xs space-y-1.5">
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-campus-dark block">
+                    <div className="bg-[#181D14] p-3.5 rounded-[18px] border border-white/10 text-xs space-y-1.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-white block">
                         Recent Messages ({task.messages.length}):
                       </span>
                       <div className="space-y-1">
                         {task.messages.slice(-2).map((m) => (
-                          <div key={m.id} className="text-slate-700 flex items-start gap-1.5 text-[11px]">
-                            <span className="font-bold text-campus-primary shrink-0">
+                          <div key={m.id} className="text-stone-300 flex items-start gap-1.5 text-[11px]">
+                            <span className="font-bold text-[#C6DE41] shrink-0">
                               {m.is_hero_sender ? 'You (Operations):' : `${m.sender_name}:`}
                             </span>
                             <span className="line-clamp-1">{m.content}</span>
@@ -765,23 +757,21 @@ export const CampusHeroDashboardPage: React.FC = () => {
         )}
       </div>
 
-      {/* ============================================================== */}
-      {/* IN-WEBSITE MESSAGING MODAL                                     */}
-      {/* ============================================================== */}
+      {/* IN-WEBSITE MESSAGING MODAL */}
       {activeChatTask && chatRecipient && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="bg-[#12160F] rounded-[28px] max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl border border-white/15 overflow-hidden">
             
             {/* Chat Modal Header */}
-            <div className="p-4 sm:p-5 bg-gradient-to-r from-campus-dark to-[#063B32] text-white flex items-center justify-between">
+            <div className="p-4 sm:p-5 bg-[#181D14] text-white flex items-center justify-between border-b border-white/10">
               <div>
-                <div className="inline-block px-2 py-0.5 rounded bg-white/20 text-campus-light text-[9px] font-extrabold uppercase tracking-wider mb-1">
+                <div className="inline-block px-2.5 py-0.5 rounded-full bg-[#C6DE41]/15 text-[#C6DE41] border border-[#C6DE41]/30 text-[10px] font-bold uppercase tracking-wider mb-1">
                   Operations Message
                 </div>
-                <h3 className="font-extrabold text-sm sm:text-base">
+                <h3 className="font-bold text-sm sm:text-base tracking-tight text-white">
                   Chat with {chatRecipient.name} ({chatRecipient.role})
                 </h3>
-                <span className="text-[11px] text-slate-300 block">
+                <span className="text-[11px] text-stone-400 block">
                   Re: {activeChatTask.product.name}
                 </span>
               </div>
@@ -792,22 +782,22 @@ export const CampusHeroDashboardPage: React.FC = () => {
                   setActiveChatTask(null);
                   setChatRecipient(null);
                 }}
-                className="p-1.5 rounded-full hover:bg-white/10 text-white transition-colors"
+                className="p-1.5 rounded-full hover:bg-white/10 text-stone-300 hover:text-white transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Sender Identity Reminder */}
-            <div className="bg-emerald-50 px-4 py-2 text-[11px] text-emerald-800 font-bold border-b border-emerald-200 flex items-center justify-between">
+            <div className="bg-[#C6DE41]/10 px-4 py-2 text-[11px] text-[#C6DE41] font-semibold border-b border-[#C6DE41]/20 flex items-center justify-between">
               <span>Sending as: <strong>Operations Team — Campus Hero</strong></span>
-              <span className="text-[10px] text-emerald-600 font-medium">Visible to student</span>
+              <span className="text-[10px] text-[#C6DE41]/80 font-medium">Visible to student</span>
             </div>
 
             {/* Chat Thread Messages */}
-            <div className="p-4 flex-grow overflow-y-auto space-y-3 bg-[#F8FAF9] min-h-[220px]">
+            <div className="p-4 flex-grow overflow-y-auto space-y-3 bg-[#090B09] min-h-[220px]">
               {activeChatTask.messages.length === 0 ? (
-                <div className="py-8 text-center text-xs text-slate-400">
+                <div className="py-8 text-center text-xs text-stone-400">
                   No messages yet. Send an operations message to coordinate timing and location!
                 </div>
               ) : (
@@ -816,13 +806,13 @@ export const CampusHeroDashboardPage: React.FC = () => {
                     key={m.id}
                     className={`flex flex-col ${m.is_hero_sender ? 'items-end' : 'items-start'}`}
                   >
-                    <div className="text-[10px] text-slate-400 mb-0.5 font-semibold px-1">
+                    <div className="text-[10px] text-stone-400 mb-0.5 font-semibold px-1">
                       {m.is_hero_sender ? 'Operations Team — Campus Hero' : m.sender_name} • {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                     <div className={`p-3 rounded-2xl max-w-[85%] text-xs leading-relaxed ${
                       m.is_hero_sender
-                        ? 'bg-campus-primary text-white rounded-tr-none shadow-sm'
-                        : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none shadow-subtle'
+                        ? 'bg-[#C6DE41] text-[#090B09] font-semibold rounded-tr-none shadow-sm'
+                        : 'bg-[#181D14] border border-white/10 text-white rounded-tl-none shadow-sm'
                     }`}>
                       {m.content}
                     </div>
@@ -832,14 +822,14 @@ export const CampusHeroDashboardPage: React.FC = () => {
             </div>
 
             {/* Fast Presets */}
-            <div className="p-2.5 bg-slate-50 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto scrollbar-none text-[11px]">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Quick:</span>
+            <div className="p-2.5 bg-[#181D14] border-t border-white/10 flex items-center gap-1.5 overflow-x-auto scrollbar-none text-[11px]">
+              <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider shrink-0">Quick:</span>
               {presetMessages.map((msg, pIdx) => (
                 <button
                   type="button"
                   key={pIdx}
                   onClick={() => setChatMessage(msg)}
-                  className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 hover:border-campus-primary hover:text-campus-primary transition-colors whitespace-nowrap text-[10px] font-medium shrink-0"
+                  className="px-3 py-1 rounded-full bg-[#12160F] border border-white/15 text-stone-300 hover:border-[#C6DE41] hover:text-[#C6DE41] transition-colors whitespace-nowrap text-[10px] font-medium shrink-0 shadow-sm"
                 >
                   {msg.slice(0, 32)}...
                 </button>
@@ -847,18 +837,18 @@ export const CampusHeroDashboardPage: React.FC = () => {
             </div>
 
             {/* Chat Input Form */}
-            <form onSubmit={handleSendMessage} className="p-3 bg-white border-t border-slate-200 flex gap-2">
-              <input
+            <form onSubmit={handleSendMessage} className="p-3 bg-[#12160F] border-t border-white/10 flex gap-2">
+              <SmoothInput
                 type="text"
                 value={chatMessage}
                 onChange={(e) => setChatMessage(e.target.value)}
                 placeholder="Type your message as Operations Team..."
-                className="flex-grow p-2.5 text-xs rounded-xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-1 focus:ring-campus-primary"
+                className="flex-grow h-10 px-4 text-xs rounded-full border border-white/15 bg-[#181D14] text-white placeholder:text-stone-500 focus:outline-none focus:border-[#C6DE41] transition-colors"
               />
               <button
                 type="submit"
                 disabled={sendingMessage || !chatMessage.trim()}
-                className="px-4 py-2.5 bg-campus-primary hover:bg-campus-primary-hover text-white text-xs font-bold rounded-xl shadow-sm transition-all disabled:opacity-50 flex items-center gap-1 shrink-0"
+                className="px-5 h-10 bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] text-xs font-bold rounded-full shadow-[0_0_15px_rgba(198,222,65,0.25)] transition-all disabled:opacity-50 flex items-center gap-1 shrink-0"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>{sendingMessage ? 'Sending...' : 'Send'}</span>
@@ -873,17 +863,17 @@ export const CampusHeroDashboardPage: React.FC = () => {
       {previewPhoto && (
         <div
           onClick={() => setPreviewPhoto(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in cursor-pointer"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in cursor-pointer"
         >
           <div className="relative max-w-2xl max-h-[85vh]">
             <img
               src={previewPhoto}
               alt="Item Preview"
-              className="max-w-full max-h-[85vh] rounded-2xl object-contain shadow-2xl border border-white/20"
+              className="max-w-full max-h-[85vh] rounded-[24px] object-contain shadow-2xl border border-white/20"
             />
             <button
               onClick={() => setPreviewPhoto(null)}
-              className="absolute -top-3 -right-3 p-2 rounded-full bg-slate-900 text-white hover:bg-rose-600 transition-colors shadow-lg"
+              className="absolute -top-3 -right-3 p-2 rounded-full bg-[#12160F] text-white hover:bg-rose-600 transition-colors shadow-lg border border-white/20"
             >
               <X className="w-4 h-4" />
             </button>
