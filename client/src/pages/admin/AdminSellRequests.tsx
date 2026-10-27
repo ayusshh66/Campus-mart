@@ -1,3 +1,4 @@
+import { SmoothInput } from '../../components/motion/SmoothInput';
 import React, { useEffect, useState } from 'react';
 import { api, SellRequestItem } from '../../services/api';
 import { 
@@ -142,7 +143,7 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
       {/* Search Input Bar */}
       <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-2">
         <Search className="w-4 h-4 text-slate-400 ml-1" />
-        <input
+        <SmoothInput
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -290,7 +291,7 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
                     </span>
                     <div className="flex items-center gap-1 mt-1">
                       <span className="text-sm font-bold text-slate-400">₹</span>
-                      <input
+                      <SmoothInput
                         type="number"
                         value={draft.buy}
                         onChange={(e) => handlePriceChange(item.id, 'buy', parseFloat(e.target.value) || 0)}
@@ -306,7 +307,7 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
                     </span>
                     <div className="flex items-center gap-1 mt-1">
                       <span className="text-sm font-bold text-slate-400">₹</span>
-                      <input
+                      <SmoothInput
                         type="number"
                         value={draft.sell}
                         onChange={(e) => handlePriceChange(item.id, 'sell', parseFloat(e.target.value) || 0)}

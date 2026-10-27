@@ -114,8 +114,8 @@ export const AdminDashboard: React.FC = () => {
           label: 'Custom Item Approvals',
           icon: Sparkles,
           badge: stats && (stats.pendingCustomSubmissions ?? 0) > 0 ? `${stats.pendingCustomSubmissions} new` : null,
-          badgeColor: 'bg-purple-100 text-purple-800',
-          color: 'text-purple-600',
+          badgeColor: 'bg-[#C6DE41]/20 text-[#090B09] border border-[#C6DE41]/40',
+          color: 'text-[#C6DE41]',
         },
         {
           id: 'buying-queue',
@@ -142,8 +142,8 @@ export const AdminDashboard: React.FC = () => {
           label: 'Buyer Orders & Demand',
           icon: ShoppingBag,
           badge: stats && stats.pendingBuyRequests > 0 ? `${stats.pendingBuyRequests} new` : null,
-          badgeColor: 'bg-purple-100 text-purple-800',
-          color: 'text-purple-600',
+          badgeColor: 'bg-[#C6DE41]/20 text-[#090B09] border border-[#C6DE41]/40',
+          color: 'text-[#C6DE41]',
         },
         {
           id: 'automatch',
@@ -387,19 +387,19 @@ export const AdminDashboard: React.FC = () => {
 
               <div
                 onClick={() => setTab('custom-submissions')}
-                className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-subtle hover:border-purple-300 transition-all cursor-pointer group"
+                className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-subtle hover:border-[#C6DE41] transition-all cursor-pointer group"
               >
                 <div className="flex items-center justify-between text-slate-400 mb-1">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-purple-800">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-[#181D14]">
                     Custom Queue
                   </span>
-                  <Sparkles className="w-3.5 h-3.5 text-purple-600 group-hover:scale-110 transition-transform" />
+                  <Sparkles className="w-3.5 h-3.5 text-[#181D14] group-hover:scale-110 transition-transform" />
                 </div>
                 <div className="text-2xl font-black text-slate-900">
                   {loadingStats ? '...' : stats?.totalCustomSubmissions || 0}
                 </div>
                 <div className="text-[10px] text-slate-500 mt-0.5">
-                  <span className="font-bold text-purple-700">{stats?.pendingCustomSubmissions || 0}</span> unlisted items
+                  <span className="font-bold text-[#181D14]">{stats?.pendingCustomSubmissions || 0}</span> unlisted items
                 </div>
               </div>
 

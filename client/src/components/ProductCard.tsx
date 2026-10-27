@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { CheckCircle2, AlertCircle, ArrowRight, Layers, ShieldCheck, Sparkles } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Layers, Sparkles } from 'lucide-react';
 import { Product } from '../services/api';
+import { resolveProductImageUrl, handleImageError } from '../utils/imageUtils';
 
 interface ProductCardProps {
   product: Product;
@@ -11,9 +12,11 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product, userCollegeCode }) => {
   const isAvailable = Boolean(product.is_available);
 
-  // Safe images resolution
+  const primaryImage = resolveProductImageUrl(product.image_url, product.images);
+
+  // Safe images count resolution
   const imageList = Array.isArray(product.images)
-    ? product.images
+    ? product.  images
     : typeof product.images === 'string'
     ? (() => {
         try {
@@ -24,114 +27,100 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, userCollegeCo
       })()
     : [];
 
-  const primaryImage =
-    product.image_url ||
-    imageList[0] ||
-    'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80';
-
   const totalPhotos = Math.max(imageList.length, product.image_url ? 1 : 0);
 
-  // Estimate a realistic reference original MRP (e.g. 35-50% higher) to highlight recommerce savings
+  // Estimate a realistic reference original MRP to highlight recommerce savings
   const estimatedOriginalMrp = Math.round(product.sell_price * 1.45);
   const savingsPercent = Math.round(((estimatedOriginalMrp - product.sell_price) / estimatedOriginalMrp) * 100);
 
   return (
-    <div className="group bg-white rounded-2xl border border-slate-200/90 shadow-subtle hover-recommerce-glow transition-all duration-300 flex flex-col overflow-hidden">
-      {/* Product Image Area */}
-      <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
+    <div className="group bg-[#12160F] border border-[#C6DE41]/20 rounded-[28px] p-3 shadow-shop-card hover:shadow-shop-card-hover transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 hover:border-[#C6DE41]/50">
+      {/* Product Image Area with 20px radius */}
+      <div className="relative aspect-square w-full rounded-[20px] overflow-hidden bg-[#181D14]">
         <img
           src={primaryImage}
           alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
           loading="lazy"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src =
-              'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80';
-          }}
+          onError={handleImageError}
         />
 
-        {/* Category Pill */}
-        <div className="absolute top-3 left-3">
-          <span className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-white/95 text-slate-800 shadow-sm backdrop-blur-sm border border-slate-200/60">
+        {/* Top Badges */}
+        <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-none">
+          <span className="px-2.5 py-1 text-[11px] font-semibold tracking-tight rounded-full bg-[#090B09]/90 text-white shadow-shop-pill backdrop-blur-sm border border-[#C6DE41]/30">
             {product.category}
           </span>
-        </div>
-
-        {/* Quality Checked Badge */}
-        <div className="absolute top-3 right-3 flex items-center gap-1">
-          {totalPhotos > 1 && (
-            <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-black/60 text-white shadow-sm backdrop-blur-sm flex items-center gap-1">
-              <Layers className="w-3 h-3" />
-              <span>{totalPhotos}</span>
-            </span>
-          )}
-          <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-600/95 text-white shadow-sm backdrop-blur-sm flex items-center gap-0.5">
-            <ShieldCheck className="w-3 h-3" />
-            <span>Verified</span>
-          </span>
-        </div>
-
-        {/* Dynamic Campus Availability Ribbon */}
-        <div className="absolute bottom-2.5 left-2.5 right-2.5">
-          {isAvailable ? (
-            <div className="flex items-center justify-between px-3 py-1.5 rounded-xl bg-emerald-600/95 backdrop-blur-md text-white text-[11px] font-semibold shadow-md">
-              <div className="flex items-center gap-1.5 truncate">
-                <span className="w-2 h-2 rounded-full bg-emerald-200 animate-pulse shrink-0" />
-                <span className="truncate">In Stock at {userCollegeCode || 'Campus'}</span>
-              </div>
-              <span className="text-[10px] bg-white/20 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider shrink-0">
-                Ready
+          <div className="flex items-center gap-1">
+            {totalPhotos > 1 && (
+              <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-black/75 text-white backdrop-blur-sm flex items-center gap-1 border border-white/15">
+                <Layers className="w-3 h-3" />
+                <span>{totalPhotos}</span>
               </span>
+            )}
+            <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-[#C6DE41]/20 text-[#C6DE41] shadow-shop-pill backdrop-blur-sm flex items-center gap-0.5 border border-[#C6DE41]/40">
+              <ShieldCheck className="w-3 h-3 text-[#C6DE41]" />
+              <span>Verified</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Availability tag at bottom inside image */}
+        <div className="absolute bottom-2.5 left-2.5 right-2.5 pointer-events-none">
+          {isAvailable ? (
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#090B09]/90 backdrop-blur-md text-white text-[11px] font-medium shadow-shop-pill border border-[#C6DE41]/30">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#C6DE41] animate-pulse shadow-[0_0_6px_#C6DE41]" />
+              <span className="truncate">Ready at {userCollegeCode || 'Campus'}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 backdrop-blur-md text-slate-300 text-[11px] font-medium shadow-md">
-              <AlertCircle className="w-3.5 h-3.5 shrink-0 text-amber-400" />
-              <span className="truncate">Out of stock at {userCollegeCode || 'your campus'}</span>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/85 backdrop-blur-md text-zinc-300 text-[11px] font-normal border border-white/15">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+              <span className="truncate">Waitlist at {userCollegeCode || 'Campus'}</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Card Content & Recommerce Valuation */}
-      <div className="p-4 sm:p-5 flex flex-col flex-grow justify-between gap-3">
+      {/* Card Content */}
+      <div className="pt-3 px-1 pb-1 flex flex-col flex-grow justify-between gap-3">
         <div>
-          <h3 className="font-extrabold text-slate-900 text-base group-hover:text-campus-primary transition-colors leading-snug line-clamp-1">
+          <h3 className="font-semibold text-white text-[15px] group-hover:text-[#C6DE41] transition-colors leading-snug line-clamp-1 tracking-tight">
             {product.name}
           </h3>
-          <p className="text-xs text-slate-500 line-clamp-2 mt-1 leading-relaxed">
+          <p className="text-[12px] text-zinc-400 line-clamp-1 mt-0.5 leading-relaxed tracking-tight">
             {product.description}
           </p>
         </div>
 
-        {/* Pricing & Cashify-style Savings Indicator */}
-        <div className="pt-3 border-t border-slate-100 flex items-end justify-between gap-2">
+        {/* Pricing & Recommerce Savings Indicator */}
+        <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-2">
           <div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-xl font-black text-campus-dark tracking-tight">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-[17px] font-bold text-white tracking-tight">
                 ₹{product.sell_price.toLocaleString('en-IN')}
               </span>
-              <span className="text-xs text-slate-400 line-through">
+              <span className="text-[11px] text-zinc-500 line-through">
                 ₹{estimatedOriginalMrp.toLocaleString('en-IN')}
               </span>
             </div>
-            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-md inline-block mt-0.5">
-              Save ~{savingsPercent}% vs Retail
+            <span className="text-[10px] font-bold text-[#C6DE41] bg-[#C6DE41]/15 px-1.5 py-0.2 rounded-full inline-block border border-[#C6DE41]/25">
+              Save {savingsPercent}%
             </span>
           </div>
 
           <Link
             to={`/buy/${product.id}`}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1 shrink-0 ${
+            className={`px-3.5 py-1.5 rounded-full text-[12px] font-bold transition-all flex items-center gap-1 shrink-0 ${
               isAvailable
-                ? 'bg-campus-primary hover:bg-campus-primary-hover text-white shadow-sm hover:shadow shadow-campus-primary/20'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                ? 'bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] shadow-shop-pill shadow-[0_0_12px_rgba(198,222,65,0.25)] hover:scale-105 active:scale-95'
+                : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
             }`}
           >
-            <span>{isAvailable ? 'Buy Now' : 'Request'}</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <span>{isAvailable ? 'Buy' : 'View'}</span>
+            <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
       </div>
     </div>
   );
 };
+

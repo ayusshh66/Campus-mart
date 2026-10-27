@@ -53,7 +53,7 @@ const HeroRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 const AppRoutes: React.FC = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAF9]">
+    <div className="min-h-screen flex flex-col bg-[#090B09] text-[#F5F7F0] selection:bg-[#C6DE41] selection:text-[#090B09]">
       <Navbar />
       <main className="flex-grow pb-20 md:pb-0">
         <Routes>

@@ -1,143 +1,160 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Shield, Sparkles, MapPin, CheckCircle2, ArrowUpRight, Heart, Users, Truck } from 'lucide-react';
+
+import React from "react";
+import { Link } from "react-router-dom";
+import {
+  Shield,
+  MapPin,
+  CheckCircle2,
+  ArrowUpRight,
+  Users,
+  Truck,
+} from "lucide-react";
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="bg-campus-dark text-white border-t border-campus-dark/40 pb-24 md:pb-10 pt-14">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+    <footer className="relative z-10 w-full border-t border-[#C6DE41]/20 bg-[#090B09] pt-16 pb-24 text-white md:pb-12">
+      <div className="mx-auto max-w-[1200px] px-4 sm:px-6">
         {/* Top Trust Ribbon */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pb-10 border-b border-white/10 mb-10 text-xs">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-campus-light shrink-0">
-              <Shield className="w-4 h-4 text-campus-light" />
+        <div className="mb-12 grid grid-cols-2 gap-4 border-b border-[#C6DE41]/15 pb-12 text-[12px] sm:grid-cols-4">
+          {[
+            {
+              icon: Shield,
+              title: "Verified Quality",
+              description: "Diagnostic peer checks",
+            },
+            {
+              icon: CheckCircle2,
+              title: "Zero Haggling",
+              description: "Fair fixed valuations",
+            },
+            {
+              icon: Truck,
+              title: "Campus Handover",
+              description: "Library / gate dropoffs",
+            },
+            {
+              icon: Users,
+              title: "Student Only",
+              description: "Zero stranger risk",
+            },
+          ].map(({ icon: Icon, title, description }) => (
+            <div key={title} className="flex items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#C6DE41]/20 bg-[#12160F]">
+                <Icon className="h-4 w-4 text-[#C6DE41]" />
+              </div>
+              <div>
+                <p className="text-[13px] font-semibold tracking-tight text-white">
+                  {title}
+                </p>
+                <p className="text-[11px] text-zinc-400">
+                  {description}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="font-bold text-white text-[13px]">Verified Quality</p>
-              <p className="text-slate-400 text-[11px]">Strict physical & diagnostic check</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-campus-light shrink-0">
-              <CheckCircle2 className="w-4 h-4 text-campus-light" />
-            </div>
-            <div>
-              <p className="font-bold text-white text-[13px]">Transparent Pricing</p>
-              <p className="text-slate-400 text-[11px]">Admin-fixed fair rates. 0 haggling</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-campus-light shrink-0">
-              <Truck className="w-4 h-4 text-campus-light" />
-            </div>
-            <div>
-              <p className="font-bold text-white text-[13px]">Campus Delivery</p>
-              <p className="text-slate-400 text-[11px]">Handed over directly in college</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-campus-light shrink-0">
-              <Users className="w-4 h-4 text-campus-light" />
-            </div>
-            <div>
-              <p className="font-bold text-white text-[13px]">Student Exclusivity</p>
-              <p className="text-slate-400 text-[11px]">Zero strangers, verified peers</p>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Main Footer Links */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
-          <div className="md:col-span-2 space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-campus-primary flex items-center justify-center text-white font-extrabold text-base shadow-md">
-                C
-              </div>
-              <span className="font-bold text-xl tracking-tight text-white">
-                Campus<span className="text-campus-light">Mart</span>
+        <div className="mb-12 grid grid-cols-1 gap-8 md:grid-cols-4">
+          <div className="space-y-3 md:col-span-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-2xl font-bold tracking-tight text-white">
+                CampusMart
               </span>
+              <span className="h-2 w-2 rounded-full bg-[#C6DE41] shadow-[0_0_8px_#C6DE41]" />
             </div>
-            <p className="text-slate-300 text-xs sm:text-sm max-w-sm leading-relaxed">
-              India's student-exclusive recommerce network. Trade pre-loved lab kits, engineering gear, calculators, and books seamlessly with verified college peers.
+
+            <p className="max-w-sm text-[13px] leading-relaxed tracking-tight text-zinc-400">
+              India's verified campus recommerce network. Trade
+              pre-loved lab kits, engineering tools, calculators,
+              and books seamlessly with verified student peers.
             </p>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-campus-light font-medium pt-2">
-              <span className="flex items-center gap-1 bg-white/5 px-2.5 py-1 rounded-full border border-white/10 text-[11px]">
-                <MapPin className="w-3 h-3 text-campus-primary" />
+
+            <div className="pt-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#C6DE41]/20 bg-[#12160F] px-3 py-1 text-[11px] text-white">
+                <MapPin className="h-3 w-3 text-[#C6DE41]" />
                 Active at BPIT, MAIT, MSIT, USAR & expanding
               </span>
             </div>
           </div>
 
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">Recommerce Market</h4>
-            <ul className="space-y-2 text-xs text-slate-300">
-              <li>
-                <Link to="/buy" className="hover:text-campus-light transition-colors flex items-center gap-1">
-                  <span>Browse Campus Catalog</span>
-                  <ArrowUpRight className="w-3 h-3 opacity-60" />
-                </Link>
-              </li>
-              <li>
-                <Link to="/sell" className="hover:text-campus-light transition-colors flex items-center gap-1">
-                  <span>Sell & Instant Valuation</span>
-                  <ArrowUpRight className="w-3 h-3 opacity-60" />
-                </Link>
-              </li>
-              <li>
-                <Link to="/find-teammates" className="hover:text-campus-light transition-colors flex items-center gap-1">
-                  <span>Find Hackathon Teammates</span>
-                  <ArrowUpRight className="w-3 h-3 opacity-60" />
-                </Link>
-              </li>
-              <li>
-                <Link to="/campus-heroes" className="hover:text-campus-light transition-colors flex items-center gap-1">
-                  <span>Campus Hero Program</span>
-                  <ArrowUpRight className="w-3 h-3 opacity-60" />
-                </Link>
-              </li>
+            <h4 className="mb-3 text-[12px] font-semibold tracking-tight text-white">
+              Explore Market
+            </h4>
+
+            <ul className="space-y-2.5 text-[13px] text-zinc-400">
+              {[
+                { label: "Browse Gear Catalog", to: "/buy" },
+                { label: "Instant Sell Valuation", to: "/sell" },
+                { label: "Hackathon Teammates", to: "/find-teammates" },
+                { label: "Campus Hero Program", to: "/campus-heroes" },
+              ].map(({ label, to }) => (
+                <li key={to}>
+                  <Link
+                    to={to}
+                    className="flex items-center gap-1 transition-colors hover:text-[#C6DE41]"
+                  >
+                    <span>{label}</span>
+                    <ArrowUpRight className="h-3 w-3 opacity-60" />
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3">Student Support</h4>
-            <ul className="space-y-2 text-xs text-slate-300">
-              <li>
-                <Link to="/profile" className="hover:text-campus-light transition-colors">
-                  My Orders & Sell Requests
-                </Link>
-              </li>
-              <li>
-                <Link to="/my-teams" className="hover:text-campus-light transition-colors">
-                  My Hackathon Teams
-                </Link>
-              </li>
-              <li>
-                <Link to="/login" className="hover:text-campus-light transition-colors">
-                  Student Sign In
-                </Link>
-              </li>
-              <li>
-                <Link to="/hero-dashboard" className="hover:text-campus-light transition-colors">
-                  Hero Operations Portal
-                </Link>
-              </li>
+            <h4 className="mb-3 text-[12px] font-semibold tracking-tight text-white">
+              Student Support
+            </h4>
+
+            <ul className="space-y-2.5 text-[13px] text-zinc-400">
+              {[
+                {
+                  label: "My Orders & Sell Requests",
+                  to: "/profile",
+                },
+                {
+                  label: "My Hackathon Teams",
+                  to: "/my-teams",
+                },
+                {
+                  label: "Student Sign In",
+                  to: "/login",
+                },
+                {
+                  label: "Hero Operations Portal",
+                  to: "/hero-dashboard",
+                },
+              ].map(({ label, to }) => (
+                <li key={to}>
+                  <Link
+                    to={to}
+                    className="transition-colors hover:text-[#C6DE41]"
+                  >
+                    {label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
 
-        {/* Bottom copyright */}
-        <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-3">
-          <p>© {new Date().getFullYear()} CampusMart. Designed exclusively for engineering & college campuses.</p>
-          <p className="flex items-center gap-1 text-slate-400">
-            <span>Built with care for students</span>
-            <Heart className="w-3 h-3 text-campus-primary fill-campus-primary" />
+        {/* Bottom Copyright */}
+        <div className="flex flex-col items-center justify-between gap-4 border-t border-[#C6DE41]/15 pt-8 text-[12px] text-zinc-500 sm:flex-row">
+          <p>
+            © {new Date().getFullYear()} CampusMart.
+            All rights reserved.
           </p>
+
+          <div className="flex items-center gap-6">
+            <span>Campus Recommerce Protocol</span>
+            <span>Privacy & College Guidelines</span>
+          </div>
         </div>
       </div>
     </footer>
   );
 };
+
+export default Footer;

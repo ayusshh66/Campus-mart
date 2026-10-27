@@ -1,3 +1,4 @@
+import { SmoothInput } from '../components/motion/SmoothInput';
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -8,7 +9,6 @@ import {
   MapPin, 
   Upload, 
   CheckCircle, 
-  CheckCircle2,
   AlertCircle, 
   Banknote, 
   Check, 
@@ -17,15 +17,9 @@ import {
   ArrowRight,
   ArrowLeft,
   Search,
-  SlidersHorizontal,
   Package,
-  Layers,
   HelpCircle,
-  ShieldCheck,
-  ChevronRight,
-  PlusCircle,
-  Image as ImageIcon,
-  FileText
+  ChevronRight
 } from 'lucide-react';
 
 interface QualityOption {
@@ -62,7 +56,6 @@ export const SellPage: React.FC = () => {
   
   // Image Upload State
   const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [uploading, setUploading] = useState<boolean>(false);
   
   // Quality Check Answers State
   const [qualityAnswers, setQualityAnswers] = useState<Record<string, QualityOption>>({});
@@ -80,7 +73,6 @@ export const SellPage: React.FC = () => {
   const [customExpectedPrice, setCustomExpectedPrice] = useState<string>('');
   const [customDescription, setCustomDescription] = useState<string>('');
   const [customImages, setCustomImages] = useState<string[]>([]);
-  const [customUploading, setCustomUploading] = useState<boolean>(false);
   const [customSubmitting, setCustomSubmitting] = useState<boolean>(false);
   const [customSubmittedSuccess, setCustomSubmittedSuccess] = useState<boolean>(false);
   const [customSubmittedData, setCustomSubmittedData] = useState<any>(null);
@@ -112,7 +104,7 @@ export const SellPage: React.FC = () => {
     return ['All', ...cats];
   }, [products]);
 
-  // Filtered products for the Catalogue view
+  // Filtered products for Catalogue view
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const matchesCategory = selectedCategory === 'All' || p.category === selectedCategory;
@@ -167,7 +159,6 @@ export const SellPage: React.FC = () => {
     setImageUrls([]);
     setError(null);
 
-    // Initialize default answers (first option of each question)
     const initialAnswers: Record<string, QualityOption> = {};
     const questionsToUse = (prod.quality_questions && prod.quality_questions.length > 0)
       ? prod.quality_questions
@@ -190,7 +181,6 @@ export const SellPage: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Back to Catalogue
   const handleBackToCatalogue = () => {
     setSelectedProduct(null);
     setCurrentStep(0);
@@ -313,36 +303,34 @@ export const SellPage: React.FC = () => {
       });
       setCustomSubmittedSuccess(true);
     } catch (err: any) {
-      setCustomError(err.message || 'Failed to submit custom sell request.');
+      setCustomError(err.message || 'Failed to submit custom listing.');
     } finally {
       setCustomSubmitting(false);
     }
   };
 
-  if (!user) return null;
-
-  // View: Success Screen for Catalog Sell Request
+  // View: Success Screen for Catalogue Submission
   if (submittedSuccess) {
     return (
-      <div className="max-w-xl mx-auto px-4 py-16 sm:py-24 text-center">
-        <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200/80 shadow-card">
-          <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-6">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-16 sm:py-24 text-center animate-fade-in">
+        <div className="max-w-lg mx-auto bg-[#12160F] rounded-[28px] p-8 sm:p-12 border border-[#C6DE41]/30 shadow-[0_0_50px_rgba(198,222,65,0.1)]">
+          <div className="w-16 h-16 rounded-full bg-[#C6DE41]/15 text-[#C6DE41] border border-[#C6DE41]/30 flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-8 h-8" />
           </div>
-          <h2 className="text-2xl font-extrabold text-campus-dark mb-2">
+          <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">
             Sell Request Submitted!
           </h2>
-          <p className="text-sm text-slate-600 leading-relaxed mb-6">
-            Your request for <strong className="text-slate-900">{submittedData?.productName}</strong> has been submitted.
-            Our {submittedData?.collegeCode} Campus Hero will verify your item during on-campus handover.
+          <p className="text-[13px] text-stone-400 leading-relaxed mb-6 tracking-tight">
+            Your request for <strong className="text-white">{submittedData?.productName}</strong> has been created.
+            A {submittedData?.collegeCode} Campus Hero will verify your item during on-campus handover.
           </p>
 
-          <div className="inline-flex flex-col items-center p-5 rounded-2xl bg-campus-soft border border-campus-primary/30 mb-8 w-full max-w-xs mx-auto">
-            <span className="text-[11px] uppercase font-bold text-slate-500">Approximate Amount You Will Get</span>
-            <span className="text-3xl font-extrabold text-campus-dark mt-1">
+          <div className="inline-flex flex-col items-center p-5 rounded-[20px] bg-[#181D14] border border-white/10 mb-8 w-full max-w-xs mx-auto">
+            <span className="text-[11px] uppercase font-semibold text-stone-400">Approximate Payout</span>
+            <span className="text-3xl font-black text-[#C6DE41] mt-1 tracking-tight">
               ₹{submittedData?.estimatedPayout.toLocaleString('en-IN')}
             </span>
-            <span className="text-[11px] text-emerald-700 font-semibold mt-1">
+            <span className="text-[11px] text-[#C6DE41]/90 font-medium mt-1">
               📍 Handover at {submittedData?.collegeCode} Campus
             </span>
           </div>
@@ -350,7 +338,7 @@ export const SellPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               to="/profile"
-              className="px-6 py-3 rounded-xl bg-campus-primary hover:bg-campus-primary-hover text-white text-xs font-bold shadow-md transition-all"
+              className="px-6 py-3 rounded-full bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] text-[13px] font-bold shadow-[0_0_20px_rgba(198,222,65,0.25)] transition-all"
             >
               View in My Profile
             </Link>
@@ -362,7 +350,7 @@ export const SellPage: React.FC = () => {
                 setDescription('');
                 setImageUrls([]);
               }}
-              className="px-6 py-3 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors"
+              className="px-6 py-3 rounded-full border border-white/15 text-stone-300 hover:text-white text-[13px] font-medium hover:bg-white/5 transition-colors"
             >
               Sell Another Item
             </button>
@@ -375,56 +363,44 @@ export const SellPage: React.FC = () => {
   // View: Success Screen for Custom Item Submission
   if (customSubmittedSuccess) {
     return (
-      <div className="max-w-xl mx-auto px-4 py-16 sm:py-24 text-center animate-fade-in">
-        <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200/80 shadow-card">
-          <div className="w-16 h-16 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mx-auto mb-6">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-16 sm:py-24 text-center animate-fade-in">
+        <div className="max-w-lg mx-auto bg-[#12160F] rounded-[28px] p-8 sm:p-12 border border-[#C6DE41]/30 shadow-[0_0_50px_rgba(198,222,65,0.1)]">
+          <div className="w-16 h-16 rounded-full bg-[#C6DE41]/15 text-[#C6DE41] border border-[#C6DE41]/30 flex items-center justify-center mx-auto mb-6">
             <CheckCircle className="w-8 h-8" />
           </div>
-          <span className="text-[11px] uppercase tracking-wider font-extrabold px-3 py-1 rounded-full bg-amber-100 text-amber-800 inline-block mb-3">
+          <span className="text-[11px] uppercase tracking-wider font-semibold px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 inline-block mb-3">
             Pending Admin Review
           </span>
-          <h2 className="text-2xl font-extrabold text-campus-dark mb-2">
+          <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">
             Custom Item Submitted!
           </h2>
-          <p className="text-sm text-slate-600 leading-relaxed mb-6">
-            Your submission for <strong className="text-slate-900">{customSubmittedData?.name}</strong> has been received by our campus operations team.
+          <p className="text-[13px] text-stone-400 leading-relaxed mb-6 tracking-tight">
+            Your submission for <strong className="text-white">{customSubmittedData?.name}</strong> has been received by our campus operations team.
           </p>
 
-          <div className="inline-flex flex-col items-center p-5 rounded-2xl bg-purple-50/60 border border-purple-200/80 mb-8 w-full max-w-sm mx-auto space-y-2">
-            <div className="flex items-center justify-between w-full text-xs text-slate-600 border-b border-purple-100 pb-2">
+          <div className="inline-flex flex-col items-center p-5 rounded-[20px] bg-[#181D14] border border-white/10 mb-8 w-full max-w-sm mx-auto space-y-2">
+            <div className="flex items-center justify-between w-full text-[12px] text-stone-400 border-b border-white/10 pb-2">
               <span>Category:</span>
-              <strong className="text-slate-900">{customSubmittedData?.category}</strong>
+              <strong className="text-white">{customSubmittedData?.category}</strong>
             </div>
-            <div className="flex items-center justify-between w-full text-xs text-slate-600 border-b border-purple-100 pb-2">
+            <div className="flex items-center justify-between w-full text-[12px] text-stone-400 border-b border-white/10 pb-2">
               <span>Condition:</span>
-              <strong className="text-slate-900">{customSubmittedData?.condition}</strong>
+              <strong className="text-white">{customSubmittedData?.condition}</strong>
             </div>
-            <div className="flex items-center justify-between w-full text-xs text-slate-600 border-b border-purple-100 pb-2">
-              <span>Your Asking Price:</span>
-              <strong className="text-purple-700 text-base font-extrabold">₹{customSubmittedData?.expectedPrice.toLocaleString('en-IN')}</strong>
+            <div className="flex items-center justify-between w-full text-[12px] text-stone-400 border-b border-white/10 pb-2">
+              <span>Asking Price:</span>
+              <strong className="text-[#C6DE41] text-[15px] font-bold">₹{customSubmittedData?.expectedPrice.toLocaleString('en-IN')}</strong>
             </div>
-            <div className="flex items-center justify-between w-full text-xs text-slate-600 pt-1">
+            <div className="flex items-center justify-between w-full text-[12px] text-stone-400 pt-1">
               <span>Campus Handover:</span>
-              <strong className="text-campus-primary font-bold">📍 {customSubmittedData?.collegeCode}</strong>
+              <strong className="text-white">📍 {customSubmittedData?.collegeCode}</strong>
             </div>
-          </div>
-
-          <div className="bg-slate-50 rounded-2xl p-4 text-xs text-slate-600 text-left mb-6 border border-slate-100 space-y-1.5">
-            <div className="flex items-center gap-2 font-bold text-slate-800">
-              <Sparkles className="w-4 h-4 text-purple-600" />
-              <span>What happens next?</span>
-            </div>
-            <p className="text-[11px] text-slate-500 leading-relaxed">
-              1. An admin will inspect your photos, condition grade, and expected price.<br />
-              2. Once approved, the item will immediately be published to the <strong>{customSubmittedData?.collegeCode} Campus Marketplace</strong> for students to purchase.<br />
-              3. You can monitor the review progress in your Profile under <strong>Custom Submissions</strong>.
-            </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               to="/profile"
-              className="px-6 py-3 rounded-xl bg-campus-primary hover:bg-campus-primary-hover text-white text-xs font-bold shadow-md transition-all"
+              className="px-6 py-3 rounded-full bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] text-[13px] font-bold shadow-[0_0_20px_rgba(198,222,65,0.25)] transition-all"
             >
               Track in My Profile
             </Link>
@@ -437,7 +413,7 @@ export const SellPage: React.FC = () => {
                 setCustomImages([]);
                 setCustomError(null);
               }}
-              className="px-6 py-3 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors"
+              className="px-6 py-3 rounded-full border border-white/15 text-stone-300 hover:text-white text-[13px] font-medium hover:bg-white/5 transition-colors"
             >
               Submit Another Item
             </button>
@@ -448,79 +424,77 @@ export const SellPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8">
       
-      {/* ============================================================== */}
-      {/* VIEW 1: CATALOGUE OR CUSTOM SELLING VIEW (When not in step-by-step) */}
-      {/* ============================================================== */}
+      {/* VIEW 1: CATALOGUE OR CUSTOM SELLING VIEW */}
       {!selectedProduct && (
         <div className="space-y-8">
-          {/* Top Mode Switcher Tabs */}
-          <div className="flex p-1.5 bg-slate-100 rounded-2xl max-w-md">
+          
+          {/* Top Pill Mode Switcher */}
+          <div className="flex p-1 bg-[#12160F] border border-white/10 rounded-full max-w-md shadow-inner">
             <button
               type="button"
               onClick={() => setSellMode('catalog')}
-              className={`flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+              className={`flex-1 py-2 px-4 rounded-full text-[12px] font-semibold flex items-center justify-center gap-2 transition-all ${
                 sellMode === 'catalog'
-                  ? 'bg-white text-campus-dark shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-[#C6DE41] text-[#090B09] shadow-[0_0_15px_rgba(198,222,65,0.3)]'
+                  : 'text-stone-400 hover:text-white'
               }`}
             >
-              <Tag className="w-4 h-4 text-campus-primary" />
-              <span>Catalog Items</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-extrabold hidden sm:inline">Instant Quote</span>
+              <Tag className="w-3.5 h-3.5" />
+              <span>Catalog Gear</span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold hidden sm:inline ${
+                sellMode === 'catalog' ? 'bg-[#090B09]/20 text-[#090B09]' : 'bg-white/10 text-stone-300'
+              }`}>Instant Quote</span>
             </button>
             <button
               type="button"
               onClick={() => setSellMode('custom')}
-              className={`flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+              className={`flex-1 py-2 px-4 rounded-full text-[12px] font-semibold flex items-center justify-center gap-2 transition-all ${
                 sellMode === 'custom'
-                  ? 'bg-white text-campus-dark shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
+                  ? 'bg-[#C6DE41] text-[#090B09] shadow-[0_0_15px_rgba(198,222,65,0.3)]'
+                  : 'text-stone-400 hover:text-white'
               }`}
             >
-              <Sparkles className="w-4 h-4 text-purple-600" />
-              <span>Sell Any Custom Item</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-800 font-extrabold hidden sm:inline">Sell Anything</span>
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Custom Listing</span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-semibold hidden sm:inline ${
+                sellMode === 'custom' ? 'bg-[#090B09]/20 text-[#090B09]' : 'bg-white/10 text-stone-300'
+              }`}>Any Item</span>
             </button>
           </div>
 
-          {/* ------------------------------------------------------------ */}
-          {/* OPTION A: SELL ANY CUSTOM ITEM                               */}
-          {/* ------------------------------------------------------------ */}
+          {/* OPTION A: SELL ANY CUSTOM ITEM */}
           {sellMode === 'custom' && (
             <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-6">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-6">
                 <div>
-                  <div className="flex items-center gap-2 text-xs font-bold text-purple-600 uppercase tracking-wider mb-2">
-                    <Sparkles className="w-4 h-4" />
-                    <span>Community Campus Marketplace</span>
+                  <div className="flex items-center gap-2 text-[12px] font-bold text-[#C6DE41] uppercase tracking-wider mb-1">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Custom Campus Listing</span>
                   </div>
-                  <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                    Sell Any Second-Hand Item
+                  <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+                    Sell Any Student Gear
                   </h2>
-                  <p className="text-xs sm:text-sm text-slate-500 mt-1.5 max-w-xl">
-                    Submit any second-hand textbooks, electronics, cycle, lab coats, drafters, or hostel items. Once reviewed, an admin will approve your listing and publish it to the {user.college.code} campus marketplace!
+                  <p className="text-[13px] text-stone-400 mt-1 max-w-xl tracking-tight">
+                    Submit any second-hand textbook, scientific calculator, engineering tool, or dorm gear. Our team will review and publish it to the {user?.college?.code} marketplace.
                   </p>
                 </div>
 
-                <div className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-campus-soft border border-campus-primary/30 text-campus-dark text-xs font-bold shadow-sm self-start md:self-auto shrink-0">
-                  <span>Campus:</span>
-                  <span className="flex items-center gap-1 text-campus-primary font-black">
-                    <MapPin className="w-4 h-4" />
-                    {user.college.code}
-                  </span>
+                <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#12160F] border border-white/10 text-white text-[12px] font-medium shadow-sm shrink-0">
+                  <MapPin className="w-3.5 h-3.5 text-[#C6DE41]" />
+                  <span>{user?.college?.code}</span>
                 </div>
               </div>
 
-              <form onSubmit={handleCustomSubmit} className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-subtle space-y-6">
+              <form onSubmit={handleCustomSubmit} className="bg-[#12160F] rounded-[28px] p-6 sm:p-8 border border-white/10 shadow-xl space-y-6">
                 {customError && (
-                  <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center justify-between gap-2">
+                  <div className="p-4 rounded-[20px] bg-rose-500/10 border border-rose-500/30 text-rose-300 text-[12px] font-medium flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                      <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
                       <span>{customError}</span>
                     </div>
-                    <button type="button" onClick={() => setCustomError(null)} className="text-rose-500 hover:text-rose-800">
+                    <button type="button" onClick={() => setCustomError(null)} className="text-rose-400 hover:text-white">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
@@ -528,47 +502,47 @@ export const SellPage: React.FC = () => {
 
                 {/* Item Name */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                    Item Name <span className="text-rose-500">*</span>
+                  <label className="block text-[12px] font-semibold text-stone-200 mb-1.5 tracking-tight">
+                    Item Name <span className="text-[#C6DE41]">*</span>
                   </label>
-                  <input
+                  <SmoothInput
                     type="text"
                     required
                     value={customName}
                     onChange={(e) => setCustomName(e.target.value)}
-                    placeholder="e.g. Casio fx-991CW Scientific Calculator, B.Tech 1st Year Chemistry Book, Decathlon Cycle..."
-                    className="w-full px-4 py-3 text-xs sm:text-sm rounded-2xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30 focus:border-campus-primary"
+                    placeholder="e.g. Casio fx-991CW Calculator, Mini Drafter, Chemistry Lab Coat..."
+                    className="w-full px-4 py-2.5 text-[13px] rounded-full border border-white/15 bg-[#181D14] text-white placeholder:text-stone-500 focus:outline-none focus:border-[#C6DE41]"
                   />
                 </div>
 
                 {/* Category & Expected Price */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                      Category <span className="text-rose-500">*</span>
+                    <label className="block text-[12px] font-semibold text-stone-200 mb-1.5 tracking-tight">
+                      Category <span className="text-[#C6DE41]">*</span>
                     </label>
                     <select
                       value={customCategory}
                       onChange={(e) => setCustomCategory(e.target.value)}
-                      className="w-full px-4 py-3 text-xs sm:text-sm rounded-2xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30 focus:border-campus-primary font-medium"
+                      className="w-full px-4 py-2.5 text-[13px] rounded-full border border-white/15 bg-[#181D14] focus:outline-none focus:border-[#C6DE41] font-medium text-white"
                     >
-                      <option value="Books & Academic">Books & Academic</option>
-                      <option value="Electronics & Tech">Electronics & Tech</option>
-                      <option value="Engineering & Lab Tools">Engineering & Lab Tools</option>
-                      <option value="Cycles & Mobility">Cycles & Mobility</option>
-                      <option value="Hostel & Dorm Essentials">Hostel & Dorm Essentials</option>
-                      <option value="Stationery & Instruments">Stationery & Instruments</option>
-                      <option value="Other Essentials">Other Essentials</option>
+                      <option value="Books & Academic" className="bg-[#12160F] text-white">Books & Academic</option>
+                      <option value="Electronics & Tech" className="bg-[#12160F] text-white">Electronics & Tech</option>
+                      <option value="Engineering & Lab Tools" className="bg-[#12160F] text-white">Engineering & Lab Tools</option>
+                      <option value="Cycles & Mobility" className="bg-[#12160F] text-white">Cycles & Mobility</option>
+                      <option value="Hostel & Dorm Essentials" className="bg-[#12160F] text-white">Hostel & Dorm Essentials</option>
+                      <option value="Stationery & Instruments" className="bg-[#12160F] text-white">Stationery & Instruments</option>
+                      <option value="Other Essentials" className="bg-[#12160F] text-white">Other Essentials</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                      Expected Cash Price (₹) <span className="text-rose-500">*</span>
+                    <label className="block text-[12px] font-semibold text-stone-200 mb-1.5 tracking-tight">
+                      Expected Payout Price (₹) <span className="text-[#C6DE41]">*</span>
                     </label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">₹</span>
-                      <input
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 font-bold text-sm">₹</span>
+                      <SmoothInput
                         type="number"
                         min="1"
                         step="1"
@@ -576,60 +550,45 @@ export const SellPage: React.FC = () => {
                         value={customExpectedPrice}
                         onChange={(e) => setCustomExpectedPrice(e.target.value)}
                         placeholder="e.g. 450"
-                        className="w-full pl-8 pr-4 py-3 text-xs sm:text-sm rounded-2xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30 focus:border-campus-primary font-bold text-slate-900"
+                        className="w-full pl-8 pr-4 py-2.5 text-[13px] rounded-full border border-white/15 bg-[#181D14] focus:outline-none focus:border-[#C6DE41] font-bold text-white placeholder:text-stone-500"
                       />
                     </div>
-                    <span className="text-[11px] text-slate-400 mt-1 block">
-                      Amount you hope to get. Admin will review and lock final payout price.
-                    </span>
                   </div>
                 </div>
 
-                {/* Condition Selection */}
+                {/* Condition Assessment */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                    Condition Assessment <span className="text-rose-500">*</span>
+                  <label className="block text-[12px] font-semibold text-stone-200 mb-2 tracking-tight">
+                    Condition Assessment <span className="text-[#C6DE41]">*</span>
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {[
-                      {
-                        value: 'Like New',
-                        label: 'Like New',
-                        desc: 'Pristine, almost unused, zero damage or marks.',
-                      },
-                      {
-                        value: 'Good',
-                        label: 'Good Condition',
-                        desc: 'Normal campus wear, fully functional & clean.',
-                      },
-                      {
-                        value: 'Used',
-                        label: 'Used / Fair',
-                        desc: 'Visible scuffs or markings, but 100% usable.',
-                      },
+                      { value: 'Like New', label: 'Like New', desc: 'Pristine, almost unused.' },
+                      { value: 'Good', label: 'Good Condition', desc: 'Normal wear, 100% works.' },
+                      { value: 'Used', label: 'Used / Fair', desc: 'Visible marks, functional.' },
                     ].map((c) => (
                       <div
                         key={c.value}
                         onClick={() => setCustomCondition(c.value)}
-                        className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
+                        className={`p-3.5 rounded-[20px] border cursor-pointer transition-all ${
                           customCondition === c.value
-                            ? 'border-campus-primary bg-campus-soft/40 shadow-sm'
-                            : 'border-slate-200 hover:border-slate-300 bg-white'
+                            ? 'border-[#C6DE41] bg-[#C6DE41]/10 shadow-[0_0_15px_rgba(198,222,65,0.1)]'
+                            : 'border-white/10 hover:border-white/25 bg-[#181D14]'
                         }`}
                       >
                         <div className="flex items-center justify-between mb-1">
-                          <span className="font-bold text-xs text-slate-900">{c.label}</span>
+                          <span className={`font-semibold text-[13px] ${customCondition === c.value ? 'text-[#C6DE41]' : 'text-white'}`}>{c.label}</span>
                           <div
                             className={`w-4 h-4 rounded-full border flex items-center justify-center ${
                               customCondition === c.value
-                                ? 'border-campus-primary bg-campus-primary text-white'
-                                : 'border-slate-300'
+                                ? 'border-[#C6DE41] bg-[#C6DE41]'
+                                : 'border-white/30'
                             }`}
                           >
-                            {customCondition === c.value && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                            {customCondition === c.value && <div className="w-1.5 h-1.5 bg-[#090B09] rounded-full" />}
                           </div>
                         </div>
-                        <p className="text-[11px] text-slate-500 leading-tight">{c.desc}</p>
+                        <p className="text-[11px] text-stone-400">{c.desc}</p>
                       </div>
                     ))}
                   </div>
@@ -637,20 +596,20 @@ export const SellPage: React.FC = () => {
 
                 {/* Description */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                    Description & Details <span className="text-rose-500">*</span>
+                  <label className="block text-[12px] font-semibold text-stone-200 mb-1.5 tracking-tight">
+                    Item Description <span className="text-[#C6DE41]">*</span>
                   </label>
                   <textarea
                     rows={3}
                     required
                     value={customDescription}
                     onChange={(e) => setCustomDescription(e.target.value)}
-                    placeholder="e.g. 8th edition textbook, includes formula sheet, bought last semester for IT department. Fully clean inside."
-                    className="w-full p-3.5 text-xs sm:text-sm rounded-2xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30 focus:border-campus-primary resize-none"
+                    placeholder="e.g. Bought last semester for IT branch. Clean, all original parts present."
+                    className="w-full p-3.5 text-[13px] rounded-[20px] border border-white/15 bg-[#181D14] text-white placeholder:text-stone-500 focus:outline-none focus:border-[#C6DE41] resize-none"
                   />
                 </div>
 
-                {/* Multi-Image Uploader (1 to 5 images) */}
+                {/* Multi-Image Uploader */}
                 <ImageUploader
                   images={customImages}
                   onChange={setCustomImages}
@@ -660,79 +619,62 @@ export const SellPage: React.FC = () => {
                   helperText="Upload real photos. Click the star on any image to set it as the primary cover photo."
                 />
 
-                {/* Campus Handover Notice */}
-                <div className="p-4 rounded-2xl bg-campus-soft border border-campus-primary/30 flex items-center gap-3 text-xs">
-                  <MapPin className="w-5 h-5 text-campus-primary shrink-0" />
-                  <div className="text-campus-dark">
-                    <span className="font-bold block">Campus-Specific Handover Guaranteed</span>
-                    <span className="text-[11px] text-slate-600">
-                      Once approved, your item will be published to the <strong>{user.college.code} campus marketplace</strong>.
-                    </span>
-                  </div>
-                </div>
-
                 {/* Submit Button */}
                 <button
                   type="submit"
                   disabled={customSubmitting}
-                  className="w-full py-4 px-6 rounded-2xl bg-campus-primary hover:bg-campus-primary-hover text-white font-bold text-sm shadow-hero hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-4 px-6 rounded-full bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] font-bold text-[14px] shadow-[0_0_25px_rgba(198,222,65,0.3)] hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <Sparkles className="w-4 h-4 text-[#090B09]" />
                   <span>{customSubmitting ? 'Submitting Item for Review...' : 'Submit Custom Item for Listing'}</span>
                 </button>
               </form>
             </div>
           )}
 
-          {/* ------------------------------------------------------------ */}
-          {/* OPTION B: CATALOGUE WE ARE BUYING VIEW                       */}
-          {/* ------------------------------------------------------------ */}
+          {/* OPTION B: CATALOGUE WE ARE BUYING VIEW */}
           {sellMode === 'catalog' && (
             <div className="space-y-8 animate-fade-in">
               {/* Header Banner */}
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-8">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-white/10 pb-6">
                 <div>
-                  <div className="flex items-center gap-2 text-xs font-bold text-campus-primary uppercase tracking-wider mb-2">
-                    <Tag className="w-4 h-4" />
-                    <span>We Are Buying Catalog</span>
+                  <div className="flex items-center gap-2 text-[12px] font-bold text-[#C6DE41] uppercase tracking-wider mb-1">
+                    <Tag className="w-3.5 h-3.5" />
+                    <span>Instant Valuation Catalog</span>
                   </div>
-                  <h1 className="text-3xl sm:text-4xl font-extrabold text-campus-dark tracking-tight">
+                  <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
                     Sell Your Campus Essentials
                   </h1>
-                  <p className="text-sm text-slate-500 mt-2 max-w-xl">
+                  <p className="text-[13px] text-stone-400 mt-1 max-w-xl tracking-tight">
                     Select the item you want to sell from our official campus inventory. 
-                    Answer a quick condition assessment to receive your guaranteed cash quote.
+                    Answer a quick diagnostic questionnaire to receive your guaranteed cashout quote.
                   </p>
                 </div>
 
-                {/* Permanent College Lock Indicator */}
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-campus-soft border border-campus-primary/30 text-campus-dark text-xs font-bold shadow-sm self-start md:self-auto">
-                  <span>Selling on campus:</span>
-                  <span className="flex items-center gap-1 text-campus-primary font-black">
-                    <MapPin className="w-4 h-4" />
-                    {user.college.code}
-                  </span>
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#12160F] border border-white/10 text-white text-[12px] font-medium shadow-sm shrink-0">
+                  <MapPin className="w-3.5 h-3.5 text-[#C6DE41]" />
+                  <span>Selling at {user?.college?.code}</span>
                 </div>
               </div>
 
               {/* Custom Item Promo Strip */}
-              <div className="bg-gradient-to-r from-campus-soft via-emerald-50/40 to-purple-50/40 rounded-2xl p-4 border border-campus-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="bg-[#12160F] rounded-[28px] p-5 border border-white/10 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 shadow-sm">
+                  <div className="w-10 h-10 rounded-full bg-[#C6DE41]/10 text-[#C6DE41] border border-[#C6DE41]/20 flex items-center justify-center shrink-0">
                     <Sparkles className="w-5 h-5" />
                   </div>
                   <div>
-                    <span className="text-xs sm:text-sm font-bold text-slate-800 block">Selling something not listed here?</span>
-                    <span className="text-[11px] text-slate-500">Submit any textbook, scientific calculator, cycle, gadgets, or dorm essentials as a custom listing!</span>
+                    <span className="text-[13px] font-semibold text-white block tracking-tight">Selling something not listed here?</span>
+                    <span className="text-[12px] text-stone-400 tracking-tight">Submit any second-hand book, tool, or electronics kit as a custom listing!</span>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setSellMode('custom')}
-                  className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 shadow-sm self-start sm:self-auto"
+                  className="px-4 py-2 rounded-full bg-[#181D14] hover:bg-white/10 border border-white/15 text-white text-[12px] font-semibold transition-all shrink-0 flex items-center gap-1.5"
                 >
                   <span>Sell Custom Item</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-3.5 h-3.5 text-[#C6DE41]" />
                 </button>
               </div>
 
@@ -740,148 +682,147 @@ export const SellPage: React.FC = () => {
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
                 {/* Search Bar */}
                 <div className="relative flex-grow max-w-md">
-                  <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
+                  <Search className="w-4 h-4 text-stone-400 absolute left-4 top-1/2 -translate-y-1/2" />
+                  <SmoothInput
                     type="text"
-                    placeholder="Search items we are buying (e.g. Casio, Math book)..."
+                    placeholder="Search items we are buying (e.g. Casio, Drafter)..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-campus-primary/30 focus:border-campus-primary"
+                    className="w-full pl-10 pr-4 py-2.5 text-[13px] rounded-full border border-white/15 bg-[#12160F] text-white placeholder:text-stone-500 focus:outline-none focus:border-[#C6DE41]"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-white"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
 
-            {/* Category Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
-                    selectedCategory === cat
-                      ? 'bg-campus-primary text-white shadow-sm'
-                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
+                {/* Category Pills */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`px-3.5 py-1.5 rounded-full text-[12px] font-medium whitespace-nowrap transition-all ${
+                        selectedCategory === cat
+                          ? 'bg-[#C6DE41] text-[#090B09] font-bold shadow-[0_0_12px_rgba(198,222,65,0.3)]'
+                          : 'bg-[#12160F] border border-white/10 text-stone-400 hover:text-white'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          {/* Catalogue Grid */}
-          {loading ? (
-            <div className="py-20 text-center">
-              <div className="w-10 h-10 border-4 border-campus-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-              <p className="text-xs text-slate-500 font-medium">Loading catalog items...</p>
-            </div>
-          ) : filteredProducts.length === 0 ? (
-            <div className="bg-white rounded-3xl p-12 text-center border border-slate-200/80">
-              <Package className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <h3 className="font-bold text-slate-800 text-base">No items found</h3>
-              <p className="text-xs text-slate-500 mt-1">
-                Try clearing your search query or selecting a different category.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProducts.map((p) => {
-                const maxVal = p.upto_buy_price || p.buy_price;
+              {/* Catalogue Grid */}
+              {loading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-80 bg-[#12160F] rounded-[28px] border border-white/10 p-3 animate-pulse" />
+                  ))}
+                </div>
+              ) : filteredProducts.length === 0 ? (
+                <div className="bg-[#12160F] rounded-[28px] p-12 text-center border border-white/10 shadow-lg">
+                  <Package className="w-12 h-12 text-stone-500 mx-auto mb-3" />
+                  <h3 className="font-semibold text-white text-base tracking-tight">No catalog items found</h3>
+                  <p className="text-[12px] text-stone-400 mt-1">
+                    Try searching for another keyword or submit it as a custom listing above.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredProducts.map((p) => {
+                    const maxVal = p.upto_buy_price || p.buy_price;
 
-                return (
-                  <div
-                    key={p.id}
-                    onClick={() => p.is_buying_enabled && handleSelectProduct(p)}
-                    className={`bg-white rounded-3xl border transition-all flex flex-col overflow-hidden group ${
-                      p.is_buying_enabled
-                        ? 'border-slate-200 hover:border-campus-primary/60 hover:shadow-card cursor-pointer'
-                        : 'border-slate-200/60 opacity-75'
-                    }`}
-                  >
-                    {/* Image Area */}
-                    <div className="relative aspect-video w-full bg-slate-100 overflow-hidden">
-                      <img
-                        src={p.image_url}
-                        alt={p.name}
-                        className={`w-full h-full object-cover transition-transform duration-300 ${
-                          p.is_buying_enabled ? 'group-hover:scale-105' : ''
+                    return (
+                      <div
+                        key={p.id}
+                        onClick={() => p.is_buying_enabled && handleSelectProduct(p)}
+                        className={`bg-[#12160F] rounded-[28px] p-3 border transition-all flex flex-col justify-between group shadow-lg hover:shadow-2xl ${
+                          p.is_buying_enabled
+                            ? 'border-white/10 hover:border-[#C6DE41]/50 cursor-pointer hover:-translate-y-1'
+                            : 'border-white/5 opacity-60'
                         }`}
-                      />
-                      <div className="absolute top-3 left-3">
-                        <span className="px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm text-campus-dark text-[10px] font-extrabold uppercase tracking-wider shadow-sm">
-                          {p.category}
-                        </span>
-                      </div>
-                      <div className="absolute top-3 right-3">
-                        {p.is_buying_enabled ? (
-                          <span className="px-2.5 py-1 rounded-full bg-emerald-500 text-white text-[10px] font-extrabold shadow-sm flex items-center gap-1">
-                            <Check className="w-3 h-3" /> Actively Buying
-                          </span>
-                        ) : (
-                          <span className="px-2.5 py-1 rounded-full bg-slate-700/90 text-white text-[10px] font-bold shadow-sm">
-                            Quota Full
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Content Area */}
-                    <div className="p-6 flex-grow flex flex-col justify-between space-y-4">
-                      <div>
-                        <h3 className="text-base font-extrabold text-slate-900 group-hover:text-campus-primary transition-colors">
-                          {p.name}
-                        </h3>
-                        <p className="text-xs text-slate-500 line-clamp-2 mt-1 leading-relaxed">
-                          {p.description}
-                        </p>
-                      </div>
-
-                      {/* Price & Action */}
-                      <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                        <div>
-                          <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
-                            Get Up To
-                          </span>
-                          <span className="text-2xl font-black text-campus-dark">
-                            ₹{maxVal.toLocaleString('en-IN')}
-                          </span>
+                      >
+                        {/* 20px radius Inner Image */}
+                        <div className="relative aspect-square w-full rounded-[20px] bg-[#181D14] overflow-hidden">
+                          <img
+                            src={p.image_url}
+                            alt={p.name}
+                            className={`w-full h-full object-cover transition-transform duration-500 ease-out ${
+                              p.is_buying_enabled ? 'group-hover:scale-105' : ''
+                            }`}
+                          />
+                          <div className="absolute top-2.5 left-2.5">
+                            <span className="px-2.5 py-1 rounded-full bg-[#090B09]/80 backdrop-blur-sm text-stone-200 border border-white/10 text-[11px] font-medium shadow-sm">
+                              {p.category}
+                            </span>
+                          </div>
+                          <div className="absolute top-2.5 right-2.5">
+                            {p.is_buying_enabled ? (
+                              <span className="px-2.5 py-0.5 rounded-full bg-[#C6DE41]/20 text-[#C6DE41] border border-[#C6DE41]/40 text-[10px] font-bold shadow-sm flex items-center gap-1">
+                                <Check className="w-3 h-3 stroke-[3]" /> Buying
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-0.5 rounded-full bg-black/70 text-stone-400 text-[10px] font-medium">
+                                Quota Full
+                              </span>
+                            )}
+                          </div>
                         </div>
 
-                        {p.is_buying_enabled ? (
-                          <button
-                            type="button"
-                            className="px-4 py-2.5 rounded-xl bg-campus-primary group-hover:bg-campus-primary-hover text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1"
-                          >
-                            <span>Sell This</span>
-                            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                          </button>
-                        ) : (
-                          <span className="text-xs text-slate-400 font-semibold px-3 py-1.5 rounded-xl bg-slate-100">
-                            Not Accepting
-                          </span>
-                        )}
+                        {/* Content Area */}
+                        <div className="pt-3 px-1 pb-1 flex flex-col flex-grow justify-between gap-3">
+                          <div>
+                            <h3 className="text-[15px] font-semibold text-white group-hover:text-[#C6DE41] transition-colors tracking-tight line-clamp-1">
+                              {p.name}
+                            </h3>
+                            <p className="text-[12px] text-stone-400 line-clamp-2 mt-0.5 leading-relaxed tracking-tight">
+                              {p.description}
+                            </p>
+                          </div>
+
+                          {/* Price & Action */}
+                          <div className="pt-2 border-t border-white/10 flex items-center justify-between">
+                            <div>
+                              <span className="text-[10px] uppercase font-semibold text-stone-400 block tracking-wider">
+                                Get Up To
+                              </span>
+                              <span className="text-xl font-black text-[#C6DE41] tracking-tight">
+                                ₹{maxVal.toLocaleString('en-IN')}
+                              </span>
+                            </div>
+
+                            {p.is_buying_enabled ? (
+                              <button
+                                type="button"
+                                className="px-3.5 py-1.5 rounded-full bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] text-[12px] font-bold shadow-[0_0_12px_rgba(198,222,65,0.25)] transition-all flex items-center gap-1"
+                              >
+                                <span>Sell This</span>
+                                <ArrowRight className="w-3.5 h-3.5" />
+                              </button>
+                            ) : (
+                              <span className="text-[11px] text-stone-500 font-medium px-3 py-1 rounded-full bg-[#181D14]">
+                                Full
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                );
-              })}
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
       )}
-    </div>
-  )}
 
-      {/* ============================================================== */}
-      {/* VIEW 2: STEP-BY-STEP QUESTIONNAIRE (Next -> Next -> Image -> Payout) */}
-      {/* ============================================================== */}
+      {/* VIEW 2: STEP-BY-STEP QUESTIONNAIRE */}
       {selectedProduct && (
         <div className="max-w-2xl mx-auto space-y-6">
           
@@ -889,63 +830,61 @@ export const SellPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <button
               onClick={handleBackToCatalogue}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-campus-dark transition-colors px-3 py-1.5 rounded-xl hover:bg-slate-100"
+              className="inline-flex items-center gap-1.5 text-[12px] font-medium text-stone-400 hover:text-white transition-colors px-3 py-1.5 rounded-full hover:bg-white/5"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to Catalogue</span>
+              <span>Back to Catalog</span>
             </button>
 
-            <span className="text-xs text-slate-500 font-bold">
+            <span className="text-[12px] text-stone-400 font-medium">
               Step {currentStep + 1} of {totalStepsCount}
             </span>
           </div>
 
           {/* Selected Item Mini-Banner */}
-          <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-subtle flex items-center justify-between gap-4">
+          <div className="p-4 rounded-[28px] bg-[#12160F] border border-white/10 shadow-lg flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
               <img
                 src={selectedProduct.image_url}
                 alt={selectedProduct.name}
-                className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0"
+                className="w-12 h-12 rounded-[14px] object-cover border border-white/10 shrink-0"
               />
               <div className="min-w-0">
-                <span className="text-[10px] font-bold text-campus-primary uppercase tracking-wider block">
+                <span className="text-[10px] font-bold text-[#C6DE41] uppercase tracking-wider block">
                   {selectedProduct.category}
                 </span>
-                <h2 className="text-sm font-extrabold text-slate-900 truncate">
+                <h2 className="text-[14px] font-semibold text-white truncate tracking-tight">
                   {selectedProduct.name}
                 </h2>
               </div>
             </div>
 
             <div className="text-right shrink-0">
-              <span className="text-[10px] uppercase font-bold text-slate-400 block">Maximum Value</span>
-              <span className="text-base sm:text-lg font-black text-campus-dark">
+              <span className="text-[10px] uppercase font-medium text-stone-400 block">Maximum Value</span>
+              <span className="text-base font-black text-[#C6DE41] tracking-tight">
                 Up to ₹{maxPrice.toLocaleString('en-IN')}
               </span>
             </div>
           </div>
 
           {/* Step Progress Bar */}
-          <div className="w-full bg-slate-200/70 h-2 rounded-full overflow-hidden">
+          <div className="w-full bg-[#181D14] h-1.5 rounded-full overflow-hidden border border-white/10">
             <div
-              className="bg-campus-primary h-full transition-all duration-300 rounded-full"
+              className="bg-[#C6DE41] shadow-[0_0_8px_#C6DE41] h-full transition-all duration-300 rounded-full"
               style={{ width: `${((currentStep + 1) / totalStepsCount) * 100}%` }}
             />
           </div>
 
           {error && (
-            <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-center gap-2">
+            <div className="p-4 rounded-[20px] bg-rose-500/10 border border-rose-500/30 text-rose-300 text-[12px] font-medium flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
-          {/* -------------------------------------------------------- */}
-          {/* PHASE A: SEQUENTIAL QUESTIONS (Step 0 to N-1)           */}
-          {/* -------------------------------------------------------- */}
+          {/* PHASE A: SEQUENTIAL QUESTIONS */}
           {currentStep < totalQuestionSteps && (
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-subtle space-y-6">
+            <div className="bg-[#12160F] rounded-[28px] p-6 sm:p-8 border border-white/10 shadow-lg space-y-6">
               {(() => {
                 const q = activeQuestions[currentStep];
                 const currentAnswer = qualityAnswers[q.id];
@@ -953,14 +892,14 @@ export const SellPage: React.FC = () => {
                 return (
                   <>
                     <div>
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-campus-primary/10 text-campus-primary text-[11px] font-extrabold uppercase tracking-wider mb-2">
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C6DE41]/10 text-[#C6DE41] text-[11px] font-bold uppercase tracking-wider mb-2 border border-[#C6DE41]/20">
                         <HelpCircle className="w-3.5 h-3.5" />
                         <span>Question {currentStep + 1} of {totalQuestionSteps}</span>
                       </div>
-                      <h3 className="text-lg sm:text-xl font-extrabold text-slate-900">
+                      <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
                         {q.question}
                       </h3>
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-[12px] text-stone-400 mt-1 tracking-tight">
                         Select the option that best reflects the condition of your item.
                       </p>
                     </div>
@@ -975,29 +914,28 @@ export const SellPage: React.FC = () => {
                             type="button"
                             key={oIdx}
                             onClick={() => handleAnswerSelect(q.id, opt)}
-                            className={`w-full p-4 rounded-2xl border text-left transition-all flex items-start gap-3.5 ${
+                            className={`w-full p-4 rounded-[20px] border text-left transition-all flex items-start gap-3.5 ${
                               isSelected
-                                ? 'bg-emerald-50/60 border-campus-primary ring-2 ring-campus-primary/20 shadow-sm text-campus-dark'
-                                : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50/50'
+                                ? 'bg-[#C6DE41]/10 border-[#C6DE41] shadow-[0_0_15px_rgba(198,222,65,0.1)]'
+                                : 'bg-[#181D14] border-white/10 text-white hover:border-white/25'
                             }`}
                           >
-                            {/* Custom Radio Button */}
                             <div className={`mt-0.5 w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
                               isSelected
-                                ? 'border-campus-primary bg-campus-primary'
-                                : 'border-slate-300 bg-white'
+                                ? 'border-[#C6DE41] bg-[#C6DE41]'
+                                : 'border-white/30 bg-transparent'
                             }`}>
                               {isSelected && (
-                                <div className="w-2 h-2 rounded-full bg-white" />
+                                <div className="w-2 h-2 rounded-full bg-[#090B09]" />
                               )}
                             </div>
 
                             <div className="flex-grow min-w-0">
-                              <span className={`block text-sm font-bold ${isSelected ? 'text-campus-dark' : 'text-slate-900'}`}>
+                              <span className={`block text-[14px] font-semibold tracking-tight ${isSelected ? 'text-[#C6DE41]' : 'text-white'}`}>
                                 {opt.label}
                               </span>
                               {opt.description && (
-                                <span className="block text-xs text-slate-500 mt-0.5 leading-snug">
+                                <span className="block text-[12px] text-stone-400 mt-0.5 leading-snug tracking-tight">
                                   {opt.description}
                                 </span>
                               )}
@@ -1009,8 +947,8 @@ export const SellPage: React.FC = () => {
 
                     {/* Overall Condition Preset on First Question */}
                     {currentStep === 0 && (
-                      <div className="pt-4 border-t border-slate-100">
-                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                      <div className="pt-4 border-t border-white/10">
+                        <label className="block text-[11px] font-semibold uppercase tracking-wider text-stone-400 mb-2">
                           Overall Item Grade
                         </label>
                         <div className="grid grid-cols-3 gap-2.5">
@@ -1023,14 +961,14 @@ export const SellPage: React.FC = () => {
                               type="button"
                               key={item.grade}
                               onClick={() => setCondition(item.grade)}
-                              className={`p-2.5 rounded-xl border text-center transition-all ${
+                              className={`p-2.5 rounded-[16px] border text-center transition-all ${
                                 condition === item.grade
-                                  ? 'border-campus-primary bg-campus-soft text-campus-dark ring-2 ring-campus-primary/30 shadow-sm font-extrabold'
-                                  : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50 font-bold'
+                                  ? 'border-[#C6DE41] bg-[#C6DE41]/15 text-[#C6DE41] font-bold shadow-sm'
+                                  : 'border-white/10 bg-[#181D14] text-stone-400 hover:text-white'
                               }`}
                             >
-                              <span className="block text-xs">{item.grade}</span>
-                              <span className="block text-[10px] text-slate-400 mt-0.5">{item.desc}</span>
+                              <span className="block text-[12px] font-semibold">{item.grade}</span>
+                              <span className="block text-[10px] text-stone-400 mt-0.5">{item.desc}</span>
                             </button>
                           ))}
                         </div>
@@ -1041,11 +979,11 @@ export const SellPage: React.FC = () => {
               })()}
 
               {/* Navigation Footer */}
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+              <div className="pt-4 border-t border-white/10 flex items-center justify-between gap-3">
                 <button
                   type="button"
                   onClick={handlePreviousStep}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 transition-colors flex items-center gap-1.5"
+                  className="px-4 py-2.5 rounded-full border border-white/15 text-stone-300 hover:text-white font-medium text-[12px] transition-colors flex items-center gap-1.5"
                 >
                   <ChevronRight className="w-3.5 h-3.5 rotate-180" />
                   <span>{currentStep === 0 ? 'Back to Catalog' : 'Previous'}</span>
@@ -1054,7 +992,7 @@ export const SellPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  className="px-6 py-2.5 rounded-xl bg-campus-primary hover:bg-campus-primary-hover text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+                  className="px-6 py-2.5 rounded-full bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] font-bold text-[12px] shadow-[0_0_15px_rgba(198,222,65,0.25)] transition-all flex items-center gap-1.5"
                 >
                   <span>Next Question</span>
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -1063,25 +1001,23 @@ export const SellPage: React.FC = () => {
             </div>
           )}
 
-          {/* -------------------------------------------------------- */}
-          {/* PHASE B: IMAGE UPLOAD STEP ("at last an image option")   */}
-          {/* -------------------------------------------------------- */}
+          {/* PHASE B: IMAGE UPLOAD STEP */}
           {currentStep === imageStepIndex && (
-            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-subtle space-y-6">
+            <div className="bg-[#12160F] rounded-[28px] p-6 sm:p-8 border border-white/10 shadow-lg space-y-6">
               <div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-campus-primary/10 text-campus-primary text-[11px] font-extrabold uppercase tracking-wider mb-2">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C6DE41]/10 text-[#C6DE41] text-[11px] font-bold uppercase tracking-wider mb-2 border border-[#C6DE41]/20">
                   <Upload className="w-3.5 h-3.5" />
                   <span>Step {imageStepIndex + 1}: Photos</span>
                 </div>
-                <h3 className="text-lg sm:text-xl font-extrabold text-slate-900">
+                <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
                   Upload Photos of Your Item
                 </h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Upload 1–4 clear photos (front, back, screen, or accessories) so our Campus Hero can quickly approve your request.
+                <p className="text-[12px] text-stone-400 mt-1 tracking-tight">
+                  Upload 1–5 clear photos (front, back, screen, or accessories) so our Campus Hero can quickly approve your request.
                 </p>
               </div>
 
-              {/* Enhanced ImageUploader (1 to 5 images with drag-and-drop, primary selection & validation) */}
+              {/* ImageUploader */}
               <ImageUploader
                 images={imageUrls}
                 onChange={setImageUrls}
@@ -1093,127 +1029,125 @@ export const SellPage: React.FC = () => {
 
               {/* Optional Notes */}
               <div className="pt-2">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                <label className="block text-[12px] font-semibold text-stone-200 mb-1.5 tracking-tight">
                   Additional Details / Notes (Optional)
                 </label>
                 <textarea
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g. Bought for 2nd semester, includes manual, no dead pixels, lightly used."
-                  className="w-full p-3.5 text-xs sm:text-sm rounded-2xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30 focus:border-campus-primary resize-none"
+                  placeholder="e.g. Bought for 2nd semester, includes manual, lightly used."
+                  className="w-full p-3.5 text-[13px] rounded-[20px] border border-white/15 bg-[#181D14] text-white placeholder:text-stone-500 focus:outline-none focus:border-[#C6DE41] resize-none"
                 />
               </div>
 
               {/* Navigation Footer */}
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+              <div className="pt-4 border-t border-white/10 flex items-center justify-between gap-3">
                 <button
                   type="button"
                   onClick={handlePreviousStep}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 transition-colors flex items-center gap-1.5"
+                  className="px-4 py-2.5 rounded-full border border-white/15 text-stone-300 hover:text-white font-medium text-[12px] transition-colors flex items-center gap-1.5"
                 >
                   <ChevronRight className="w-3.5 h-3.5 rotate-180" />
-                  <span>Previous Question</span>
+                  <span>Previous</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  className="px-6 py-2.5 rounded-xl bg-campus-primary hover:bg-campus-primary-hover text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+                  className="px-6 py-2.5 rounded-full bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] font-bold text-[12px] shadow-[0_0_15px_rgba(198,222,65,0.25)] transition-all flex items-center gap-1.5"
                 >
-                  <span>Next: View Valuation</span>
+                  <span>View Valuation</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
           )}
 
-          {/* -------------------------------------------------------- */}
-          {/* PHASE C: FINAL APPROXIMATE PAYOUT & SUBMIT               */}
-          {/* -------------------------------------------------------- */}
+          {/* PHASE C: FINAL PAYOUT & SUBMIT */}
           {currentStep === finalReviewStepIndex && (
             <div className="space-y-6">
               {/* Massive Approximate Payout Card */}
-              <div className="bg-gradient-to-br from-campus-dark to-[#052b24] rounded-3xl p-6 sm:p-8 text-white shadow-card border border-emerald-900/40 text-center space-y-3">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-campus-light text-xs font-bold uppercase tracking-wider">
-                  <Sparkles className="w-3.5 h-3.5 text-campus-light" />
-                  <span>Approximate Payout You Will Receive</span>
+              <div className="bg-[#12160F] text-white rounded-[28px] p-6 sm:p-8 text-center space-y-3 border border-[#C6DE41]/30 shadow-[0_0_40px_rgba(198,222,65,0.1)]">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C6DE41]/10 text-[#C6DE41] border border-[#C6DE41]/20 text-[11px] font-bold uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Estimated Cashout Payout</span>
                 </span>
 
                 <div className="py-2">
-                  <span className="text-4xl sm:text-5xl font-black text-white tracking-tight">
+                  <span className="text-4xl sm:text-5xl font-black text-[#C6DE41] tracking-tight">
                     ₹{liveEstimatedPayout.toLocaleString('en-IN')}
                   </span>
-                  <span className="block text-xs text-emerald-200/80 font-medium mt-1">
-                    Instant cash or UPI transfer upon physical verification
+                  <span className="block text-[12px] text-stone-400 font-normal mt-1">
+                    Instant cash or UPI transfer upon on-campus inspection
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
-                  Price calculated based on your responses. Zero commission or listing deductions.
+                <p className="text-[12px] text-stone-400 max-w-md mx-auto leading-relaxed tracking-tight">
+                  Calculated based on your verified responses. Zero hidden deductions.
                 </p>
               </div>
 
               {/* Condition Summary Checklist Card */}
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-subtle space-y-4">
-                <h4 className="text-sm font-extrabold uppercase tracking-wider text-slate-800">
-                  Your Condition Summary
+              <div className="bg-[#12160F] rounded-[28px] p-6 sm:p-8 border border-white/10 shadow-lg space-y-4">
+                <h4 className="text-[12px] font-bold uppercase tracking-wider text-white">
+                  Condition Summary
                 </h4>
 
-                <div className="divide-y divide-slate-100">
-                  {activeQuestions.map((q, idx) => {
+                <div className="divide-y divide-white/10">
+                  {activeQuestions.map((q) => {
                     const ans = qualityAnswers[q.id];
                     return (
-                      <div key={q.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-1">
-                        <span className="text-slate-500 font-medium">{q.question}</span>
-                        <span className="font-bold text-campus-dark flex items-center gap-1">
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <div key={q.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between text-[12px] gap-1">
+                        <span className="text-stone-400 font-normal">{q.question}</span>
+                        <span className="font-semibold text-white flex items-center gap-1.5">
+                          <Check className="w-3.5 h-3.5 text-[#C6DE41]" />
                           {ans?.label || 'Not specified'}
                         </span>
                       </div>
                     );
                   })}
-                  <div className="py-3 flex items-center justify-between text-xs">
-                    <span className="text-slate-500 font-medium">Overall Grade</span>
-                    <span className="font-bold text-campus-dark">{condition}</span>
+                  <div className="py-3 flex items-center justify-between text-[12px]">
+                    <span className="text-stone-400 font-normal">Overall Grade</span>
+                    <span className="font-semibold text-white">{condition}</span>
                   </div>
-                  <div className="py-3 flex items-center justify-between text-xs">
-                    <span className="text-slate-500 font-medium">Photos Attached</span>
-                    <span className="font-bold text-campus-dark">
+                  <div className="py-3 flex items-center justify-between text-[12px]">
+                    <span className="text-stone-400 font-normal">Photos Attached</span>
+                    <span className="font-semibold text-white">
                       {imageUrls.length} photo{imageUrls.length !== 1 ? 's' : ''}
                     </span>
                   </div>
                 </div>
 
                 {/* Handover Details */}
-                <div className="p-4 rounded-2xl bg-campus-soft border border-campus-primary/30 flex items-center gap-3 text-xs">
-                  <MapPin className="w-5 h-5 text-campus-primary shrink-0" />
-                  <div className="text-campus-dark">
-                    <span className="font-bold block">Campus Handover Guarantee</span>
-                    <span className="text-[11px] text-slate-600">
-                      Physical inspection and payment take place on {user.college.code} campus.
+                <div className="p-4 rounded-[20px] bg-[#181D14] border border-white/10 flex items-center gap-3 text-[12px]">
+                  <MapPin className="w-4 h-4 text-[#C6DE41] shrink-0" />
+                  <div className="text-white">
+                    <span className="font-semibold block">Campus Handover Guarantee</span>
+                    <span className="text-[11px] text-stone-400">
+                      Physical inspection and payment take place on {user?.college?.code} campus.
                     </span>
                   </div>
                 </div>
 
                 {/* Navigation & Submit CTA */}
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+                <div className="pt-4 border-t border-white/10 flex items-center justify-between gap-3">
                   <button
                     type="button"
                     onClick={handlePreviousStep}
-                    className="px-4 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 transition-colors flex items-center gap-1.5"
+                    className="px-4 py-3 rounded-full border border-white/15 text-stone-300 hover:text-white font-medium text-[12px] transition-colors flex items-center gap-1.5"
                   >
                     <ChevronRight className="w-3.5 h-3.5 rotate-180" />
-                    <span>Back to Photos</span>
+                    <span>Back</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleSubmit}
                     disabled={submitting}
-                    className="flex-grow py-3.5 px-6 rounded-xl bg-campus-primary hover:bg-campus-primary-hover text-white font-bold text-xs sm:text-sm shadow-hero hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-grow py-3.5 px-6 rounded-full bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] font-bold text-[13px] shadow-[0_0_20px_rgba(198,222,65,0.25)] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    <Banknote className="w-4 h-4" />
+                    <Banknote className="w-4 h-4 text-[#090B09]" />
                     <span>
                       {submitting ? 'Submitting Request...' : `Submit Sell Request (Get ₹${liveEstimatedPayout})`}
                     </span>
