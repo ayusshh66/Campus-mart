@@ -37,6 +37,7 @@ model User {
   college_id               String
   college                  College                 @relation(fields: [college_id], references: [id])
   role                     String                  @default("USER") // "USER", "ADMIN", "CAMPUS_HERO"
+  marketplace_mode         String                  @default("BUYER") // "BUYER", "SELLER"
   created_at               DateTime                @default(now())
   updated_at               DateTime                @updatedAt
   sell_requests            SellRequest[]
@@ -203,7 +204,7 @@ model CustomItemSubmission {
   category                String
   condition               String       // "Like New", "Good", "Used"
   description             String
-  expected_price          Float
+  expected_price          Float?
   images                  String       @default("[]") // JSON array string of student uploaded image URLs
   status                  String       @default("PENDING") // PENDING, APPROVED, REJECTED
   rejection_reason        String?

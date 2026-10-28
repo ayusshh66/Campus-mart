@@ -17,7 +17,13 @@ export const LoginPage: React.FC = () => {
     setLoading(true); setError(null);
     try {
       const user = await login(email, password);
-      navigate(user.role === 'ADMIN' ? '/admin' : '/buy');
+      if (user.role === 'ADMIN') {
+        navigate('/admin');
+      } else if (user.marketplace_mode === 'SELLER') {
+        navigate('/');
+      } else {
+        navigate('/buy');
+      }
     } catch (err: any) { setError(err.message || 'Invalid email or password.'); }
     finally { setLoading(false); }
   };

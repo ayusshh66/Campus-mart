@@ -12,6 +12,7 @@ export interface AuthUser {
   college_name?: string;
   college_code?: string;
   role: string;
+  marketplace_mode?: string;
 }
 
 export interface AuthRequest extends Request {
@@ -48,6 +49,7 @@ export const authenticateToken = async (
         college_name: user.college.name,
         college_code: user.college.code,
         role: user.role,
+        marketplace_mode: user.marketplace_mode || 'BUYER',
       };
     }
   } catch (err) {

@@ -2,13 +2,14 @@ import { Router, Response } from 'express';
 import prisma from '../db';
 import { authenticateToken, requireAuth, AuthRequest } from '../middleware/auth';
 import { processAutoMatchForSellRequest } from '../services/autoMatch';
+import { getDefaultQualityQuestions } from './products';
 
 const router = Router();
 
 // POST /api/sell-requests - Submit a request to sell an approved catalog item
 router.post('/', authenticateToken, requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const { product_id, condition, description, images, quality_answers, estimated_price } = req.body;
+    const { product_id, condition, description, images, quality_answers } = req.body;
 
     if (!product_id || !condition) {
       return res.status(400).json({
@@ -56,17 +57,52 @@ router.post('/', authenticateToken, requireAuth, async (req: AuthRequest, res: R
     }
 
     let qualityAnswersJson = '{}';
+    let parsedQualityAnswers: Record<string, any> = {};
     if (quality_answers) {
       if (typeof quality_answers === 'string') {
         qualityAnswersJson = quality_answers;
+        try {
+          parsedQualityAnswers = JSON.parse(quality_answers);
+        } catch (e) {
+          parsedQualityAnswers = {};
+        }
       } else {
         qualityAnswersJson = JSON.stringify(quality_answers);
+        parsedQualityAnswers = quality_answers;
       }
     }
 
-    const finalEstimatedPrice = estimated_price !== undefined
-      ? parseFloat(estimated_price)
-      : product.buy_price;
+    // SECURITY: Prevent students from setting prices via direct API requests.
+    // Derive catalog estimates server-side strictly from admin-configured prices and validated condition answers.
+    let productQuestions: any[] = [];
+    try {
+      productQuestions = JSON.parse(product.quality_questions || '[]');
+    } catch (e) {
+      productQuestions = [];
+    }
+    if (!productQuestions || productQuestions.length === 0) {
+      productQuestions = getDefaultQualityQuestions(
+        product.name,
+        product.category,
+        product.buy_price,
+        product.upto_buy_price
+      );
+    }
+
+    let totalDeductions = 0;
+    productQuestions.forEach((q: any) => {
+      const studentAnswer = parsedQualityAnswers[q.id];
+      if (studentAnswer) {
+        const answerLabel = typeof studentAnswer === 'object' && studentAnswer.label ? studentAnswer.label : String(studentAnswer);
+        const matchedOption = q.options?.find((opt: any) => opt.label.toLowerCase() === answerLabel.toLowerCase());
+        if (matchedOption && typeof matchedOption.deduction === 'number') {
+          totalDeductions += matchedOption.deduction;
+        }
+      }
+    });
+
+    const maxPrice = product.upto_buy_price || Math.round(product.buy_price * 1.25);
+    const serverDerivedEstimatedPrice = Math.max(50, Math.round(maxPrice - totalDeductions));
 
     // STRICT SECURITY RULE: college_id is locked to the authenticated user's registered college!
     const sellRequest = await prisma.sellRequest.create({
@@ -78,8 +114,8 @@ router.post('/', authenticateToken, requireAuth, async (req: AuthRequest, res: R
         description: description?.trim() || null,
         images: imagesJson,
         quality_answers: qualityAnswersJson,
-        estimated_price: finalEstimatedPrice,
-        admin_buy_price: finalEstimatedPrice, // snapshot estimated price
+        estimated_price: serverDerivedEstimatedPrice,
+        admin_buy_price: serverDerivedEstimatedPrice, // initial server-derived valuation snapshot
         status: 'PENDING',
       },
       include: {
@@ -106,7 +142,7 @@ router.post('/', authenticateToken, requireAuth, async (req: AuthRequest, res: R
         product_name: sellRequest.product.name,
         condition: sellRequest.condition,
         college_name: sellRequest.college.name,
-        estimated_payout: finalEstimatedPrice,
+        estimated_payout: serverDerivedEstimatedPrice,
         status: finalStatus,
         auto_matched: Boolean(autoMatchResult?.auto_approved),
         created_at: sellRequest.created_at,
@@ -167,7 +203,7 @@ router.get('/my', authenticateToken, requireAuth, async (req: AuthRequest, res: 
 // POST /api/sell-requests/custom - Submit any custom item not in the catalog
 router.post('/custom', authenticateToken, requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const { name, category, condition, description, expected_price, images } = req.body;
+    const { name, category, condition, description, images } = req.body;
 
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({
@@ -198,14 +234,6 @@ router.post('/custom', authenticateToken, requireAuth, async (req: AuthRequest, 
       });
     }
 
-    const parsedPrice = parseFloat(expected_price);
-    if (isNaN(parsedPrice) || parsedPrice <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Expected price must be a valid positive amount.',
-      });
-    }
-
     // Format images safely as JSON
     let imagesJson = '[]';
     if (images) {
@@ -219,6 +247,8 @@ router.post('/custom', authenticateToken, requireAuth, async (req: AuthRequest, 
     // SECURITY: College is strictly locked to authenticated user's registered college
     const collegeId = req.user!.college_id;
 
+    // ADMIN-ONLY PRICING: Seller does not set price.
+    // Price will be determined by CampusMart admins after review.
     const submission = await prisma.customItemSubmission.create({
       data: {
         user_id: req.user!.id,
@@ -227,7 +257,7 @@ router.post('/custom', authenticateToken, requireAuth, async (req: AuthRequest, 
         category: category.trim(),
         condition,
         description: description.trim(),
-        expected_price: parsedPrice,
+        expected_price: null, // User pricing removed; admin assigns valuation
         images: imagesJson,
         status: 'PENDING',
       },
@@ -238,13 +268,14 @@ router.post('/custom', authenticateToken, requireAuth, async (req: AuthRequest, 
 
     return res.status(201).json({
       success: true,
-      message: 'Your custom item has been submitted for review! Once approved by admin, it will be listed as available on your campus.',
+      message: 'Your custom item has been submitted for review! Price will be determined by CampusMart after review.',
       data: {
         id: submission.id,
         name: submission.name,
         category: submission.category,
         condition: submission.condition,
-        expected_price: submission.expected_price,
+        expected_price: null,
+        price_status: 'Price will be determined by CampusMart after review.',
         college_id: submission.college_id,
         college_code: submission.college.code,
         college_name: submission.college.name,

@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 
 export const ProfilePage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, marketplaceMode, setMarketplaceMode } = useAuth();
   const navigate = useNavigate();
 
   const [sellRequests, setSellRequests] = useState<SellRequestItem[]>([]);
@@ -198,14 +198,42 @@ export const ProfilePage: React.FC = () => {
               )}
             </div>
 
-            {/* Permanent College Display */}
-            <div className="mt-1.5 flex items-center gap-2">
+            {/* Permanent College Display & Marketplace Mode */}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#181D14] border border-white/10 text-white text-[12px] font-semibold">
                 <MapPin className="w-3.5 h-3.5 text-[#C6DE41]" />
                 <span>{user.college.code} — {user.college.name}</span>
                 <span title="College is permanently bound and immutable">
                   <Lock className="w-3 h-3 text-stone-400 ml-1" />
                 </span>
+              </div>
+
+              {/* Interactive Marketplace Mode Toggle */}
+              <div className="inline-flex items-center p-0.5 rounded-full bg-[#181D14] border border-[#C6DE41]/30">
+                <button
+                  type="button"
+                  onClick={() => setMarketplaceMode('BUYER')}
+                  className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all flex items-center gap-1 ${
+                    marketplaceMode === 'BUYER'
+                      ? 'bg-[#C6DE41] text-[#090B09] shadow-[0_0_10px_rgba(198,222,65,0.3)]'
+                      : 'text-stone-400 hover:text-white'
+                  }`}
+                >
+                  <ShoppingBag className="w-3 h-3" />
+                  <span>Buyer Mode</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMarketplaceMode('SELLER')}
+                  className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all flex items-center gap-1 ${
+                    marketplaceMode === 'SELLER'
+                      ? 'bg-[#C6DE41] text-[#090B09] shadow-[0_0_10px_rgba(198,222,65,0.3)]'
+                      : 'text-stone-400 hover:text-white'
+                  }`}
+                >
+                  <Tag className="w-3 h-3" />
+                  <span>Seller Mode</span>
+                </button>
               </div>
             </div>
 
@@ -458,10 +486,10 @@ export const ProfilePage: React.FC = () => {
                   <div className="flex sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 pt-3 sm:pt-0 border-white/10 gap-2">
                     <div>
                       <span className="text-[11px] text-stone-400 uppercase font-semibold block text-right">
-                        Estimated Payout
+                        {item.status === 'APPROVED' ? 'Final Payout Quote' : 'Estimated Payout'}
                       </span>
                       <span className="text-lg font-black text-[#C6DE41]">
-                        ₹{item.admin_buy_price}
+                        ₹{item.admin_buy_price || item.estimated_price}
                       </span>
                     </div>
                     <div>{getStatusBadge(item.status)}</div>
@@ -596,11 +624,17 @@ export const ProfilePage: React.FC = () => {
                 <div className="flex sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 pt-3 sm:pt-0 border-white/10 gap-2 shrink-0">
                   <div className="text-right">
                     <span className="text-[11px] text-stone-400 uppercase font-semibold block">
-                      {sub.status === 'APPROVED' ? 'Approved Payout' : 'Asking Price'}
+                      {sub.status === 'APPROVED' ? 'Final Payout Quote' : 'Payout Valuation'}
                     </span>
-                    <span className="text-lg font-black text-[#C6DE41]">
-                      ₹{(sub.admin_buy_price || sub.expected_price).toLocaleString('en-IN')}
-                    </span>
+                    {sub.status === 'APPROVED' && sub.admin_buy_price ? (
+                      <span className="text-lg font-black text-[#C6DE41]">
+                        ₹{sub.admin_buy_price.toLocaleString('en-IN')}
+                      </span>
+                    ) : sub.status === 'REJECTED' ? (
+                      <span className="text-xs font-bold text-rose-400">Rejected</span>
+                    ) : (
+                      <span className="text-xs font-bold text-amber-300">Pending Admin Valuation</span>
+                    )}
                     {sub.status === 'APPROVED' && sub.admin_sell_price && (
                       <span className="text-[10px] text-stone-400 block">
                         Catalog Price: ₹{sub.admin_sell_price}

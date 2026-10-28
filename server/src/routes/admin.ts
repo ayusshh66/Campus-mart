@@ -1075,7 +1075,7 @@ router.put('/custom-submissions/:id', async (req: AuthRequest, res: Response) =>
           condition: submission.condition,
           description: submission.description,
           images: submission.images,
-          estimated_price: submission.expected_price,
+          estimated_price: buyPrice,
           admin_buy_price: buyPrice,
           admin_sell_price: sellPrice,
           status: 'APPROVED', // Makes it dynamically available on student's campus!
@@ -1151,6 +1151,7 @@ router.get('/users', async (req: AuthRequest, res: Response) => {
         email: true,
         phone: true,
         role: true,
+        marketplace_mode: true,
         college_id: true,
         created_at: true,
         updated_at: true,

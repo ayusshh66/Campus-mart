@@ -49,6 +49,7 @@ model User {
   college_id               String
   college                  College                 @relation(fields: [college_id], references: [id])
   role                     Role                    @default(USER)
+  marketplace_mode         String                  @default("BUYER")
   created_at               DateTime                @default(now())
   updated_at               DateTime                @updatedAt
   sell_requests            SellRequest[]
@@ -215,7 +216,7 @@ model CustomItemSubmission {
   category                String
   condition               String
   description             String
-  expected_price          Float
+  expected_price          Float?
   images                  String       @default("[]")
   status                  RequestStatus @default(PENDING)
   rejection_reason        String?

@@ -93,7 +93,7 @@ const HoveredLink: React.FC<{ to: string; children: React.ReactNode }> = ({ to, 
 );
 
 export const Navbar: React.FC = () => {
-  const { user, logout, selectedCollegeId, setSelectedCollegeId, resetToHomeCollege, isBrowsingOtherCollege } = useAuth();
+  const { user, logout, selectedCollegeId, setSelectedCollegeId, resetToHomeCollege, isBrowsingOtherCollege, marketplaceMode, setMarketplaceMode } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -296,37 +296,79 @@ export const Navbar: React.FC = () => {
             onMouseLeave={() => setActiveMenu(null)}
             onKeyDown={(e) => { if (e.key === 'Escape') setActiveMenu(null); }}
           >
-            <MenuItem label="Explore" to="/buy" active={activeMenu} setActive={setActiveMenu} current={isActive('/buy')}>
-              <HoveredLink to="/buy">Browse Campus Catalog</HoveredLink>
-              <HoveredLink to="/sell">Sell Your Gear</HoveredLink>
-            </MenuItem>
-            <MenuItem label="Sell Gear" to="/sell" active={activeMenu} setActive={setActiveMenu} current={isActive('/sell')}>
-              <HoveredLink to="/sell">Sell Campus Essentials</HoveredLink>
-            </MenuItem>
-            <MenuItem label="Teammates" to="/find-teammates" active={activeMenu} setActive={setActiveMenu} current={isActive('/find-teammates') || isActive('/teams')}>
-              <HoveredLink to="/find-teammates">Browse Team Openings</HoveredLink>
-              <HoveredLink to="/teams/create">Create Team Post</HoveredLink>
-              {user && <HoveredLink to="/my-teams">My Teams</HoveredLink>}
-            </MenuItem>
-            <MenuItem label="Heroes" to="/campus-heroes" active={activeMenu} setActive={setActiveMenu} current={isActive('/campus-heroes')}>
-              <HoveredLink to="/campus-heroes">Campus Hero Program</HoveredLink>
-              {(user?.role === 'CAMPUS_HERO' || user?.role === 'ADMIN') && (
-                <HoveredLink to="/hero-dashboard">Hero Operations</HoveredLink>
-              )}
-            </MenuItem>
-            {user && (
-              <MenuItem label="My Teams" to="/my-teams" active={activeMenu} setActive={setActiveMenu} current={isActive('/my-teams')}>
-                <HoveredLink to="/my-teams">My Team Applications</HoveredLink>
-                <HoveredLink to="/find-teammates">Find Teammates</HoveredLink>
-              </MenuItem>
-            )}
-            {(user?.role === 'CAMPUS_HERO' || user?.role === 'ADMIN') && (
-              <Link to="/hero-dashboard" className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 hover:text-[#C6DE41]" title="Campus Hero Delivery Operations">
-                Hero Ops
-              </Link>
-            )}
-            {user?.role === 'ADMIN' && (
-              <Link to="/admin" className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 hover:text-[#C6DE41]">Admin</Link>
+            {marketplaceMode === 'SELLER' ? (
+              /* Seller Mode Desktop Navigation */
+              <>
+                <MenuItem label="Sell Gear" to="/sell" active={activeMenu} setActive={setActiveMenu} current={isActive('/sell')}>
+                  <HoveredLink to="/sell">Submit Item to Sell</HoveredLink>
+                  <HoveredLink to="/profile">Track Payouts & Valuation</HoveredLink>
+                </MenuItem>
+                <MenuItem label="My Submissions" to="/profile" active={activeMenu} setActive={setActiveMenu} current={isActive('/profile')}>
+                  <HoveredLink to="/profile">Submission Review Status</HoveredLink>
+                  <HoveredLink to="/profile">Payout Quotes</HoveredLink>
+                </MenuItem>
+                <MenuItem label="Teammates" to="/find-teammates" active={activeMenu} setActive={setActiveMenu} current={isActive('/find-teammates') || isActive('/teams')}>
+                  <HoveredLink to="/find-teammates">Browse Team Openings</HoveredLink>
+                  <HoveredLink to="/teams/create">Create Team Post</HoveredLink>
+                  {user && <HoveredLink to="/my-teams">My Teams</HoveredLink>}
+                </MenuItem>
+                <MenuItem label="Heroes" to="/campus-heroes" active={activeMenu} setActive={setActiveMenu} current={isActive('/campus-heroes')}>
+                  <HoveredLink to="/campus-heroes">Campus Hero Program</HoveredLink>
+                  {(user?.role === 'CAMPUS_HERO' || user?.role === 'ADMIN') && (
+                    <HoveredLink to="/hero-dashboard">Hero Operations</HoveredLink>
+                  )}
+                </MenuItem>
+                {user && (
+                  <MenuItem label="My Teams" to="/my-teams" active={activeMenu} setActive={setActiveMenu} current={isActive('/my-teams')}>
+                    <HoveredLink to="/my-teams">My Team Applications</HoveredLink>
+                    <HoveredLink to="/find-teammates">Find Teammates</HoveredLink>
+                  </MenuItem>
+                )}
+                {(user?.role === 'CAMPUS_HERO' || user?.role === 'ADMIN') && (
+                  <Link to="/hero-dashboard" className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 hover:text-[#C6DE41]" title="Campus Hero Delivery Operations">
+                    Hero Ops
+                  </Link>
+                )}
+                {user?.role === 'ADMIN' && (
+                  <Link to="/admin" className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 hover:text-[#C6DE41]">Admin</Link>
+                )}
+              </>
+            ) : (
+              /* Buyer Mode Desktop Navigation: Primary focus BUY, "Sell Gear" LAST among marketplace actions */
+              <>
+                <MenuItem label="Explore" to="/buy" active={activeMenu} setActive={setActiveMenu} current={isActive('/buy')}>
+                  <HoveredLink to="/buy">Browse Campus Catalog</HoveredLink>
+                  <HoveredLink to="/sell">Sell Your Gear</HoveredLink>
+                </MenuItem>
+                <MenuItem label="Teammates" to="/find-teammates" active={activeMenu} setActive={setActiveMenu} current={isActive('/find-teammates') || isActive('/teams')}>
+                  <HoveredLink to="/find-teammates">Browse Team Openings</HoveredLink>
+                  <HoveredLink to="/teams/create">Create Team Post</HoveredLink>
+                  {user && <HoveredLink to="/my-teams">My Teams</HoveredLink>}
+                </MenuItem>
+                <MenuItem label="Heroes" to="/campus-heroes" active={activeMenu} setActive={setActiveMenu} current={isActive('/campus-heroes')}>
+                  <HoveredLink to="/campus-heroes">Campus Hero Program</HoveredLink>
+                  {(user?.role === 'CAMPUS_HERO' || user?.role === 'ADMIN') && (
+                    <HoveredLink to="/hero-dashboard">Hero Operations</HoveredLink>
+                  )}
+                </MenuItem>
+                {user && (
+                  <MenuItem label="My Teams" to="/my-teams" active={activeMenu} setActive={setActiveMenu} current={isActive('/my-teams')}>
+                    <HoveredLink to="/my-teams">My Team Applications</HoveredLink>
+                    <HoveredLink to="/find-teammates">Find Teammates</HoveredLink>
+                  </MenuItem>
+                )}
+                {(user?.role === 'CAMPUS_HERO' || user?.role === 'ADMIN') && (
+                  <Link to="/hero-dashboard" className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 hover:text-[#C6DE41]" title="Campus Hero Delivery Operations">
+                    Hero Ops
+                  </Link>
+                )}
+                {user?.role === 'ADMIN' && (
+                  <Link to="/admin" className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 hover:text-[#C6DE41]">Admin</Link>
+                )}
+                <MenuItem label="Sell Gear" to="/sell" active={activeMenu} setActive={setActiveMenu} current={isActive('/sell')}>
+                  <HoveredLink to="/sell">Sell Campus Essentials</HoveredLink>
+                </MenuItem>
+              </>
             )}
           </nav>
 
@@ -334,6 +376,19 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center gap-2">
             {user ? (
               <div className="flex items-center gap-2">
+                {/* Mode Switcher Pill */}
+                <button
+                  onClick={() => setMarketplaceMode(marketplaceMode === 'BUYER' ? 'SELLER' : 'BUYER')}
+                  title={`Switch to ${marketplaceMode === 'BUYER' ? 'Seller' : 'Buyer'} Mode`}
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#C6DE41]/40 bg-[#12160F] hover:bg-[#C6DE41]/10 text-white text-[11px] font-bold transition-all shadow-shop-pill group"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#C6DE41] shadow-[0_0_5px_#C6DE41]" />
+                  <span className="text-zinc-400 font-normal">Mode:</span>
+                  <span className="text-[#C6DE41] group-hover:underline">
+                    {marketplaceMode === 'SELLER' ? 'Seller' : 'Buyer'}
+                  </span>
+                </button>
+
                 <Link
                   to="/profile"
                   className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#C6DE41]/30 bg-[#12160F] hover:border-[#C6DE41]/60 transition-all text-[12px] font-medium text-white shadow-shop-pill"
@@ -384,30 +439,57 @@ export const Navbar: React.FC = () => {
           <Home className="w-4 h-4 mb-0.5" />
           <span>Home</span>
         </Link>
-        <Link
-          to="/buy"
-          className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/buy') ? 'text-[#C6DE41]' : 'text-zinc-400 hover:text-white'
-            }`}
-        >
-          <ShoppingBag className="w-4 h-4 mb-0.5" />
-          <span><TextRoll text="Buy" /></span>
-        </Link>
-        <Link
-          to="/sell"
-          className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/sell') ? 'text-[#C6DE41]' : 'text-zinc-400 hover:text-white'
-            }`}
-        >
-          <Tag className="w-4 h-4 mb-0.5" />
-          <span><TextRoll text="Sell" /></span>
-        </Link>
-        <Link
-          to="/find-teammates"
-          className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/find-teammates') || isActive('/teams') ? 'text-[#C6DE41]' : 'text-zinc-400 hover:text-white'
-            }`}
-        >
-          <Users className="w-4 h-4 mb-0.5" />
-          <span>Teams</span>
-        </Link>
+
+        {marketplaceMode === 'SELLER' ? (
+          /* Seller Mobile Nav: No Buy button */
+          <>
+            <Link
+              to="/sell"
+              className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/sell') ? 'text-[#C6DE41]' : 'text-zinc-400 hover:text-white'
+                }`}
+            >
+              <Tag className="w-4 h-4 mb-0.5" />
+              <span><TextRoll text="Sell" /></span>
+            </Link>
+            <Link
+              to="/find-teammates"
+              className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/find-teammates') || isActive('/teams') ? 'text-[#C6DE41]' : 'text-zinc-400 hover:text-white'
+                }`}
+            >
+              <Users className="w-4 h-4 mb-0.5" />
+              <span>Teams</span>
+            </Link>
+          </>
+        ) : (
+          /* Buyer Mobile Nav: Primary focus BUY, "Sell Gear" LAST among marketplace actions */
+          <>
+            <Link
+              to="/buy"
+              className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/buy') ? 'text-[#C6DE41]' : 'text-zinc-400 hover:text-white'
+                }`}
+            >
+              <ShoppingBag className="w-4 h-4 mb-0.5" />
+              <span><TextRoll text="Buy" /></span>
+            </Link>
+            <Link
+              to="/find-teammates"
+              className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/find-teammates') || isActive('/teams') ? 'text-[#C6DE41]' : 'text-zinc-400 hover:text-white'
+                }`}
+            >
+              <Users className="w-4 h-4 mb-0.5" />
+              <span>Teams</span>
+            </Link>
+            <Link
+              to="/sell"
+              className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/sell') ? 'text-[#C6DE41]' : 'text-zinc-400 hover:text-white'
+                }`}
+            >
+              <Tag className="w-4 h-4 mb-0.5" />
+              <span><TextRoll text="Sell" /></span>
+            </Link>
+          </>
+        )}
+
         {user ? (
           <Link
             to="/profile"

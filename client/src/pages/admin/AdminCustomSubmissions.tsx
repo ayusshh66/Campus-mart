@@ -345,10 +345,12 @@ export const AdminCustomSubmissions: React.FC<Props> = ({ onAction }) => {
                       </span>
                     </div>
 
-                    {/* Student's Asking Price */}
+                    {/* Student Asking / Valuation Status */}
                     <div className="pt-1">
                       <span className="text-xs text-slate-500">Student Expected Price: </span>
-                      <span className="text-sm font-black text-campus-dark">₹{sub.expected_price.toLocaleString('en-IN')}</span>
+                      <span className="text-sm font-black text-campus-dark">
+                        {sub.expected_price != null ? `₹${sub.expected_price.toLocaleString('en-IN')}` : 'Determined by Admin'}
+                      </span>
                     </div>
 
                     {/* Rejection notice if rejected */}

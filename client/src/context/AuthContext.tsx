@@ -6,9 +6,11 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<User>;
-  register: (payload: { name: string; email: string; phone: string; password: string; college_id: string }) => Promise<User>;
+  register: (payload: { name: string; email: string; phone: string; password: string; college_id: string; marketplace_mode?: 'BUYER' | 'SELLER' }) => Promise<User>;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  marketplaceMode: 'BUYER' | 'SELLER';
+  setMarketplaceMode: (mode: 'BUYER' | 'SELLER') => Promise<void>;
   selectedCollegeId: string | null;
   setSelectedCollegeId: (id: string | null) => void;
   resetToHomeCollege: () => void;
@@ -61,6 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     phone: string;
     password: string;
     college_id: string;
+    marketplace_mode?: 'BUYER' | 'SELLER';
   }): Promise<User> => {
     const res = await api.register(payload);
     localStorage.setItem('campusmart_token', res.data.token);
@@ -86,6 +89,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(userData);
       } catch (err) {
         console.error('Failed to refresh user:', err);
+      }
+    }
+  };
+
+  const setMarketplaceMode = async (mode: 'BUYER' | 'SELLER') => {
+    if (user) {
+      try {
+        const res = await api.updateMarketplaceMode(mode);
+        setUser((prev) => (prev ? { ...prev, marketplace_mode: res.data.marketplace_mode } : null));
+      } catch (err) {
+        console.error('Failed to update marketplace mode:', err);
       }
     }
   };
@@ -120,6 +134,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     : guestCollegeId;
 
   const isBrowsingOtherCollege = Boolean(user && browsingCollegeId && browsingCollegeId !== user.college.id);
+  const activeMarketplaceMode: 'BUYER' | 'SELLER' = user ? (user.marketplace_mode || 'BUYER') : 'BUYER';
 
   return (
     <AuthContext.Provider
@@ -131,6 +146,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         logout,
         refreshUser,
+        marketplaceMode: activeMarketplaceMode,
+        setMarketplaceMode,
         selectedCollegeId: activeCollegeId,
         setSelectedCollegeId,
         resetToHomeCollege,

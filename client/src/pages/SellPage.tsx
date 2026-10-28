@@ -70,7 +70,6 @@ export const SellPage: React.FC = () => {
   const [customName, setCustomName] = useState<string>('');
   const [customCategory, setCustomCategory] = useState<string>('Books & Academic');
   const [customCondition, setCustomCondition] = useState<string>('Good');
-  const [customExpectedPrice, setCustomExpectedPrice] = useState<string>('');
   const [customDescription, setCustomDescription] = useState<string>('');
   const [customImages, setCustomImages] = useState<string[]>([]);
   const [customSubmitting, setCustomSubmitting] = useState<boolean>(false);
@@ -268,11 +267,6 @@ export const SellPage: React.FC = () => {
       setCustomError('Please enter the item name.');
       return;
     }
-    const price = parseFloat(customExpectedPrice);
-    if (isNaN(price) || price <= 0) {
-      setCustomError('Please enter a valid expected cash price (greater than ₹0).');
-      return;
-    }
     if (customDescription.trim().length < 5) {
       setCustomError('Please provide a brief description (at least 5 characters).');
       return;
@@ -289,7 +283,6 @@ export const SellPage: React.FC = () => {
         category: customCategory,
         condition: customCondition,
         description: customDescription.trim(),
-        expected_price: price,
         images: customImages,
       });
 
@@ -297,7 +290,7 @@ export const SellPage: React.FC = () => {
         name: customName.trim(),
         category: customCategory,
         condition: customCondition,
-        expectedPrice: price,
+        priceStatus: 'Price will be determined by CampusMart after review.',
         collegeCode: user?.college.code,
         imageCount: customImages.length,
       });
@@ -388,8 +381,8 @@ export const SellPage: React.FC = () => {
               <strong className="text-white">{customSubmittedData?.condition}</strong>
             </div>
             <div className="flex items-center justify-between w-full text-[12px] text-stone-400 border-b border-white/10 pb-2">
-              <span>Asking Price:</span>
-              <strong className="text-[#C6DE41] text-[15px] font-bold">₹{customSubmittedData?.expectedPrice.toLocaleString('en-IN')}</strong>
+              <span>Payout Valuation:</span>
+              <strong className="text-[#C6DE41] text-[12px] font-bold">Price will be determined by CampusMart after review.</strong>
             </div>
             <div className="flex items-center justify-between w-full text-[12px] text-stone-400 pt-1">
               <span>Campus Handover:</span>
@@ -408,7 +401,6 @@ export const SellPage: React.FC = () => {
               onClick={() => {
                 setCustomSubmittedSuccess(false);
                 setCustomName('');
-                setCustomExpectedPrice('');
                 setCustomDescription('');
                 setCustomImages([]);
                 setCustomError(null);
@@ -536,22 +528,20 @@ export const SellPage: React.FC = () => {
                     </select>
                   </div>
 
-                  <div>
-                    <label className="block text-[12px] font-semibold text-stone-200 mb-1.5 tracking-tight">
-                      Expected Payout Price (₹) <span className="text-[#C6DE41]">*</span>
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 font-bold text-sm">₹</span>
-                      <SmoothInput
-                        type="number"
-                        min="1"
-                        step="1"
-                        required
-                        value={customExpectedPrice}
-                        onChange={(e) => setCustomExpectedPrice(e.target.value)}
-                        placeholder="e.g. 450"
-                        className="w-full pl-8 pr-4 py-2.5 text-[13px] rounded-full border border-white/15 bg-[#181D14] focus:outline-none focus:border-[#C6DE41] font-bold text-white placeholder:text-stone-500"
-                      />
+                  <div className="rounded-2xl border border-[#C6DE41]/30 bg-[#181D14] p-3.5 flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-[#C6DE41]/15 text-[#C6DE41] border border-[#C6DE41]/30 flex items-center justify-center shrink-0 mt-0.5">
+                      <Banknote className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="block text-[11px] font-bold uppercase tracking-wider text-[#C6DE41]">
+                        Admin-Determined Valuation
+                      </span>
+                      <p className="text-[12px] font-semibold text-white mt-0.5">
+                        Price will be determined by CampusMart after review.
+                      </p>
+                      <p className="text-[11px] text-stone-400 mt-0.5 leading-snug">
+                        Our operations team reviews your photos, category, and condition to assign a fair guaranteed cash payout and campus listing price.
+                      </p>
                     </div>
                   </div>
                 </div>

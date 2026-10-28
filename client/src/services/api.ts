@@ -23,6 +23,7 @@ export interface User {
   email: string;
   phone: string;
   role: 'USER' | 'ADMIN' | 'CAMPUS_HERO';
+  marketplace_mode: 'BUYER' | 'SELLER';
   college: {
     id: string;
     code: string;
@@ -128,7 +129,7 @@ export interface CustomItemSubmissionItem {
   category: string;
   condition: string;
   description: string;
-  expected_price: number;
+  expected_price?: number | null;
   images: string[];
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   rejection_reason?: string | null;
@@ -503,7 +504,7 @@ export const api = {
   },
 
   // Auth
-  register: async (payload: { name: string; email: string; phone: string; password: string; college_id: string }) => {
+  register: async (payload: { name: string; email: string; phone: string; password: string; college_id: string; marketplace_mode?: 'BUYER' | 'SELLER' }) => {
     return request<{ success: boolean; message: string; data: { token: string; user: User } }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(payload),
@@ -520,6 +521,13 @@ export const api = {
   getMe: async () => {
     const res = await request<{ success: boolean; data: User }>('/auth/me');
     return res.data;
+  },
+
+  updateMarketplaceMode: async (marketplace_mode: 'BUYER' | 'SELLER') => {
+    return request<{ success: boolean; message: string; data: { marketplace_mode: 'BUYER' | 'SELLER' } }>('/auth/mode', {
+      method: 'PATCH',
+      body: JSON.stringify({ marketplace_mode }),
+    });
   },
 
   // Products
@@ -560,7 +568,7 @@ export const api = {
     category: string;
     condition: string;
     description: string;
-    expected_price: number;
+    expected_price?: number;
     images?: string[];
   }) => {
     return request<{ success: boolean; message: string; data: any }>('/sell-requests/custom', {

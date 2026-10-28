@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api, College } from '../services/api';
-import { ArrowRight, UserPlus, AlertTriangle, AlertCircle, GraduationCap } from 'lucide-react';
+import { ArrowRight, UserPlus, AlertTriangle, AlertCircle, GraduationCap, ShoppingBag, Tag } from 'lucide-react';
 
 export const SignupPage: React.FC = () => {
   const { register } = useAuth();
@@ -14,6 +14,7 @@ export const SignupPage: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [collegeId, setCollegeId] = useState('');
+  const [marketplaceMode, setMarketplaceMode] = useState<'BUYER' | 'SELLER'>('BUYER');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -39,8 +40,15 @@ export const SignupPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      await register({ name, email, phone, password, college_id: collegeId });
-      navigate('/buy');
+      const user = await register({
+        name,
+        email,
+        phone,
+        password,
+        college_id: collegeId,
+        marketplace_mode: marketplaceMode,
+      });
+      navigate(user.marketplace_mode === 'SELLER' ? '/' : '/buy');
     } catch (err: any) {
       setError(err.message || 'Registration failed.');
     } finally {
@@ -128,6 +136,80 @@ export const SignupPage: React.FC = () => {
                 <p>
                   <strong>College selection is permanent.</strong> Make sure you select the correct college before continuing.
                 </p>
+              </div>
+
+              {/* Required "I want to Buy / I want to Sell" Selection */}
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-semibold text-zinc-300 mb-2">
+                  I am joining CampusMart to <span className="text-[#C6DE41]">*</span>
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setMarketplaceMode('BUYER')}
+                    className={`flex items-start gap-3.5 p-4 rounded-2xl border text-left transition-all ${
+                      marketplaceMode === 'BUYER'
+                        ? 'border-[#C6DE41] bg-[#C6DE41]/10 shadow-[0_0_20px_rgba(198,222,65,0.15)] ring-1 ring-[#C6DE41]'
+                        : 'border-white/15 bg-[#12160F] hover:border-white/30 text-zinc-400'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-colors ${
+                      marketplaceMode === 'BUYER'
+                        ? 'bg-[#C6DE41] text-[#090B09] border-[#C6DE41]'
+                        : 'bg-white/5 text-zinc-400 border-white/10'
+                    }`}>
+                      <ShoppingBag size={20} />
+                    </div>
+                    <div className="flex-grow min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className={`font-bold text-sm ${marketplaceMode === 'BUYER' ? 'text-white' : 'text-zinc-300'}`}>
+                          I want to Buy
+                        </span>
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                          marketplaceMode === 'BUYER' ? 'border-[#C6DE41] bg-[#C6DE41]' : 'border-white/20'
+                        }`}>
+                          {marketplaceMode === 'BUYER' && <div className="w-1.5 h-1.5 bg-[#090B09] rounded-full" />}
+                        </div>
+                      </div>
+                      <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                        Discover verified student gear, books & tools on campus with zero stranger risk.
+                      </p>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setMarketplaceMode('SELLER')}
+                    className={`flex items-start gap-3.5 p-4 rounded-2xl border text-left transition-all ${
+                      marketplaceMode === 'SELLER'
+                        ? 'border-[#C6DE41] bg-[#C6DE41]/10 shadow-[0_0_20px_rgba(198,222,65,0.15)] ring-1 ring-[#C6DE41]'
+                        : 'border-white/15 bg-[#12160F] hover:border-white/30 text-zinc-400'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-colors ${
+                      marketplaceMode === 'SELLER'
+                        ? 'bg-[#C6DE41] text-[#090B09] border-[#C6DE41]'
+                        : 'bg-white/5 text-zinc-400 border-white/10'
+                    }`}>
+                      <Tag size={20} />
+                    </div>
+                    <div className="flex-grow min-w-0">
+                      <div className="flex items-center justify-between">
+                        <span className={`font-bold text-sm ${marketplaceMode === 'SELLER' ? 'text-white' : 'text-zinc-300'}`}>
+                          I want to Sell
+                        </span>
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                          marketplaceMode === 'SELLER' ? 'border-[#C6DE41] bg-[#C6DE41]' : 'border-white/20'
+                        }`}>
+                          {marketplaceMode === 'SELLER' && <div className="w-1.5 h-1.5 bg-[#090B09] rounded-full" />}
+                        </div>
+                      </div>
+                      <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                        Declutter your room, get guaranteed admin valuation, and cash out safely.
+                      </p>
+                    </div>
+                  </button>
+                </div>
               </div>
 
               <button
