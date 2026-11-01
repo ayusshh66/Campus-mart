@@ -4,6 +4,7 @@ import { authenticateToken, requireAuth, AuthRequest } from '../middleware/auth'
 import { processAutoMatchForSellRequest } from '../services/autoMatch';
 import { getDefaultQualityQuestions } from './products';
 
+
 const router = Router();
 
 // POST /api/sell-requests - Submit a request to sell an approved catalog item
@@ -56,53 +57,140 @@ router.post('/', authenticateToken, requireAuth, async (req: AuthRequest, res: R
       }
     }
 
-    let qualityAnswersJson = '{}';
-    let parsedQualityAnswers: Record<string, any> = {};
-    if (quality_answers) {
-      if (typeof quality_answers === 'string') {
-        qualityAnswersJson = quality_answers;
-        try {
-          parsedQualityAnswers = JSON.parse(quality_answers);
-        } catch (e) {
-          parsedQualityAnswers = {};
-        }
-      } else {
-        qualityAnswersJson = JSON.stringify(quality_answers);
-        parsedQualityAnswers = quality_answers;
-      }
-    }
+    
+    // Parse quality answers safely
+    let parsedQualityAnswers: Record<string, unknown>;
 
-    // SECURITY: Prevent students from setting prices via direct API requests.
-    // Derive catalog estimates server-side strictly from admin-configured prices and validated condition answers.
-    let productQuestions: any[] = [];
     try {
-      productQuestions = JSON.parse(product.quality_questions || '[]');
-    } catch (e) {
-      productQuestions = [];
-    }
-    if (!productQuestions || productQuestions.length === 0) {
-      productQuestions = getDefaultQualityQuestions(
-        product.name,
-        product.category,
-        product.buy_price,
-        product.upto_buy_price
-      );
-    }
+      const parsed =
+        typeof quality_answers === 'string'
+          ? JSON.parse(quality_answers)
+          : quality_answers;
 
-    let totalDeductions = 0;
-    productQuestions.forEach((q: any) => {
-      const studentAnswer = parsedQualityAnswers[q.id];
-      if (studentAnswer) {
-        const answerLabel = typeof studentAnswer === 'object' && studentAnswer.label ? studentAnswer.label : String(studentAnswer);
-        const matchedOption = q.options?.find((opt: any) => opt.label.toLowerCase() === answerLabel.toLowerCase());
-        if (matchedOption && typeof matchedOption.deduction === 'number') {
-          totalDeductions += matchedOption.deduction;
-        }
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Valid quality answers are required.',
+        });
       }
-    });
 
-    const maxPrice = product.upto_buy_price || Math.round(product.buy_price * 1.25);
-    const serverDerivedEstimatedPrice = Math.max(50, Math.round(maxPrice - totalDeductions));
+      parsedQualityAnswers = parsed;
+    } catch {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid quality answers format.',
+      });
+    }
+
+    // Load admin-configured quality questions
+    let productQuestions: Array<{
+      id: string;
+      options: Array<{ label: string; deduction: number }>;
+    }>;
+
+    try {
+      const storedQuestions = JSON.parse(product.quality_questions || '[]');
+
+      if (!Array.isArray(storedQuestions)) {
+        throw new Error('Invalid quality questions');
+      }
+
+      productQuestions = storedQuestions.length > 0
+        ? storedQuestions
+        : getDefaultQualityQuestions(
+            product.name,
+            product.category,
+            product.buy_price,
+            product.upto_buy_price
+          );
+    } catch {
+      return res.status(500).json({
+        success: false,
+        message: 'Invalid product quality configuration.',
+      });
+    }
+
+    // Validate answers and calculate deductions
+    let totalDeductions = 0;
+
+    for (const question of productQuestions) {
+      if (
+        typeof question?.id !== 'string' ||
+        !Array.isArray(question.options) ||
+        question.options.length === 0
+      ) {
+        return res.status(500).json({
+          success: false,
+          message: 'Invalid product quality configuration.',
+        });
+      }
+
+      const answer = parsedQualityAnswers[question.id];
+
+      // Support both string answers and { label: "..." }
+      const answerLabel =
+        typeof answer === 'string'
+          ? answer
+          : answer && typeof answer === 'object' &&
+            'label' in answer &&
+            typeof answer.label === 'string'
+          ? answer.label
+          : null;
+
+      if (!answerLabel?.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: `Answer required for ${question.id}`,
+        });
+      }
+
+      const matchedOption = question.options.find(
+        (option) =>
+          typeof option?.label === 'string' &&
+          option.label.trim().toLowerCase() ===
+            answerLabel.trim().toLowerCase()
+      );
+
+      if (!matchedOption) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid answer for ${question.id}`,
+        });
+      }
+
+      if (
+        typeof matchedOption.deduction !== 'number' ||
+        !Number.isFinite(matchedOption.deduction) ||
+        matchedOption.deduction < 0
+      ) {
+        return res.status(500).json({
+          success: false,
+          message: 'Invalid deduction configuration.',
+        });
+      }
+
+      totalDeductions += matchedOption.deduction;
+    }
+
+    // Calculate payout using admin prices
+    const maxPrice =
+      product.upto_buy_price ??
+      Math.round(product.buy_price * 1.25);
+
+    if (!Number.isFinite(maxPrice) || maxPrice <= 0) {
+      return res.status(500).json({
+        success: false,
+        message: 'Invalid product pricing configuration.',
+      });
+    }
+
+    const serverDerivedEstimatedPrice = Math.min(
+      maxPrice,
+      Math.max(50, Math.round(maxPrice - totalDeductions))
+    );
+
+    const qualityAnswersJson = JSON.stringify(parsedQualityAnswers);
+
 
     // STRICT SECURITY RULE: college_id is locked to the authenticated user's registered college!
     const sellRequest = await prisma.sellRequest.create({

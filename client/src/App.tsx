@@ -11,6 +11,7 @@ import { CampusHeroesPage } from './pages/CampusHeroesPage';
 import { CampusHeroDashboardPage } from './pages/CampusHeroDashboardPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { LoginPage } from './pages/LoginPage';
+import { GuestHome } from './pages/GuestHome';
 import { SignupPage } from './pages/SignupPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { FindTeammatesPage } from './pages/FindTeammatesPage';
@@ -51,13 +52,27 @@ const HeroRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <>{children}</>;
 };
 
+
+const GuestLandingRoute: React.FC = () => {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <div className="min-h-[50vh] bg-[#090B09]" />;
+  }
+
+  // Guests see the redesigned homepage.
+  // Logged-in users retain their existing homepage.
+  return user ? <Home /> : <GuestHome />;
+};
+
+
 const AppRoutes: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-[#090B09] text-[#F5F7F0] selection:bg-[#C6DE41] selection:text-[#090B09]">
       <Navbar />
       <main className="flex-grow pb-20 md:pb-0">
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<GuestLandingRoute />} />
           <Route path="/buy" element={<BuyPage />} />
           <Route path="/buy/:productId" element={<ProductDetailPage />} />
           <Route path="/sell" element={<ProtectedRoute><SellPage /></ProtectedRoute>} />

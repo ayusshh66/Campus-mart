@@ -55,11 +55,38 @@ export async function processAutoMatchForSellRequest(sellRequestId: string) {
       }
     }
 
-    // 3. Minimum payout check (if configured)
-    const payout = sellRequest.estimated_price || product.buy_price;
-    if (product.min_payout_for_auto && payout < product.min_payout_for_auto) {
+   
+    // 3. Validate payout before auto-approval
+    const payout = sellRequest.estimated_price;
+
+    // Must match the pricing rules in sellRequests.ts
+    const maxAllowedPrice =
+      product.upto_buy_price ??
+      Math.round(product.buy_price * 1.25);
+
+    // Reject missing, invalid, or manipulated payouts
+    if (
+      payout === null ||
+      !Number.isFinite(payout) ||
+      payout < 50 ||
+      !Number.isFinite(maxAllowedPrice) ||
+      maxAllowedPrice < 50 ||
+      payout > maxAllowedPrice
+    ) {
+      console.warn(
+        `Auto-approval blocked: invalid payout for sell request ${sellRequest.id}`
+      );
       return null;
     }
+
+    // Check minimum payout configured by admin
+    if (
+      product.min_payout_for_auto != null &&
+      payout < product.min_payout_for_auto
+    ) {
+      return null;
+    }
+
 
     // 4. Max campus inventory check (e.g. up to 10 calculators per campus)
     const currentActiveCount = await prisma.sellRequest.count({
