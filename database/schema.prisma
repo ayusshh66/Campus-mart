@@ -122,7 +122,7 @@ model BuyRequest {
   status                  String         @default("PENDING") // PENDING, APPROVED, COMPLETED, REJECTED
   notes                   String?
   auto_matched            Boolean        @default(false)
-  matched_sell_request_id String?
+  matched_sell_request_id String? @unique
   created_at              DateTime       @default(now())
   updated_at              DateTime       @updatedAt
   delivery_tasks          DeliveryTask[]

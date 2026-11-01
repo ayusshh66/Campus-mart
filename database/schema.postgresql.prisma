@@ -134,7 +134,7 @@ model BuyRequest {
   status                  RequestStatus  @default(PENDING)
   notes                   String?
   auto_matched            Boolean        @default(false)
-  matched_sell_request_id String?
+ matched_sell_request_id String? @unique
   created_at              DateTime       @default(now())
   updated_at              DateTime       @updatedAt
   delivery_tasks          DeliveryTask[]
