@@ -457,13 +457,13 @@ router.get('/campus-heroes', async (_req: AuthRequest, res: Response) => {
   }
 });
 
-// PUT /api/admin/campus-heroes/:id - Review and approve/reject Campus Hero application
+// PUT /api/admin/campus-heroes/:id - Review application & synchronize role atomically
 router.put('/campus-heroes/:id', async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-
     const validStatuses = ['PENDING', 'APPROVED', 'REJECTED'];
+
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
@@ -471,33 +471,60 @@ router.put('/campus-heroes/:id', async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const updated = await prisma.campusHeroApplication.update({
-      where: { id },
-      data: { status },
-      include: {
-        user: true,
-        college: true,
-      },
+    const result = await prisma.$transaction(async (tx) => {
+      const existing = await tx.campusHeroApplication.findUnique({
+        where: { id },
+        include: { user: true },
+      });
+      if (!existing) return { kind: 'NOT_FOUND' as const };
+
+      // Earlier applications are history. Only the latest application may
+      // change permissions, otherwise an old decision can undo a newer one.
+      const latest = await tx.campusHeroApplication.findFirst({
+        where: { user_id: existing.user_id },
+        orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+        select: { id: true },
+      });
+      if (latest?.id !== id) return { kind: 'STALE_APPLICATION' as const };
+
+      const updated = await tx.campusHeroApplication.update({
+        where: { id },
+        data: { status },
+        include: { user: true, college: true },
+      });
+
+      // Never overwrite ADMIN through a Campus Hero application decision.
+      if (existing.user.role !== 'ADMIN') {
+        const newRole = status === 'APPROVED' ? 'CAMPUS_HERO' : 'USER';
+        await tx.user.update({
+          where: { id: existing.user_id },
+          data: { role: newRole },
+        });
+      }
+
+      return { kind: 'UPDATED' as const, updated };
     });
 
-    // If approved, also upgrade user.role to CAMPUS_HERO
-    if (status === 'APPROVED') {
-      await prisma.user.update({
-        where: { id: updated.user_id },
-        data: { role: 'CAMPUS_HERO' },
+    if (result.kind === 'NOT_FOUND') {
+      return res.status(404).json({ success: false, message: 'Application not found.' });
+    }
+    if (result.kind === 'STALE_APPLICATION') {
+      return res.status(409).json({
+        success: false,
+        message: 'Cannot change an old application. Review the latest application instead.',
       });
     }
 
     return res.json({
       success: true,
       message: `Campus Hero application has been marked as ${status}.`,
-      data: updated,
+      data: result.updated,
     });
-  } catch (error: any) {
+  } catch (error) {
+    console.error('Campus Hero application update error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to update campus hero application',
-      error: error.message,
+      message: 'Failed to update campus hero application.',
     });
   }
 });
@@ -1075,7 +1102,7 @@ router.put('/custom-submissions/:id', async (req: AuthRequest, res: Response) =>
           condition: submission.condition,
           description: submission.description,
           images: submission.images,
-          estimated_price: buyPrice,
+          estimated_price: submission.expected_price,
           admin_buy_price: buyPrice,
           admin_sell_price: sellPrice,
           status: 'APPROVED', // Makes it dynamically available on student's campus!
@@ -1151,7 +1178,6 @@ router.get('/users', async (req: AuthRequest, res: Response) => {
         email: true,
         phone: true,
         role: true,
-        marketplace_mode: true,
         college_id: true,
         created_at: true,
         updated_at: true,
@@ -1189,13 +1215,13 @@ router.get('/users', async (req: AuthRequest, res: Response) => {
   }
 });
 
-// PUT /api/admin/users/:id/role - Update a user's role with validation
+// PUT /api/admin/users/:id/role - The explicit admin decision is authoritative
 router.put('/users/:id/role', async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
-
     const validRoles = ['USER', 'CAMPUS_HERO', 'ADMIN'];
+
     if (!validRoles.includes(role)) {
       return res.status(400).json({
         success: false,
@@ -1203,69 +1229,70 @@ router.put('/users/:id/role', async (req: AuthRequest, res: Response) => {
       });
     }
 
-    const targetUser = await prisma.user.findUnique({
-      where: { id },
-    });
+    const result = await prisma.$transaction(async (tx) => {
+      const targetUser = await tx.user.findUnique({ where: { id } });
+      if (!targetUser) return { kind: 'NOT_FOUND' as const };
 
-    if (!targetUser) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found.',
-      });
-    }
-
-    // Protection: Prevent demoting the last active administrator
-    if (targetUser.role === 'ADMIN' && role !== 'ADMIN') {
-      const adminCount = await prisma.user.count({
-        where: { role: 'ADMIN' },
-      });
-      if (adminCount <= 1) {
-        return res.status(400).json({
-          success: false,
-          message: 'Cannot demote the sole remaining administrator.',
-        });
+      // Keep the existing protection against removing the only admin.
+      if (targetUser.role === 'ADMIN' && role !== 'ADMIN') {
+        const adminCount = await tx.user.count({ where: { role: 'ADMIN' } });
+        if (adminCount <= 1) return { kind: 'LAST_ADMIN' as const };
       }
-    }
 
-    const updated = await prisma.user.update({
-      where: { id },
-      data: { role },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        role: true,
-        college_id: true,
-        college: {
-          select: {
-            id: true,
-            code: true,
-            name: true,
-          },
+      const updated = await tx.user.update({
+        where: { id },
+        data: { role },
+        select: {
+          id: true, name: true, email: true, phone: true, role: true,
+          college_id: true,
+          college: { select: { id: true, code: true, name: true } },
         },
-      },
+      });
+
+      // Keep the latest application shown in the UI consistent with the
+      // admin's explicit decision. Historical applications stay unchanged.
+      const latestApp = await tx.campusHeroApplication.findFirst({
+        where: { user_id: id },
+        orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+        select: { id: true, status: true },
+      });
+
+      if (latestApp) {
+        if (role === 'CAMPUS_HERO' && latestApp.status !== 'APPROVED') {
+          await tx.campusHeroApplication.update({
+            where: { id: latestApp.id },
+            data: { status: 'APPROVED' },
+          });
+        } else if (role === 'USER' && latestApp.status === 'APPROVED') {
+          // Schema has no REVOKED status; REJECTED is the existing inactive state.
+          await tx.campusHeroApplication.update({
+            where: { id: latestApp.id },
+            data: { status: 'REJECTED' },
+          });
+        }
+      }
+
+      return { kind: 'UPDATED' as const, updated };
     });
 
-    // If promoted to CAMPUS_HERO, mark any pending application as APPROVED
-    if (role === 'CAMPUS_HERO') {
-      await prisma.campusHeroApplication.updateMany({
-        where: { user_id: id, status: 'PENDING' },
-        data: { status: 'APPROVED' },
+    if (result.kind === 'NOT_FOUND') {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+    if (result.kind === 'LAST_ADMIN') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot demote the sole remaining administrator.',
       });
     }
 
     return res.json({
       success: true,
-      message: `User ${updated.name}'s role updated to ${role}.`,
-      data: updated,
+      message: `User ${result.updated.name}'s role updated to ${role}.`,
+      data: result.updated,
     });
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to update user role',
-      error: error.message,
-    });
+  } catch (error) {
+    console.error('Role update error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update user role.' });
   }
 });
 
@@ -1522,4 +1549,3 @@ router.get('/analytics', async (_req: AuthRequest, res: Response) => {
 });
 
 export default router;
-

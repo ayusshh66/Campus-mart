@@ -10,7 +10,7 @@ const router = Router();
 // POST /api/auth/register
 router.post('/register', async (req: Request, res: Response) => {
   try {
-    const { name, email, phone, password, college_id, marketplace_mode } = req.body;
+    const { name, email, phone, password, college_id } = req.body;
 
     if (!name || !email || !phone || !password || !college_id) {
       return res.status(400).json({
@@ -45,9 +45,6 @@ router.post('/register', async (req: Request, res: Response) => {
       });
     }
 
-    // Validate marketplace_mode preference
-    const mode = (marketplace_mode === 'SELLER') ? 'SELLER' : 'BUYER';
-
     // Hash password
     const password_hash = await bcrypt.hash(password, 10);
 
@@ -60,7 +57,6 @@ router.post('/register', async (req: Request, res: Response) => {
         password_hash,
         college_id: college.id,
         role: 'USER',
-        marketplace_mode: mode,
       },
       include: {
         college: true,
@@ -90,7 +86,6 @@ router.post('/register', async (req: Request, res: Response) => {
           email: newUser.email,
           phone: newUser.phone,
           role: newUser.role,
-          marketplace_mode: newUser.marketplace_mode,
           college: {
             id: newUser.college.id,
             code: newUser.college.code,
@@ -169,7 +164,6 @@ router.post('/login', async (req: Request, res: Response) => {
           email: user.email,
           phone: user.phone,
           role: user.role,
-          marketplace_mode: user.marketplace_mode || 'BUYER',
           college: {
             id: user.college.id,
             code: user.college.code,
@@ -204,30 +198,8 @@ router.get('/me', authenticateToken, requireAuth, async (req: AuthRequest, res: 
       });
     }
 
-    let currentRole = user.role;
-    if (currentRole === 'USER') {
-      const approvedApp = await prisma.campusHeroApplication.findFirst({
-        where: { user_id: user.id, status: 'APPROVED' },
-      });
-      if (approvedApp) {
-        currentRole = 'CAMPUS_HERO';
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { role: 'CAMPUS_HERO' },
-        });
-      }
-    } else if (currentRole === 'CAMPUS_HERO') {
-      const rejectedApp = await prisma.campusHeroApplication.findFirst({
-        where: { user_id: user.id, status: 'REJECTED' },
-      });
-      if (rejectedApp) {
-        currentRole = 'USER';
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { role: 'USER' },
-        });
-      }
-    }
+    // User.role in the database is authoritative.
+    // Reading /auth/me must never promote or demote a user.
 
     return res.json({
       success: true,
@@ -236,8 +208,7 @@ router.get('/me', authenticateToken, requireAuth, async (req: AuthRequest, res: 
         name: user.name,
         email: user.email,
         phone: user.phone,
-        role: currentRole,
-        marketplace_mode: user.marketplace_mode || 'BUYER',
+        role: user.role,
         college: {
           id: user.college.id,
           code: user.college.code,
@@ -249,46 +220,6 @@ router.get('/me', authenticateToken, requireAuth, async (req: AuthRequest, res: 
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch user profile.',
-      error: error.message,
-    });
-  }
-});
-
-// PATCH /api/auth/mode - Switch buyer/seller preference mode
-router.patch('/mode', authenticateToken, requireAuth, async (req: AuthRequest, res: Response) => {
-  try {
-    const { marketplace_mode } = req.body;
-    const normalizedMode = (marketplace_mode || '').toUpperCase();
-
-    if (!['BUYER', 'SELLER'].includes(normalizedMode)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid marketplace mode. Must be BUYER or SELLER.',
-      });
-    }
-
-    const updated = await prisma.user.update({
-      where: { id: req.user!.id },
-      data: { marketplace_mode: normalizedMode },
-      select: {
-        id: true,
-        name: true,
-        role: true,
-        marketplace_mode: true,
-      },
-    });
-
-    return res.json({
-      success: true,
-      message: `Account mode switched to ${normalizedMode}.`,
-      data: {
-        marketplace_mode: updated.marketplace_mode,
-      },
-    });
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to update marketplace mode.',
       error: error.message,
     });
   }

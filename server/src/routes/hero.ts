@@ -1,80 +1,30 @@
-import { Router, Response } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import prisma from '../db';
 import { authenticateToken, requireAuth, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
-// Middleware: Verify that user is an authorized Campus Hero or Admin
-export const requireCampusHeroOrAdmin = async (req: AuthRequest, res: Response, next: Function) => {
+// Middleware: Trust the user's CURRENT database role, loaded by authenticateToken.
+// Never change user.role inside an authorization check.
+export const requireCampusHeroOrAdmin = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
   if (!req.user) {
-    return res.status(401).json({ success: false, message: 'Authentication required' });
-  }
-
-  // Admins are always authorized
-  if (req.user.role === 'ADMIN') {
-    return next();
-  }
-
-  // If user role is CAMPUS_HERO, ensure they have not been rejected
-  if (req.user.role === 'CAMPUS_HERO') {
-    const rejectedApp = await prisma.campusHeroApplication.findFirst({
-      where: {
-        user_id: req.user.id,
-        status: 'REJECTED',
-      },
-    });
-
-    if (rejectedApp) {
-      // Downgrade stale role in database
-      await prisma.user.update({
-        where: { id: req.user.id },
-        data: { role: 'USER' },
-      });
-      req.user.role = 'USER';
-      return res.status(403).json({
-        success: false,
-        message: 'Access restricted. Your Campus Hero application has been rejected.',
-      });
-    }
-
-    return next();
-  }
-
-  // For users with role 'USER', check if they have an APPROVED application
-  const heroApp = await prisma.campusHeroApplication.findFirst({
-    where: {
-      user_id: req.user.id,
-    },
-    orderBy: { created_at: 'desc' },
-  });
-
-  if (heroApp && heroApp.status === 'APPROVED') {
-    // Synchronize user role in database
-    await prisma.user.update({
-      where: { id: req.user.id },
-      data: { role: 'CAMPUS_HERO' },
-    });
-    req.user.role = 'CAMPUS_HERO';
-    return next();
-  }
-
-  if (heroApp && heroApp.status === 'PENDING') {
-    return res.status(403).json({
+    return res.status(401).json({
       success: false,
-      message: 'Your Campus Hero application is currently pending review by administrators.',
+      message: 'Authentication required.',
     });
   }
 
-  if (heroApp && heroApp.status === 'REJECTED') {
-    return res.status(403).json({
-      success: false,
-      message: 'Access restricted. Your Campus Hero application has been rejected.',
-    });
+  if (req.user.role === 'ADMIN' || req.user.role === 'CAMPUS_HERO') {
+    return next();
   }
 
   return res.status(403).json({
     success: false,
-    message: 'Access restricted. You must be an approved Campus Hero or Admin to access this dashboard.',
+    message: 'Only approved Campus Heroes and administrators may access this route.',
   });
 };
 
@@ -414,122 +364,84 @@ router.put('/tasks/:id/status', authenticateToken, requireAuth, requireCampusHer
   }
 });
 
-// POST /api/hero/tasks/:id/message - Send in-website message as "Operations Team — Campus Hero"
+// POST /api/hero/tasks/:id/message - Messaging only for task participants
+router.post('/tasks/:id/message', authenticateToken, requireAuth, requireCampusHeroOrAdmin, async (req: AuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { receiver_id, content } = req.body;
 
-router.post(
-  '/tasks/:id/message',
-  authenticateToken,
-  requireAuth,
-  requireCampusHeroOrAdmin,
-  async (req: AuthRequest, res: Response) => {
-    try {
-      const { id } = req.params;
-      const { receiver_id, content } = req.body;
-
-      // 1. Validate message input
-      if (
-        typeof receiver_id !== 'string' ||
-        !receiver_id.trim() ||
-        typeof content !== 'string' ||
-        !content.trim() ||
-        content.trim().length > 2000
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: 'Valid receiver and message (max 2000 characters) are required.',
-        });
-      }
-
-      // 2. Fetch task with buyer and seller information
-      const task = await prisma.deliveryTask.findUnique({
-        where: { id },
-        include: {
-          sell_request: {
-            select: { user_id: true },
-          },
-          buy_request: {
-            select: { user_id: true },
-          },
-        },
-      });
-
-      if (!task) {
-        return res.status(404).json({
-          success: false,
-          message: 'Delivery task not found.',
-        });
-      }
-
-      const isAdmin = req.user!.role === 'ADMIN';
-
-      // 3. Verify Campus Hero authorization
-      if (!isAdmin) {
-        if (task.college_id !== req.user!.college_id) {
-          return res.status(403).json({
-            success: false,
-            message: 'You cannot access tasks from another college.',
-          });
-        }
-
-        // Hero must claim the task before messaging
-        if (task.assigned_hero_id !== req.user!.id) {
-          return res.status(403).json({
-            success: false,
-            message: 'Claim this task before sending messages.',
-          });
-        }
-      }
-
-      // 4. SECURITY: Only message the task's buyer or seller
-      const isSeller =
-        task.sell_request?.user_id === receiver_id;
-
-      const isBuyer =
-        task.buy_request?.user_id === receiver_id;
-
-      if (!isSeller && !isBuyer) {
-        return res.status(403).json({
-          success: false,
-          message: 'Receiver is not part of this delivery task.',
-        });
-      }
-
-      // 5. Create authorized message
-      const message = await prisma.message.create({
-        data: {
-          sender_id: req.user!.id,
-          sender_display_name: 'Operations Team — Campus Hero',
-          receiver_id,
-          task_id: task.id,
-          sell_request_id: task.sell_request_id,
-          buy_request_id: task.buy_request_id,
-          content: content.trim(),
-        },
-        include: {
-          sender: {
-            select: { id: true, name: true },
-          },
-          receiver: {
-            select: { id: true, name: true },
-          },
-        },
-      });
-
-      return res.status(201).json({
-        success: true,
-        message: 'Message sent successfully.',
-        data: message,
-      });
-    } catch (error) {
-      console.error('Campus Hero messaging error:', error);
-
-      return res.status(500).json({
+    if (
+      typeof receiver_id !== 'string' || !receiver_id.trim() ||
+      typeof content !== 'string' || !content.trim() || content.trim().length > 2000
+    ) {
+      return res.status(400).json({
         success: false,
-        message: 'Failed to send message.',
+        message: 'Valid receiver and message (max 2000 characters) are required.',
       });
     }
-  }
-);
 
+    const task = await prisma.deliveryTask.findUnique({
+      where: { id },
+      include: {
+        sell_request: { select: { user_id: true } },
+        buy_request: { select: { user_id: true } },
+      },
+    });
+
+    if (!task) {
+      return res.status(404).json({ success: false, message: 'Delivery task not found.' });
+    }
+
+    const isAdmin = req.user!.role === 'ADMIN';
+    if (!isAdmin) {
+      if (task.college_id !== req.user!.college_id) {
+        return res.status(403).json({
+          success: false,
+          message: 'You cannot access tasks from another college.',
+        });
+      }
+      if (task.assigned_hero_id !== req.user!.id) {
+        return res.status(403).json({
+          success: false,
+          message: 'Claim this task before sending messages.',
+        });
+      }
+    }
+
+    const isSeller = task.sell_request?.user_id === receiver_id;
+    const isBuyer = task.buy_request?.user_id === receiver_id;
+    if (!isSeller && !isBuyer) {
+      return res.status(403).json({
+        success: false,
+        message: 'Receiver is not part of this delivery task.',
+      });
+    }
+
+    const message = await prisma.message.create({
+      data: {
+        sender_id: req.user!.id,
+        sender_display_name: 'Operations Team — Campus Hero',
+        receiver_id,
+        task_id: task.id,
+        sell_request_id: task.sell_request_id,
+        buy_request_id: task.buy_request_id,
+        content: content.trim(),
+      },
+      include: {
+        sender: { select: { id: true, name: true } },
+        receiver: { select: { id: true, name: true } },
+      },
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Message sent successfully.',
+      data: message,
+    });
+  } catch (error) {
+    console.error('Campus Hero messaging error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to send message.' });
+  }
+});
 
 export default router;
