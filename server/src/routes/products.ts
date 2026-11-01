@@ -111,9 +111,7 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     const productsWithAvailability = await Promise.all(
       products.map(async (product) => {
         let is_available = false;
-        let approvedCount = 0;
-
-        if (targetCollegeId) {
+        let approvedCount = 0;       if (targetCollegeId) {
           // Dynamic check: An approved active sell_request exists for this product AND college
           const approvedSellRequests = await prisma.sellRequest.findMany({
             where: {
@@ -126,6 +124,32 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
           approvedCount = approvedSellRequests.length;
           is_available = approvedCount > 0;
         }
+
+        
+if (targetCollegeId) {
+  approvedCount = await prisma.sellRequest.count({
+    where: {
+      product_id: product.id,
+      college_id: targetCollegeId,
+      status: 'APPROVED',
+
+      // Exclude items already reserved or sold
+      delivery_tasks: {
+        none: {
+          task_type: {
+            in: ['DROP', 'MATCHED_EXCHANGE'],
+          },
+          status: {
+            in: ['ASSIGNED', 'PICKED_UP', 'DELIVERED', 'COMPLETED'],
+          },
+        },
+      },
+    },
+  });
+
+  is_available = approvedCount > 0;
+}
+
 
         let parsedImages: string[] = [];
         try {
@@ -223,17 +247,31 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
     let is_available = false;
     let approvedCount = 0;
 
-    if (targetCollegeId) {
-      const approvedSellRequests = await prisma.sellRequest.findMany({
-        where: {
-          product_id: product.id,
-          college_id: targetCollegeId,
-          status: 'APPROVED',
+    
+if (targetCollegeId) {
+  approvedCount = await prisma.sellRequest.count({
+    where: {
+      product_id: product.id,
+      college_id: targetCollegeId,
+      status: 'APPROVED',
+
+      // Exclude items already reserved or sold
+      delivery_tasks: {
+        none: {
+          task_type: {
+            in: ['DROP', 'MATCHED_EXCHANGE'],
+          },
+          status: {
+            in: ['ASSIGNED', 'PICKED_UP', 'DELIVERED', 'COMPLETED'],
+          },
         },
-      });
-      approvedCount = approvedSellRequests.length;
-      is_available = approvedCount > 0;
-    }
+      },
+    },
+  });
+
+  is_available = approvedCount > 0;
+}
+
 
     let parsedImages: string[] = [];
     try {

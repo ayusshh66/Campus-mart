@@ -220,7 +220,7 @@ router.get('/dashboard', authenticateToken, requireAuth, requireCampusHeroOrAdmi
           notes: t.buy_request.notes,
           buy_request_id: t.buy_request.id,
         } : null,
-        messages: t.messages.map((m) => ({
+        messages: (canViewPrivateDetails ? t.messages : []).map((m) => ({
           id: m.id,
           sender_id: m.sender_id,
           sender_name: m.sender.name,
@@ -415,81 +415,121 @@ router.put('/tasks/:id/status', authenticateToken, requireAuth, requireCampusHer
 });
 
 // POST /api/hero/tasks/:id/message - Send in-website message as "Operations Team — Campus Hero"
-router.post('/tasks/:id/message', authenticateToken, requireAuth, requireCampusHeroOrAdmin, async (req: AuthRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { receiver_id, content } = req.body;
 
-    if (!receiver_id || !content || !content.trim()) {
-      return res.status(400).json({
+router.post(
+  '/tasks/:id/message',
+  authenticateToken,
+  requireAuth,
+  requireCampusHeroOrAdmin,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { receiver_id, content } = req.body;
+
+      // 1. Validate message input
+      if (
+        typeof receiver_id !== 'string' ||
+        !receiver_id.trim() ||
+        typeof content !== 'string' ||
+        !content.trim() ||
+        content.trim().length > 2000
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: 'Valid receiver and message (max 2000 characters) are required.',
+        });
+      }
+
+      // 2. Fetch task with buyer and seller information
+      const task = await prisma.deliveryTask.findUnique({
+        where: { id },
+        include: {
+          sell_request: {
+            select: { user_id: true },
+          },
+          buy_request: {
+            select: { user_id: true },
+          },
+        },
+      });
+
+      if (!task) {
+        return res.status(404).json({
+          success: false,
+          message: 'Delivery task not found.',
+        });
+      }
+
+      const isAdmin = req.user!.role === 'ADMIN';
+
+      // 3. Verify Campus Hero authorization
+      if (!isAdmin) {
+        if (task.college_id !== req.user!.college_id) {
+          return res.status(403).json({
+            success: false,
+            message: 'You cannot access tasks from another college.',
+          });
+        }
+
+        // Hero must claim the task before messaging
+        if (task.assigned_hero_id !== req.user!.id) {
+          return res.status(403).json({
+            success: false,
+            message: 'Claim this task before sending messages.',
+          });
+        }
+      }
+
+      // 4. SECURITY: Only message the task's buyer or seller
+      const isSeller =
+        task.sell_request?.user_id === receiver_id;
+
+      const isBuyer =
+        task.buy_request?.user_id === receiver_id;
+
+      if (!isSeller && !isBuyer) {
+        return res.status(403).json({
+          success: false,
+          message: 'Receiver is not part of this delivery task.',
+        });
+      }
+
+      // 5. Create authorized message
+      const message = await prisma.message.create({
+        data: {
+          sender_id: req.user!.id,
+          sender_display_name: 'Operations Team — Campus Hero',
+          receiver_id,
+          task_id: task.id,
+          sell_request_id: task.sell_request_id,
+          buy_request_id: task.buy_request_id,
+          content: content.trim(),
+        },
+        include: {
+          sender: {
+            select: { id: true, name: true },
+          },
+          receiver: {
+            select: { id: true, name: true },
+          },
+        },
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: 'Message sent successfully.',
+        data: message,
+      });
+    } catch (error) {
+      console.error('Campus Hero messaging error:', error);
+
+      return res.status(500).json({
         success: false,
-        message: 'Receiver ID and non-empty message content are required.',
+        message: 'Failed to send message.',
       });
     }
-
-    const task = await prisma.deliveryTask.findUnique({
-      where: { id },
-    });
-
-    if (!task) {
-      return res.status(404).json({ success: false, message: 'Delivery task not found' });
-    }
-
-    // College & authorization check
-    if (req.user!.role !== 'ADMIN') {
-      if (task.college_id !== req.user!.college_id) {
-        return res.status(403).json({
-          success: false,
-          message: 'Unauthorized. You can only coordinate tasks for your own college campus.',
-        });
-      }
-
-      if (task.assigned_hero_id && task.assigned_hero_id !== req.user!.id) {
-        return res.status(403).json({
-          success: false,
-          message: 'Unauthorized. This task is assigned to another Campus Hero.',
-        });
-      }
-    }
-
-    // If task was unassigned, assign to this hero upon sending message
-    if (!task.assigned_hero_id) {
-      await prisma.deliveryTask.update({
-        where: { id: task.id },
-        data: { assigned_hero_id: req.user!.id },
-      });
-    }
-
-    const heroDisplayName = 'Operations Team — Campus Hero';
-
-    const message = await prisma.message.create({
-      data: {
-        sender_id: req.user!.id,
-        sender_display_name: heroDisplayName,
-        receiver_id,
-        task_id: task.id,
-        sell_request_id: task.sell_request_id,
-        buy_request_id: task.buy_request_id,
-        content: content.trim(),
-      },
-      include: {
-        sender: { select: { id: true, name: true } },
-        receiver: { select: { id: true, name: true } },
-      },
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: 'Message sent successfully as Operations Team — Campus Hero',
-      data: message,
-    });
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to send message',
-      error: error.message,
-    });
   }
-});
+);
+
 
 export default router;
