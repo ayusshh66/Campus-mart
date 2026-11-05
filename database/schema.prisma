@@ -18,6 +18,7 @@ model College {
   is_active                Boolean                 @default(true)
   created_at               DateTime                @default(now())
   users                    User[]
+  solo_posts SoloPost[]
   sell_requests            SellRequest[]
   buy_requests             BuyRequest[]
   campus_hero_applications CampusHeroApplication[]
@@ -50,7 +51,7 @@ model User {
   hackathon_profile        HackathonProfile?
   created_teams            TeamPost[]              @relation("CreatedTeams")
   team_applications        TeamApplication[]       @relation("ApplicantApplications")
-
+  solo_posts SoloPost[] @relation("SoloPosts")
   @@map("users")
 }
 
@@ -276,4 +277,30 @@ model TeamApplication {
   @@unique([team_post_id, applicant_id])
   @@map("team_applications")
 }
+
+
+model SoloPost {
+  id                String   @id @default(uuid())
+  user_id           String
+  user              User     @relation("SoloPosts", fields: [user_id], references: [id], onDelete: Cascade)
+
+  college_id        String
+  college           College  @relation(fields: [college_id], references: [id], onDelete: Cascade)
+
+  hackathon_name    String
+  headline          String
+  description       String
+  skills            String   @default("[]")
+  preferred_roles   String   @default("[]")
+  eligibility_rules String   @default("OPEN_TO_ALL")
+  status            String   @default("OPEN")
+
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  @@unique([user_id, hackathon_name])
+  @@index([college_id, status])
+  @@map("solo_posts")
+}
+
 

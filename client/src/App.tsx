@@ -2,6 +2,8 @@ import React from 'react';
 import { Toaster } from 'sonner';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { SoloPostsPage } from './pages/SoloPostsPage';
+import { CreateSoloPostPage } from './pages/CreateSoloPostPage';
 import { ThemeProvider } from './context/ThemeContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -74,6 +76,22 @@ const AppRoutes: React.FC = () => {
       <Navbar />
       <main className="flex-grow pb-20 md:pb-0">
         <Routes>
+          <Route path="/find-students" element={<SoloPostsPage />} />
+<Route path="/students/create" element={<ProtectedRoute><CreateSoloPostPage /></ProtectedRoute>} />
+{/* Individual Hackathon Recruitment */}
+<Route
+  path="/find-students"
+  element={<SoloPostsPage />}
+/>
+
+<Route
+  path="/students/create"
+  element={
+    <ProtectedRoute>
+      <CreateSoloPostPage />
+    </ProtectedRoute>
+  }
+/>
           <Route path="/" element={<GuestLandingRoute />} />
           <Route path="/buy" element={<BuyPage />} />
           <Route path="/buy/:productId" element={<ProductDetailPage />} />
