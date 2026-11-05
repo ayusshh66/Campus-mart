@@ -1,5 +1,6 @@
 import Skiper39Background from '../components/ui/Skiper39Background';
 import { SmoothInput } from '../components/motion/SmoothInput';
+import GatewayFlowBackground from '../components/ui/GatewayFlowBackground';
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -213,12 +214,17 @@ export const FindTeammatesPage: React.FC = () => {
 
   return (
     <>
-      <div className="relative bg-[#090B09] text-[#F5F7F0]">
-        <div className="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8">
-          {/* Top Hero Banner */}
-          <div className="relative overflow-hidden rounded-[28px] bg-[#12160F] text-white p-8 sm:p-12 border border-[#C6DE41]/20 shadow-2xl">
-            <div className="absolute top-0 right-0 w-80 h-80 bg-[#C6DE41]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="relative isolate bg-[#090B09] text-[#F5F7F0]">
 
+        {/* NEW: Animated Gateway Flow background */}
+        <GatewayFlowBackground />
+
+        <div className="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8">
+
+          {/* Top Hero Banner */}
+          {/* Keep your existing code below unchanged */}
+<div className="relative overflow-hidden rounded-[28px] bg-[#080808] text-white p-8 sm:p-12 border border-[#C6DE41]/20 shadow-2xl">          
+<div className="absolute top-0 right-0 w-80 h-80 bg-transparent rounded-full blur-3xl pointer-events-none" />
             <div className="relative z-10 space-y-6">
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div className="max-w-2xl space-y-3">
@@ -270,11 +276,10 @@ export const FindTeammatesPage: React.FC = () => {
                 </span>
                 <button
                   onClick={() => setSelectedHackathon('')}
-                  className={`px-3.5 py-1.5 rounded-full transition-all shrink-0 font-bold ${
-                    selectedHackathon === ''
+                  className={`px-3.5 py-1.5 rounded-full transition-all shrink-0 font-bold ${selectedHackathon === ''
                       ? 'bg-[#C6DE41] text-[#090B09] shadow-[0_0_12px_rgba(198,222,65,0.3)]'
                       : 'bg-[#181D14] text-stone-300 hover:text-white border border-white/10'
-                  }`}
+                    }`}
                 >
                   All Events
                 </button>
@@ -282,11 +287,10 @@ export const FindTeammatesPage: React.FC = () => {
                   <button
                     key={h}
                     onClick={() => setSelectedHackathon(selectedHackathon === h ? '' : h)}
-                    className={`px-3.5 py-1.5 rounded-full transition-all shrink-0 font-semibold ${
-                      selectedHackathon === h
+                    className={`px-3.5 py-1.5 rounded-full transition-all shrink-0 font-semibold ${selectedHackathon === h
                         ? 'bg-[#C6DE41] text-[#090B09] font-bold shadow-[0_0_12px_rgba(198,222,65,0.3)]'
                         : 'bg-[#181D14] text-stone-300 hover:text-white border border-white/10'
-                    }`}
+                      }`}
                   >
                     {h}
                   </button>
@@ -298,7 +302,7 @@ export const FindTeammatesPage: React.FC = () => {
           {/* Main Content Area */}
           <div className="space-y-6">
             {/* Search & Filter Bar */}
-            <div className="bg-[#12160F] rounded-[28px] p-6 shadow-xl border border-white/10 mb-8">
+<div className="bg-[#080808] rounded-[28px] p-6 shadow-xl border border-white/10 mb-8">
               <form onSubmit={handleSearchSubmit} className="space-y-4">
                 <div className="flex flex-col md:flex-row gap-3">
                   {/* Search text input */}
@@ -457,10 +461,12 @@ export const FindTeammatesPage: React.FC = () => {
                     const isCrossCollege = post.eligibility_rules === 'OPEN_TO_ALL';
 
                     return (
+
                       <div
                         key={post.id}
-                        className="bg-[#12160F] rounded-[28px] p-6 shadow-xl hover:shadow-[0_0_30px_rgba(198,222,65,0.08)] border border-white/10 hover:border-[#C6DE41]/40 transition-all duration-200 flex flex-col justify-between group"
+                        className="bg-[#080808] rounded-[28px] p-6 shadow-[0_12px_32px_rgba(0,0,0,0.35)] hover:shadow-[0_16px_40px_rgba(0,0,0,0.5)] border border-white/10 hover:border-[#C6DE41]/40 transition-all duration-200 flex flex-col justify-between group"
                       >
+
                         <div>
                           {/* Card Top: Hackathon Tag & Status */}
                           <div className="flex items-start justify-between gap-2 mb-3">
@@ -567,13 +573,12 @@ export const FindTeammatesPage: React.FC = () => {
                           {post.my_application ? (
                             <Link
                               to={`/teams/${post.id}`}
-                              className={`w-full py-2.5 rounded-full text-[12px] font-bold flex items-center justify-center gap-1.5 transition-all ${
-                                post.my_application.status === 'ACCEPTED'
+                              className={`w-full py-2.5 rounded-full text-[12px] font-bold flex items-center justify-center gap-1.5 transition-all ${post.my_application.status === 'ACCEPTED'
                                   ? 'bg-[#C6DE41] text-[#090B09]'
                                   : post.my_application.status === 'REJECTED'
-                                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                              }`}
+                                    ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                                    : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                                }`}
                             >
                               <CheckCircle2 className="w-3.5 h-3.5" />
                               <span>
@@ -777,7 +782,7 @@ export const FindTeammatesPage: React.FC = () => {
 
       {/* Animated crowd above the footer */}
       <section
-        className="relative w-full h-[50vh] min-h-[380px] max-h-[600px] overflow-hidden bg-[#090B09]"
+        className="relative w-full h-[50vh] min-h-[380px] max-h-[600px] overflow-hidden bg-[#090B09] dark:bg-[#090B09] light:bg-[#F7F8F2] border-t border-[#DFE5D5] dark:border-[#C6DE41]/20 transition-colors duration-300"
         aria-label="Animated walking crowd"
       >
         <Skiper39Background />
@@ -786,7 +791,7 @@ export const FindTeammatesPage: React.FC = () => {
           href="https://skiper-ui.com/v1/skiper39"
           target="_blank"
           rel="noopener noreferrer"
-          className="absolute bottom-3 right-4 z-10 text-[10px] text-stone-500 underline underline-offset-2 hover:text-[#C6DE41]"
+          className="absolute bottom-3 right-4 z-10 text-[10px] text-stone-500 dark:text-stone-500 light:text-[#78826F] underline underline-offset-2 hover:text-[#C6DE41] dark:hover:text-[#C6DE41] light:hover:text-[#7E9E0A] transition-colors"
         >
           Crowd animation inspired by Skiper UI
         </a>

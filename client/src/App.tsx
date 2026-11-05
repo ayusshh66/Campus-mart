@@ -1,6 +1,8 @@
 import React from 'react';
+import { Toaster } from 'sonner';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { Home } from './pages/Home';
@@ -57,7 +59,7 @@ const GuestLandingRoute: React.FC = () => {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
-    return <div className="min-h-[50vh] bg-[#090B09]" />;
+    return <div className="min-h-[50vh] bg-[#090B09] dark:bg-[#090B09] light:bg-[#F7F8F2]" />;
   }
 
   // Guests see the redesigned homepage.
@@ -68,7 +70,7 @@ const GuestLandingRoute: React.FC = () => {
 
 const AppRoutes: React.FC = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-[#090B09] text-[#F5F7F0] selection:bg-[#C6DE41] selection:text-[#090B09]">
+    <div className="min-h-screen flex flex-col bg-[#090B09] dark:bg-[#090B09] light:bg-[#F7F8F2] text-[#F5F7F0] dark:text-[#F5F7F0] light:text-[#171B13] selection:bg-[#C6DE41] selection:text-[#090B09] transition-colors duration-200">
       <Navbar />
       <main className="flex-grow pb-20 md:pb-0">
         <Routes>
@@ -109,10 +111,17 @@ const AppRoutes: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-    </BrowserRouter>
+  <AuthProvider>
+    <AppRoutes />
+    <Toaster
+      position="top-right"
+      richColors
+      closeButton
+      duration={5000}
+      offset={{ top: 90, right: 20 }}
+    />
+  </AuthProvider>
+</BrowserRouter>
   );
 };
 

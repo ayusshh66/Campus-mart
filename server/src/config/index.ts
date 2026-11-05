@@ -1,15 +1,19 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-const jwtSecret = process.env.JWT_SECRET;
+// Always load the .env file inside the server folder
+// Works from src/config and dist/config
+const envPath = path.resolve(__dirname, '../../.env');
+
+dotenv.config({ path: envPath });
+
+const jwtSecret = process.env.JWT_SECRET?.trim();
 
 if (!jwtSecret || jwtSecret.length < 32) {
   throw new Error(
-    'JWT_SECRET must be set and contain at least 32 characters.'
+    `JWT_SECRET is missing or too short. Check ${envPath}`
   );
 }
-
-dotenv.config();
 
 export const config = {
   port: process.env.PORT || 5000,

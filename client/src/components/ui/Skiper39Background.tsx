@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
+import { useTheme } from '../../context/ThemeContext';
 
 /**
- * Skiper 39 canvas background, adapted for a Vite/React page.
+ * Skiper 39 canvas background, adapted for Vite/React with dark and light theme awareness.
  * Animation logic follows the user-supplied 21st.dev example.
  * The original illustration is by Open Peeps; retain attribution per Skiper UI's free license.
  */
@@ -33,6 +34,12 @@ export const Skiper39Background: React.FC<Props> = ({
   cols = 7,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { isDark } = useTheme();
+  const isDarkRef = useRef(isDark);
+
+  useEffect(() => {
+    isDarkRef.current = isDark;
+  }, [isDark]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -102,10 +109,28 @@ export const Skiper39Background: React.FC<Props> = ({
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
       active.forEach((peep) => {
         ctx.save();
         ctx.translate(peep.x, peep.y);
         ctx.scale(peep.direction, 1);
+
+        // Subtle drop shadow under feet to ground characters naturally on both light and dark floors
+        ctx.beginPath();
+        ctx.ellipse(
+          0,
+          peep.height - 2,
+          peep.width * 0.24,
+          4,
+          0,
+          0,
+          Math.PI * 2
+        );
+        ctx.fillStyle = isDarkRef.current
+          ? "rgba(0, 0, 0, 0.35)"
+          : "rgba(23, 27, 19, 0.12)";
+        ctx.fill();
+
         ctx.drawImage(
           image, peep.frameX, peep.frameY, frameWidth, frameHeight,
           0, 0, peep.width, peep.height,
@@ -124,7 +149,6 @@ export const Skiper39Background: React.FC<Props> = ({
       canvas.height = Math.round(stageHeight * dpr);
       stopWalks();
       if (reducedMotion.matches) {
-        // One static reference frame; no motion when the user requests reduced motion.
         peeps.forEach((peep, index) => {
           peep.x = (index / peeps.length) * stageWidth;
           peep.y = stageHeight - peep.height - random(0, 115);
@@ -166,6 +190,13 @@ export const Skiper39Background: React.FC<Props> = ({
       running = true;
     };
 
+    const handleThemeChange = (e: Event) => {
+      const customEvent = e as CustomEvent<{ theme: 'dark' | 'light' }>;
+      isDarkRef.current = customEvent.detail?.theme === 'dark';
+      draw();
+    };
+
+    window.addEventListener('campusmart-theme-change', handleThemeChange);
     image.onload = onImageLoad;
     image.src = src;
     const observer = new ResizeObserver(resize);
@@ -177,6 +208,7 @@ export const Skiper39Background: React.FC<Props> = ({
       image.onload = null;
       observer.disconnect();
       reducedMotion.removeEventListener('change', resize);
+      window.removeEventListener('campusmart-theme-change', handleThemeChange);
       if (running) gsap.ticker.remove(draw);
       stopWalks();
     };

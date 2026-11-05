@@ -64,6 +64,165 @@
 .cm-guest-hint {text-align:center;margin-top:22px;font-size:12px;color:#78806D;}
 .cm-guest-hint a {color:var(--cm-lime);}
 .cm-guest-hint a:hover {text-decoration:underline;}
+
+/* =======================================================
+   LIGHT THEME OVERRIDES FOR GUEST HOME
+   ======================================================= */
+html.light .cm-landing {
+  --cm-lime: #7E9E0A;
+  --cm-ink: #171B13;
+  --cm-card: #FFFFFF;
+  --cm-line: #DFE5D5;
+  background-color: #F7F8F2 !important;
+  color: #171B13 !important;
+}
+
+html.light .cm-ambient-left {
+  background: radial-gradient(circle, rgba(198, 222, 65, 0.18) 0%, rgba(220, 238, 140, 0.08) 40%, transparent 70%);
+}
+
+html.light .cm-ambient-right {
+  background: radial-gradient(circle, rgba(198, 222, 65, 0.15) 0%, rgba(230, 240, 180, 0.06) 45%, transparent 72%);
+}
+
+html.light .cm-grain {
+  opacity: 0.06;
+}
+
+html.light .cm-hero-copy h1 {
+  color: #171B13 !important;
+}
+
+html.light .cm-hero-copy h1 span {
+  color: #7E9E0A !important;
+}
+
+html.light .cm-hero-copy p {
+  color: #57614E !important;
+}
+
+html.light .cm-hero-search {
+  background: #FFFFFF !important;
+  border: 1px solid #DFE5D5 !important;
+  box-shadow: 0 6px 24px rgba(23, 27, 19, 0.06) !important;
+}
+
+html.light .cm-hero-search:focus-within {
+  border-color: #C6DE41 !important;
+  box-shadow: 0 0 0 3px rgba(198, 222, 65, 0.25) !important;
+}
+
+html.light .cm-hero-search input {
+  color: #171B13 !important;
+}
+
+html.light .cm-hero-search input::placeholder {
+  color: #78826F !important;
+}
+
+html.light .cm-hero-search button {
+  background: #C6DE41 !important;
+  color: #171B13 !important;
+  box-shadow: 0 0 20px rgba(198, 222, 65, 0.4) !important;
+}
+
+html.light .cm-scene-card {
+  filter: drop-shadow(0 10px 24px rgba(23, 27, 19, 0.12));
+}
+
+html.light .cm-scene-card-inner {
+  background: #FFFFFF !important;
+  border: 1px solid #DFE5D5 !important;
+  box-shadow: 0 8px 30px rgba(23, 27, 19, 0.08) !important;
+}
+
+html.light .cm-scene-card:hover .cm-scene-card-inner {
+  border-color: #C6DE41 !important;
+  box-shadow: 0 14px 40px rgba(198, 222, 65, 0.25) !important;
+}
+
+html.light .cm-scene-photo {
+  background: #EEF2E6 !important;
+}
+
+html.light .cm-scene-info strong {
+  color: #171B13 !important;
+}
+
+html.light .cm-scene-info span {
+  color: #171B13 !important;
+}
+
+html.light .cm-scene-heart {
+  color: #171B13;
+  filter: drop-shadow(0 1px 3px rgba(255, 255, 255, 0.8));
+}
+
+html.light .cm-route-card {
+  background: #FFFFFF !important;
+  border: 1px solid #DFE5D5 !important;
+  box-shadow: 0 4px 18px rgba(23, 27, 19, 0.05) !important;
+}
+
+html.light .cm-route-card:hover {
+  border-color: #C6DE41 !important;
+  box-shadow: 0 8px 25px rgba(198, 222, 65, 0.2) !important;
+}
+
+html.light .cm-route-copy strong {
+  color: #171B13 !important;
+}
+
+html.light .cm-route-copy small {
+  color: #57614E !important;
+}
+
+html.light .cm-route-icon {
+  background: rgba(198, 222, 65, 0.15) !important;
+  border: 1px solid rgba(198, 222, 65, 0.4) !important;
+  color: #7E9E0A !important;
+}
+
+html.light .cm-route-arrow {
+  background: #C6DE41 !important;
+  color: #171B13 !important;
+  box-shadow: 0 0 16px rgba(198, 222, 65, 0.3) !important;
+}
+
+html.light .cm-teammate-banner {
+  background: #FFFFFF !important;
+  border: 1px solid #DFE5D5 !important;
+  box-shadow: 0 6px 24px rgba(23, 27, 19, 0.06) !important;
+}
+
+html.light .cm-team-content h2 {
+  color: #171B13 !important;
+}
+
+html.light .cm-team-content h2 span {
+  color: #7E9E0A !important;
+}
+
+html.light .cm-team-icon {
+  background: #F0F4E8 !important;
+  border: 1px solid #DFE5D5 !important;
+  color: #7E9E0A !important;
+}
+
+html.light .cm-team-button {
+  background: #C6DE41 !important;
+  color: #171B13 !important;
+  box-shadow: 0 0 20px rgba(198, 222, 65, 0.35) !important;
+}
+
+html.light .cm-guest-hint {
+  color: #78826F !important;
+}
+
+html.light .cm-guest-hint a {
+  color: #7E9E0A !important;
+}
+
 @media (min-width:1536px) { .cm-top-grid {min-height:475px;} .cm-product-scene {min-height:475px;} }
 @media (max-width:1199px) { .cm-top-grid{grid-template-columns: minmax(0,.53fr) minmax(0,.47fr);min-height:420px;} .cm-product-scene{min-height:420px;} .cm-scene-card{width:170px;height:185px;} .cm-quality-note{right:0;top:35%;font-size:17px;} .cm-route-card{gap:12px;padding:15px;} .cm-route-copy strong{font-size:18px;} .cm-route-copy small{font-size:11px;} }
 @media (max-width:900px) { .cm-top-grid{grid-template-columns:1fr;min-height:0;} .cm-hero-copy{padding:20px 0 10px;} .cm-hero-copy h1{font-size:clamp(42px,7vw,64px);} .cm-hero-search{max-width:700px;} .cm-product-scene{min-height:360px;max-width:680px;width:100%;margin:auto;} .cm-scene-card{width:185px;height:200px;} .cm-quick-links{gap:10px;} .cm-route-icon{width:39px;height:39px;} .cm-route-arrow{width:40px;height:40px;} .cm-route-copy small{display:none;} .cm-team-content{margin-left:27%;} }

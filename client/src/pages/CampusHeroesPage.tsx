@@ -115,12 +115,12 @@ export const CampusHeroesPage: React.FC = () => {
   ];
 
   return (
-    <div className="relative isolate min-h-screen bg-[#090B09] space-y-16 pb-20 overflow-hidden">
+    <div className="relative isolate min-h-screen bg-[#090B09] dark:bg-[#090B09] light:bg-[#F7F8F2] space-y-16 pb-20 overflow-hidden transition-colors duration-200">
       {/* Whole-screen background scene */}
       <UnicornHeroBackground />
 
       {/* 1. HERO BANNER */}
-      <section className="relative z-10 bg-[#12160F]/60 backdrop-blur-md text-white pt-16 pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden rounded-[28px] max-w-[1200px] mx-auto border border-[#C6DE41]/20 shadow-[0_0_60px_rgba(198,222,65,0.08)]">
+      <section className="relative z-10 bg-[#12160F]/60 dark:bg-[#12160F]/60 light:bg-white/85 backdrop-blur-md text-white dark:text-white light:text-[#171B13] pt-16 pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden rounded-[28px] max-w-[1200px] mx-auto border border-[#C6DE41]/20 dark:border-[#C6DE41]/20 light:border-[#DFE5D5] shadow-[0_0_60px_rgba(198,222,65,0.08)]">
 
         <div className="max-w-5xl mx-auto text-center relative z-10">
 

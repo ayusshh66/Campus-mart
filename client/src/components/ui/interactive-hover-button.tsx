@@ -1,4 +1,3 @@
-
 import React from "react";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -39,14 +38,14 @@ function HoverContent({
         {!iconOnly && text}
       </span>
 
-      {/* Animated hover label */}
+      {/* Animated hover label - high contrast text when green circle expands */}
       {!iconOnly && (
         <span
           aria-hidden="true"
           className={cn(
             "pointer-events-none absolute inset-0 z-20",
             "flex translate-x-12 items-center justify-center gap-2",
-            "whitespace-nowrap text-white opacity-0",
+            "whitespace-nowrap text-[#090B09] font-bold opacity-0",
             "transition-all duration-300",
             "group-hover:translate-x-0 group-hover:opacity-100"
           )}
@@ -76,9 +75,9 @@ function HoverContent({
 const baseClasses = cn(
   "group relative inline-flex min-h-10 w-auto cursor-pointer",
   "items-center justify-center overflow-hidden rounded-full border",
-  "border-white/20 bg-[#12160F] px-5 py-2",
-  "text-center text-[13px] font-semibold text-white",
-  "transition-all duration-300",
+  "border-white/20 dark:border-white/20 light:border-[#DFE5D5] bg-[#12160F] dark:bg-[#12160F] light:bg-[#FFFFFF] px-5 py-2",
+  "text-center text-[13px] font-semibold text-white dark:text-white light:text-[#171B13]",
+  "transition-all duration-300 shadow-sm",
   "focus-visible:outline-2 focus-visible:outline-offset-2",
   "focus-visible:outline-[#C6DE41]",
   "disabled:cursor-not-allowed disabled:opacity-50"
@@ -108,7 +107,7 @@ export const InteractiveHoverButton = React.forwardRef<
       aria-label={iconOnly ? text : props["aria-label"]}
       className={cn(
         baseClasses,
-        active && "bg-slate-950 text-white",
+        active && "bg-slate-950 dark:bg-slate-950 light:bg-[#C6DE41]/20 text-white dark:text-white light:text-[#171B13] border-[#C6DE41]",
         iconOnly && "h-11 w-11 min-h-0 p-0",
         className
       )}
@@ -155,7 +154,7 @@ export function InteractiveHoverLink({
         "focus-visible:outline-2 focus-visible:outline-offset-2",
         primary
           ? "border-[#C6DE41] bg-[#C6DE41] text-[#090B09] font-bold shadow-[0_0_15px_rgba(198,222,65,0.3)]"
-          : "border-white/15 bg-white/5 text-white hover:border-[#C6DE41]/50",
+          : "border-white/15 dark:border-white/15 light:border-[#DFE5D5] bg-white/5 dark:bg-white/5 light:bg-[#FFFFFF] text-white dark:text-white light:text-[#171B13] hover:border-[#C6DE41]/50 shadow-sm",
         className
       )}
     >
@@ -180,7 +179,7 @@ export function InteractiveHoverLink({
           "whitespace-nowrap opacity-0",
           "transition-all duration-300",
           "group-hover:translate-x-0 group-hover:opacity-100",
-          primary ? "text-[#090B09] font-bold" : "text-[#090B09] font-bold"
+          "text-[#090B09] font-bold"
         )}
       >
         <span>{text}</span>

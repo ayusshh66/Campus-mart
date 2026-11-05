@@ -2,20 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+:root,
+html.dark,
+[data-theme='dark'] {
   color-scheme: dark;
+  --foreground: #F5F7F0;
+  --background: #090B09;
+  --muted-foreground: #B5B9AB;
+
   --color-canvas-mist: #090B09;
   --color-ink-black: #F5F7F0;
   --color-shop-violet: #C6DE41;
   --font-inter: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --campus-bg: #090B09;
+  --campus-surface: #12160F;
+  --campus-surface-hover: #20271A;
+  --campus-accent: #C6DE41;
+  --campus-accent-hover: #D7EF59;
+  --campus-border: rgba(198, 222, 65, 0.24);
+  --campus-text: #F5F7F0;
+  --campus-muted: #B5B9AB;
 }
+
+html.light,
+[data-theme='light'] {
+  color-scheme: light;
+  --foreground: #171B13;
+  --background: #F7F8F2;
+  --muted-foreground: #57614E;
+
+  --color-canvas-mist: #F7F8F2;
+  --color-ink-black: #171B13;
+  --color-shop-violet: #C6DE41;
+  --font-inter: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --campus-bg: #F7F8F2;
+  --campus-surface: #FFFFFF;
+  --campus-surface-hover: #F0F4E8;
+  --campus-accent: #C6DE41;
+  --campus-accent-hover: #D7EF59;
+  --campus-border: #DFE5D5;
+  --campus-text: #171B13;
+  --campus-muted: #57614E;
+}
+
 @layer base {
   html { scroll-behavior: smooth; }
-  body { margin: 0; background: var(--color-canvas-mist); color: var(--color-ink-black); font-family: var(--font-inter); letter-spacing: -0.015em; -webkit-font-smoothing: antialiased; }
+  body {
+    margin: 0;
+    background: var(--color-canvas-mist);
+    color: var(--color-ink-black);
+    font-family: var(--font-inter);
+    letter-spacing: -0.015em;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
   h1,h2,h3,h4 { letter-spacing: -0.04em; }
   button, input, select, textarea { font: inherit; }
   :focus-visible { outline: 2px solid #C6DE41; outline-offset: 3px; }
 }
+
 @layer components {
   .shop-card-shadow { box-shadow: 0 14px 42px -25px rgba(0,0,0,.7),0 4px 14px -8px rgba(0,0,0,.4); }
   .shop-card-hover { transition: transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s ease; }
@@ -24,36 +71,23 @@
   .shop-pill-shadow { box-shadow: 0 3px 14px rgba(0,0,0,.3); }
   .animate-shimmer { background: linear-gradient(90deg,#12160f 25%,#1f2919 50%,#12160f 75%);background-size:200% 100%;animation:shimmer 1.7s ease-in-out infinite; }
 }
+
 @keyframes shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+
 ::-webkit-scrollbar { width: 7px; height: 7px; }
 ::-webkit-scrollbar-thumb { background: #2A3322; border-radius: 20px; }
 ::-webkit-scrollbar-thumb:hover { background: #C6DE41; }
-@media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;scroll-behavior:auto !important; } }
-html {
-  scroll-behavior: smooth;
-}
 
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
+  *,*::before,*::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
-
-:root {
-  --campus-bg: #090B09;
-  --campus-surface: #151A11;
-  --campus-surface-hover: #20271A;
-
-  --campus-accent: #C6DE41;
-  --campus-accent-hover: #D7EF59;
-
-  --campus-border: rgba(198, 222, 65, 0.24);
-  --campus-text: #F5F7F0;
-  --campus-muted: #B5B9AB;
-}
-
-/* Black-green glassmorphism */
+/* Glassmorphism Classes */
 .campus-glass {
   background: rgba(21, 26, 17, 0.72);
   backdrop-filter: blur(18px);
@@ -103,4 +137,232 @@ html {
   border: 1px solid var(--campus-border);
   border-radius: 18px;
   color: #FFFFFF;
+}
+
+/* ============================================================
+   PREMIUM LIGHT THEME SYSTEM (Ivory #F7F8F2, White #FFFFFF,
+   Charcoal #171B13, Lime #C6DE41, Subtle Borders #DFE5D5)
+   ============================================================ */
+
+html.light body {
+  background-color: #F7F8F2 !important;
+  color: #171B13 !important;
+}
+
+/* Surfaces & Containers */
+html.light .bg-\[\#090B09\],
+html.light .bg-\[\#09090b\] {
+  background-color: #F7F8F2 !important;
+}
+
+html.light .bg-\[\#090B09\]\/90 {
+  background-color: rgba(247, 248, 242, 0.92) !important;
+}
+
+html.light .bg-\[\#090B09\]\/95 {
+  background-color: rgba(247, 248, 242, 0.96) !important;
+}
+
+html.light .bg-\[\#090B09\]\/80 {
+  background-color: rgba(247, 248, 242, 0.85) !important;
+}
+
+html.light .bg-\[\#090B09\]\/60 {
+  background-color: rgba(247, 248, 242, 0.70) !important;
+}
+
+html.light .bg-\[\#090B09\]\/40 {
+  background-color: rgba(247, 248, 242, 0.40) !important;
+}
+
+html.light .bg-\[\#12160F\],
+html.light .bg-\[\#151A11\] {
+  background-color: #FFFFFF !important;
+}
+
+html.light .bg-\[\#12160F\]\/60 {
+  background-color: rgba(255, 255, 255, 0.88) !important;
+}
+
+html.light .bg-\[\#12160F\]\/75 {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+}
+
+html.light .bg-\[\#12160F\]\/90 {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+}
+
+html.light .bg-\[\#181D14\] {
+  background-color: #F0F4E8 !important;
+}
+
+html.light .bg-\[\#1F291C\] {
+  background-color: #EEF2E6 !important;
+}
+
+html.light .bg-\[\#161B12\] {
+  background-color: #F5F7EF !important;
+}
+
+html.light .bg-\[\#20271A\] {
+  background-color: #E8ECE0 !important;
+}
+
+html.light .bg-\[\#0A0D08\]\/95,
+html.light .bg-\[\#0E120A\]\/95,
+html.light .bg-\[\#0A0D08\],
+html.light .bg-\[\#0E120A\] {
+  background-color: rgba(255, 255, 255, 0.98) !important;
+}
+
+html.light .bg-\[\#10190A\] {
+  background-color: #F0F4E8 !important;
+}
+
+html.light .bg-\[\#10140D\] {
+  background-color: #FFFFFF !important;
+}
+
+/* Subtle Borders */
+html.light .border-\[\#C6DE41\]\/20,
+html.light .border-\[\#C6DE41\]\/30,
+html.light .border-\[\#C6DE41\]\/40,
+html.light .border-\[\#C6DE41\]\/15,
+html.light .border-\[\#C6DE41\]\/25,
+html.light .border-\[\#C6DE41\]\/35,
+html.light .border-white\/5,
+html.light .border-white\/10,
+html.light .border-white\/15,
+html.light .border-white\/20,
+html.light .border-white\/25,
+html.light .border-white\/30,
+html.light .border-stone-800,
+html.light .border-zinc-800 {
+  border-color: #DFE5D5 !important;
+}
+
+/* Charcoal Primary & Muted Texts */
+html.light .text-\[\#F5F7F0\],
+html.light .text-\[\#E2E6D8\] {
+  color: #171B13 !important;
+}
+
+html.light .text-\[\#B5B9AB\] {
+  color: #57614E !important;
+}
+
+html.light .text-zinc-400,
+html.light .text-stone-400,
+html.light .text-zinc-300,
+html.light .text-stone-300 {
+  color: #57614E !important;
+}
+
+html.light .text-zinc-500,
+html.light .text-stone-500 {
+  color: #78826F !important;
+}
+
+/* Form Inputs in Light Mode */
+html.light input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+html.light select,
+html.light textarea {
+  background-color: #FFFFFF !important;
+  color: #171B13 !important;
+  border-color: #DFE5D5 !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #78826F !important;
+}
+
+html.light input:disabled,
+html.light textarea:disabled,
+html.light select:disabled {
+  background-color: #F0F4E8 !important;
+  color: #57614E !important;
+}
+
+/* Headings and content text in light mode */
+html.light h1:not([class*="text-[#C6DE41]"]):not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-red"]),
+html.light h2:not([class*="text-[#C6DE41]"]):not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-red"]),
+html.light h3:not([class*="text-[#C6DE41]"]):not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-red"]),
+html.light h4:not([class*="text-[#C6DE41]"]):not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-red"]),
+html.light h5:not([class*="text-[#C6DE41]"]):not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-red"]),
+html.light strong:not([class*="text-[#C6DE41]"]):not([class*="text-emerald"]):not([class*="text-amber"]):not([class*="text-red"]) {
+  color: #171B13;
+}
+
+html.light .text-white:not([class*="bg-[#C6DE41]"]):not([class*="bg-amber"]):not([class*="bg-red"]):not([class*="bg-emerald"]):not([class*="bg-black"]) {
+  color: #171B13;
+}
+
+/* Light Glassmorphism */
+html.light .campus-glass {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid #DFE5D5;
+  color: #171B13;
+  box-shadow: 0 10px 30px rgba(23, 27, 19, 0.05);
+}
+
+html.light .campus-glass-card {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid #DFE5D5;
+  color: #171B13;
+  box-shadow: 0 4px 20px rgba(23, 27, 19, 0.05);
+}
+
+html.light .campus-glass-card:hover {
+  border-color: #C6DE41;
+  box-shadow: 0 12px 35px rgba(198, 222, 65, 0.2);
+}
+
+html.light .campus-glass-input {
+  background: #FFFFFF;
+  border: 1px solid #DFE5D5;
+  color: #171B13;
+  caret-color: #7E9E0A;
+}
+
+html.light .campus-glass-input::placeholder {
+  color: #78826F;
+}
+
+html.light .campus-glass-menu {
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid #DFE5D5;
+  color: #171B13;
+  box-shadow: 0 15px 40px rgba(23, 27, 19, 0.08);
+}
+
+/* Light Mode Shadows */
+html.light .shadow-shop-card {
+  box-shadow: 0 4px 20px -2px rgba(23, 27, 19, 0.05), 0 2px 6px -1px rgba(198, 222, 65, 0.08);
+}
+
+html.light .shadow-shop-card-hover:hover {
+  box-shadow: 0 12px 30px -4px rgba(23, 27, 19, 0.09), 0 4px 14px -2px rgba(198, 222, 65, 0.22);
+}
+
+html.light .shadow-shop-float {
+  box-shadow: 0 12px 32px -4px rgba(23, 27, 19, 0.1), 0 4px 14px -2px rgba(198, 222, 65, 0.15);
+}
+
+html.light .shadow-shop-pill {
+  box-shadow: 0 2px 8px 0 rgba(23, 27, 19, 0.06);
+}
+
+html.light .animate-shimmer {
+  background: linear-gradient(90deg, #F0F4E8 25%, #E5EAD9 50%, #F0F4E8 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.7s ease-in-out infinite;
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: #DFE5D5;
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #C6DE41;
 }

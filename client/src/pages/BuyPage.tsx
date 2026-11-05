@@ -152,7 +152,7 @@ useEffect(() => {
   const isFiltered = searchQuery !== '' || selectedCategory !== 'All' || onlyInStock || sortBy !== 'featured';
 
   return (
-    <div className="campus-explore-dark relative isolate min-h-screen w-full bg-[#090B09] text-white">
+    <div className="campus-explore-dark relative isolate min-h-screen w-full bg-[#090B09] dark:bg-[#090B09] light:bg-[#F7F8F2] text-white dark:text-white light:text-[#171B13] transition-colors duration-200">
       <KineticFabricBackground />
       <div className="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8">
 

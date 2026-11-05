@@ -59,7 +59,7 @@ export const SignupPage: React.FC = () => {
   const field = 'w-full rounded-2xl border border-white/15 bg-[#12160F] px-4 py-3.5 text-sm text-white outline-none transition focus:border-[#C6DE41] focus:ring-2 focus:ring-[#C6DE41]/20 placeholder:text-zinc-500';
 
   return (
-    <main className="min-h-screen bg-[#090B09] text-white flex items-center justify-center px-5 py-12 lg:py-20">
+    <main className="min-h-screen bg-[#090B09] dark:bg-[#090B09] light:bg-[#F7F8F2] text-white dark:text-white light:text-[#171B13] transition-colors duration-200 flex items-center justify-center px-5 py-12 lg:py-20">
       <div className="mx-auto max-w-5xl w-full">
         <div className="grid overflow-hidden rounded-[32px] border border-[#C6DE41]/25 bg-[#12160F] shadow-2xl lg:grid-cols-[.8fr_1.2fr]">
           <aside className="relative bg-[#0E120A] p-8 text-white sm:p-12 border-b lg:border-b-0 lg:border-r border-white/10">

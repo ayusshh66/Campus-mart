@@ -134,7 +134,7 @@ export const GuestHome: React.FC = () => {
   };
 
   return (
-    <div className="cm-landing relative isolate overflow-hidden bg-[#090B09] text-[#F5F7F0]">
+    <div className="cm-landing relative isolate overflow-hidden bg-[#090B09] dark:bg-[#090B09] light:bg-[#F7F8F2] text-[#F5F7F0] dark:text-[#F5F7F0] light:text-[#171B13] transition-colors duration-200">
       <div className="cm-ambient cm-ambient-left" aria-hidden="true" />
       <div className="cm-ambient cm-ambient-right" aria-hidden="true" />
       <div className="cm-grain" aria-hidden="true" />

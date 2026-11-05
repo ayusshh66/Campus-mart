@@ -145,7 +145,7 @@ export const ProductDetailPage: React.FC = () => {
   const savings = Math.round(((estimatedOriginalPrice - product.sell_price) / estimatedOriginalPrice) * 100);
 
   return (
-    <div className="min-h-screen bg-[#090B09] text-white py-8 sm:py-12">
+    <div className="min-h-screen bg-[#090B09] dark:bg-[#090B09] light:bg-[#F7F8F2] text-white dark:text-white light:text-[#171B13] py-8 sm:py-12 transition-colors duration-200">
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 space-y-6">
       
       {/* Back button */}

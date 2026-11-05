@@ -349,7 +349,7 @@ export const Home: React.FC = () => {
   };
 
   return (
-    <div className="campus-home-dark relative isolate min-h-screen bg-[#090B09]">
+    <div className="campus-home-dark relative isolate min-h-screen bg-[#090B09] dark:bg-[#090B09] light:bg-[#F7F8F2] transition-colors duration-200">
       <ASMRStaticBackground />
       <div className="relative z-10 space-y-12 md:space-y-16 pb-12 md:pb-16 overflow-x-hidden">
 
