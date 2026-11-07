@@ -647,27 +647,6 @@ export const SellPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Custom Item Promo Strip */}
-              <div className="bg-[#12160F] rounded-[28px] p-5 border border-white/10 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#C6DE41]/10 text-[#C6DE41] border border-[#C6DE41]/20 flex items-center justify-center shrink-0">
-                    <Sparkles className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <span className="text-[13px] font-semibold text-white block tracking-tight">Selling something not listed here?</span>
-                    <span className="text-[12px] text-stone-400 tracking-tight">Submit any second-hand book, tool, or electronics kit as a custom listing!</span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSellMode('custom')}
-                  className="px-4 py-2 rounded-full bg-[#181D14] hover:bg-white/10 border border-white/15 text-white text-[12px] font-semibold transition-all shrink-0 flex items-center gap-1.5"
-                >
-                  <span>Sell Custom Item</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-[#C6DE41]" />
-                </button>
-              </div>
-
               {/* Search & Category Filter Strip */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
                 {/* Search Bar */}
@@ -720,7 +699,7 @@ export const SellPage: React.FC = () => {
                   <Package className="w-12 h-12 text-stone-500 mx-auto mb-3" />
                   <h3 className="font-semibold text-white text-base tracking-tight">No catalog items found</h3>
                   <p className="text-[12px] text-stone-400 mt-1">
-                    Try searching for another keyword or submit it as a custom listing above.
+                    Try searching for another keyword or submit it as a custom listing below.
                   </p>
                 </div>
               ) : (
@@ -807,6 +786,27 @@ export const SellPage: React.FC = () => {
                   })}
                 </div>
               )}
+
+              {/* Custom Item Promo Strip */}
+              <div className="bg-[#12160F] rounded-[28px] p-5 border border-white/10 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#C6DE41]/10 text-[#C6DE41] border border-[#C6DE41]/20 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[13px] font-semibold text-white block tracking-tight">Selling something not listed here?</span>
+                    <span className="text-[12px] text-stone-400 tracking-tight">Submit any second-hand book, tool, or electronics kit as a custom listing!</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSellMode('custom')}
+                  className="px-4 py-2 rounded-full bg-[#181D14] hover:bg-white/10 border border-white/15 text-white text-[12px] font-semibold transition-all shrink-0 flex items-center gap-1.5"
+                >
+                  <span>Sell Custom Item</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-[#C6DE41]" />
+                </button>
+              </div>
             </div>
           )}
         </div>

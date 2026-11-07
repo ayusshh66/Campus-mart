@@ -180,7 +180,7 @@ export const GuestHome: React.FC = () => {
         <section className="cm-quick-links" aria-label="Choose what you want to do">
             <RouteCard to="/buy" title="Buy" subtitle="Find what you need" icon={ShoppingBag} />
               <RouteCard to="/sell" title="Sell" subtitle="Give gear a new home" icon={Tag} />
-              <RouteCard to="/teams/create" title="Make a Team" subtitle="Find your next team" icon={Users} />
+              <RouteCard to="/teams/create" title="Make a Team" subtitle="Find your next team (coming soon)" icon={Users} />
               
         </section>
 
@@ -200,7 +200,7 @@ export const GuestHome: React.FC = () => {
           <div className="cm-team-content">
             <h2>Find people to <span>build with.</span></h2>
             <Link to="/find-teammates" className="cm-team-button">
-              Find Teammates <ArrowRight className="h-[19px] w-[19px]" />
+              coming soon <ArrowRight className="h-[19px] w-[19px]" />
             </Link>
           </div>
         </section>

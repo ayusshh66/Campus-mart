@@ -1,0 +1,31 @@
+// Add inside model User (in BOTH database/schema.prisma and database/schema.postgresql.prisma):
+// solo_invitations_sent     SoloInvitation[] @relation("SoloInvitesSent")
+// solo_invitations_received SoloInvitation[] @relation("SoloInvitesReceived")
+//
+// Add inside model TeamPost:
+// solo_invitations SoloInvitation[]
+//
+// Add inside model SoloPost:
+// invitations SoloInvitation[]
+
+model SoloInvitation {
+  id            String   @id @default(uuid())
+  solo_post_id  String
+  solo_post     SoloPost @relation(fields: [solo_post_id], references: [id], onDelete: Cascade)
+  team_post_id  String
+  team_post     TeamPost @relation(fields: [team_post_id], references: [id], onDelete: Cascade)
+  sender_id     String
+  sender        User     @relation("SoloInvitesSent", fields: [sender_id], references: [id], onDelete: Cascade)
+  recipient_id  String
+  recipient     User     @relation("SoloInvitesReceived", fields: [recipient_id], references: [id], onDelete: Cascade)
+  role_offered  String
+  message       String   @default("")
+  status        String   @default("PENDING") // PENDING, ACCEPTED, DECLINED
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@unique([solo_post_id, team_post_id])
+  @@index([recipient_id, status])
+  @@index([sender_id, status])
+  @@map("solo_invitations")
+}

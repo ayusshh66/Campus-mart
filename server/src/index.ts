@@ -6,6 +6,7 @@ import { config } from './config';
 import authRoutes from './routes/auth';
 import collegeRoutes from './routes/colleges';
 import productRoutes from './routes/products';
+import soloPostsRoutes from './routes/soloPosts';
 import sellRequestRoutes from './routes/sellRequests';
 import buyRequestRoutes from './routes/buyRequests';
 import campusHeroRoutes from './routes/campusHeroes';
@@ -81,11 +82,29 @@ app.get('/api/health', (_req: Request, res: Response) => {
   });
 });
 
+
+// Hackathon features are disabled for the current release.
+// Keep this middleware BEFORE the team-related routes.
+if (process.env.ENABLE_TEAMS !== 'true') {
+  app.use(
+    ['/api/teams', '/api/solo-posts', '/api/solo-invites'],
+    (_req, res) => {
+      return res.status(503).json({
+        success: false,
+        message: 'Hackathon matching is launching soon.',
+      });
+    }
+  );
+}
+
+// Mount Routes
+
 // Mount Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/colleges', collegeRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/sell-requests', sellRequestRoutes);
+app.use('/api/solo-posts', soloPostsRoutes);
 app.use('/api/buy-requests', buyRequestRoutes);
 app.use('/api/campus-heroes', campusHeroRoutes);
 app.use('/api/admin', adminRoutes);

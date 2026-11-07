@@ -1,3 +1,4 @@
+
 import { TextRoll } from './motion/TextRoll';
 import { SmoothInput } from './motion/SmoothInput';
 import React, { useState, useEffect, useRef } from 'react';
@@ -6,6 +7,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ThemeToggle } from './ThemeToggle';
 import { api, College } from '../services/api';
+import { TEAMS_ENABLED } from '../config/features';
 import {
   ShoppingBag,
   Tag,
@@ -20,11 +22,10 @@ import {
   X,
   Check,
   Building2,
-  RotateCcw
+  RotateCcw,
 } from 'lucide-react';
 
-// 21st.dev Navbar Menu: original spring timing and layout animation,
-// adapted for React Router and CampusMart's theme-aware color palette.
+// Original spring animation settings
 const menuTransition = {
   type: 'spring' as const,
   mass: 0.5,
@@ -43,51 +44,93 @@ type MenuItemProps = {
   children: React.ReactNode;
 };
 
-const MenuItem: React.FC<MenuItemProps> = ({
-  label, to, active, setActive, current, children,
-}) => (
-  <div
-    className="relative"
-    onMouseEnter={() => setActive(label)}
-    onFocus={() => setActive(label)}
-  >
-    <motion.div transition={{ duration: 0.3 }}>
-      <Link
-        to={to}
-        aria-current={current ? 'page' : undefined}
-        aria-expanded={active === label}
-        className={`block whitespace-nowrap rounded-full px-2.5 py-2 text-[12px] font-medium transition-colors lg:text-[13px] ${
-          current
-            ? 'text-[#C6DE41] font-semibold'
-            : 'text-white dark:text-white light:text-[#171B13] hover:text-[#C6DE41] light:hover:text-[#7E9E0A]'
-        }`}
-      >
-        {label}
-      </Link>
-    </motion.div>
 
-    {active === label && (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.85, y: 10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={menuTransition}
-        className="absolute left-1/2 top-full z-[70] -translate-x-1/2 pt-4"
-      >
-        <motion.div
-          layoutId="campusmart-navbar-active"
-          transition={menuTransition}
-          className="overflow-hidden rounded-2xl border border-[#C6DE41]/30 dark:border-[#C6DE41]/30 light:border-[#DFE5D5] bg-[#0A0D08]/95 dark:bg-[#0A0D08]/95 light:bg-[#FFFFFF]/98 shadow-xl backdrop-blur-md"
+const MenuItem: React.FC<MenuItemProps> = ({
+  label,
+  to,
+  active,
+  setActive,
+  current,
+  children,
+}) => {
+  // Hide My Teams during the buy/sell-only release
+  if (!TEAMS_ENABLED && label === 'My Teams') {
+    return null;
+  }
+
+  // Show a disabled Teammates label
+  
+if (!TEAMS_ENABLED && label === 'Teammates') {
+  return (
+    <div
+      aria-label="Teammates — Coming Soon"
+      title="Hackathon matching is launching soon"
+      className="flex cursor-not-allowed select-none flex-col items-center justify-center gap-0.5 px-2.5 py-1.5"
+    >
+      <span className="whitespace-nowrap text-[12px] font-medium leading-4 text-zinc-400 light:text-[#62695E] lg:text-[13px]">
+        Teammates
+      </span>
+
+      <span className="whitespace-nowrap text-[9px] font-medium leading-3 tracking-wide text-[#C6DE41] light:text-[#526800]">
+        Coming Soon
+      </span>
+    </div>
+  );
+}
+
+
+  // Original dropdown behavior for other menus
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setActive(label)}
+      onFocus={() => setActive(label)}
+    >
+      <motion.div transition={{ duration: 0.3 }}>
+        <Link
+          to={to}
+          aria-current={current ? 'page' : undefined}
+          aria-expanded={active === label}
+          className={`block whitespace-nowrap rounded-full px-2.5 py-2 text-[12px] font-medium transition-colors lg:text-[13px] ${
+            current
+              ? 'text-[#C6DE41] font-semibold'
+              : 'text-white dark:text-white light:text-[#171B13] hover:text-[#C6DE41] light:hover:text-[#7E9E0A]'
+          }`}
         >
-          <motion.div layout className="flex w-max min-w-[185px] flex-col gap-1 p-4 text-sm">
-            {children}
+          {label}
+        </Link>
+      </motion.div>
+
+      {active === label && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.85, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={menuTransition}
+          className="absolute left-1/2 top-full z-[70] -translate-x-1/2 pt-4"
+        >
+          <motion.div
+            layoutId="campusmart-navbar-active"
+            transition={menuTransition}
+            className="overflow-hidden rounded-2xl border border-[#C6DE41]/30 light:border-[#DFE5D5] bg-[#0A0D08]/95 light:bg-[#FFFFFF]/98 shadow-xl backdrop-blur-md"
+          >
+            <motion.div
+              layout
+              className="flex w-max min-w-[185px] flex-col gap-1 p-4 text-sm"
+            >
+              {children}
+            </motion.div>
           </motion.div>
         </motion.div>
-      </motion.div>
-    )}
-  </div>
-);
+      )}
+    </div>
+  );
+};
 
-const HoveredLink: React.FC<{ to: string; children: React.ReactNode }> = ({ to, children }) => (
+
+const HoveredLink: React.FC<{
+  to: string;
+  children: React.ReactNode;
+}> = ({ to, children }) => (
   <Link
     to={to}
     className="rounded-lg px-3 py-2 text-zinc-300 dark:text-zinc-300 light:text-[#171B13] transition-colors hover:bg-[#C6DE41]/15 hover:text-[#C6DE41] light:hover:bg-[#C6DE41]/20 light:hover:text-[#7E9E0A]"
@@ -97,7 +140,17 @@ const HoveredLink: React.FC<{ to: string; children: React.ReactNode }> = ({ to, 
 );
 
 export const Navbar: React.FC = () => {
-  const { user, logout, selectedCollegeId, setSelectedCollegeId, resetToHomeCollege, isBrowsingOtherCollege, marketplaceMode, setMarketplaceMode } = useAuth();
+  const {
+    user,
+    logout,
+    selectedCollegeId,
+    setSelectedCollegeId,
+    resetToHomeCollege,
+    isBrowsingOtherCollege,
+    marketplaceMode,
+    setMarketplaceMode,
+  } = useAuth();
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -105,6 +158,7 @@ export const Navbar: React.FC = () => {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [showCollegeModal, setShowCollegeModal] = useState(false);
   const [collegeSearch, setCollegeSearch] = useState('');
+
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -116,20 +170,28 @@ export const Navbar: React.FC = () => {
         console.error('Failed to fetch colleges for navbar:', err);
       }
     };
+
     fetchColleges();
   }, []);
 
-  // Close modal when clicking outside
+  // Close campus selector when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(e.target as Node)
+      ) {
         setShowCollegeModal(false);
       }
     };
+
     if (showCollegeModal) {
       document.addEventListener('mousedown', handleClickOutside);
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, [showCollegeModal]);
 
   const handleLogout = () => {
@@ -138,46 +200,106 @@ export const Navbar: React.FC = () => {
   };
 
   const isActive = (path: string) => {
-    if (path === '/' && location.pathname === '/') return true;
-    if (path !== '/' && location.pathname.startsWith(path)) return true;
+    if (path === '/' && location.pathname === '/') {
+      return true;
+    }
+
+    if (path !== '/' && location.pathname.startsWith(path)) {
+      return true;
+    }
+
     return false;
   };
 
-  // Find active college details
-  const activeCollege = colleges.find((c) => c.id === selectedCollegeId) || (user ? user.college : colleges[0]);
+  // Highlight Teammates for both team and individual posts
+  const isTeammatesActive =
+    isActive('/find-teammates') ||
+    isActive('/teams') ||
+    isActive('/find-students') ||
+    isActive('/students') ||
+    isActive('/my-teams');
 
-  const filteredColleges = colleges.filter((c) =>
-    c.name.toLowerCase().includes(collegeSearch.toLowerCase()) ||
-    c.code.toLowerCase().includes(collegeSearch.toLowerCase())
+  const activeCollege =
+    colleges.find((c) => c.id === selectedCollegeId) ||
+    (user ? user.college : colleges[0]);
+
+  const filteredColleges = colleges.filter(
+    (c) =>
+      c.name.toLowerCase().includes(collegeSearch.toLowerCase()) ||
+      c.code.toLowerCase().includes(collegeSearch.toLowerCase())
+  );
+
+  // Shared menu content works for Buyer and Seller modes
+  const teammatesMenu = (
+    <>
+      <HoveredLink to="/find-teammates">
+        Browse Team Openings
+      </HoveredLink>
+
+      <HoveredLink to="/teams/create">
+        Create Team Post
+      </HoveredLink>
+
+      <div className="my-1 border-t border-white/10 light:border-[#DFE5D5]" />
+
+      <HoveredLink to="/find-students">
+        Browse Available Students
+      </HoveredLink>
+
+      <HoveredLink to="/students/create">
+        Post Looking for Team
+      </HoveredLink>
+
+      {user && (
+        <>
+          <div className="my-1 border-t border-white/10 light:border-[#DFE5D5]" />
+
+          <HoveredLink to="/my-teams">
+            My Teams
+          </HoveredLink>
+        </>
+      )}
+    </>
   );
 
   return (
     <>
-      {/* Top Banner - Shop App Style Notice */}
+      {/* Top Banner */}
       <div className="bg-[#090B09] dark:bg-[#090B09] light:bg-[#EEF2E6] text-white dark:text-white light:text-[#171B13] py-2 px-4 text-center text-xs font-medium tracking-tight border-b border-[#C6DE41]/20 dark:border-[#C6DE41]/20 light:border-[#DFE5D5] shadow-sm transition-colors duration-200">
         <div className="max-w-[1200px] mx-auto flex items-center justify-center gap-2">
           <span className="w-2 h-2 rounded-full bg-[#C6DE41] shadow-[0_0_8px_#C6DE41] shrink-0" />
-          <span className="font-semibold text-white dark:text-white light:text-[#171B13]">CampusMart Recommerce:</span>
-          <span className="text-white/90 dark:text-white/90 light:text-[#57614E]">Verified student-to-student handover with zero shipping fee</span>
+
+          <span className="font-semibold text-white dark:text-white light:text-[#171B13]">
+            CampusMart Recommerce:
+          </span>
+
+          <span className="text-white/90 dark:text-white/90 light:text-[#57614E]">
+            Verified student-to-student handover with zero shipping fee
+          </span>
         </div>
       </div>
 
-      {/* Main Top Header */}
+      {/* Main Header */}
       <header className="sticky top-0 z-50 border-b border-[#C6DE41]/20 dark:border-[#C6DE41]/20 light:border-[#DFE5D5] bg-[#090B09]/90 dark:bg-[#090B09]/90 light:bg-[#F7F8F2]/90 backdrop-blur-md transition-colors duration-200">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
 
-          {/* Left: Brand Logo & Interactive Campus Selector */}
+          {/* Brand and Campus Selector */}
           <div className="flex items-center gap-3 sm:gap-4">
-            <Link to="/" className="flex items-center gap-1.5 group shrink-0">
+            <Link
+              to="/"
+              className="flex items-center gap-1.5 group shrink-0"
+            >
               <span className="font-bold text-[20px] tracking-tightest text-white dark:text-white light:text-[#171B13]">
                 CampusMart
               </span>
+
               <span className="w-2 h-2 rounded-full bg-[#C6DE41] mb-1 shadow-[0_0_8px_rgba(198,222,65,0.6)]" />
             </Link>
 
-            {/* Interactive Campus Selector Button */}
+            {/* Campus Selector */}
             <div className="relative">
               <button
+                type="button"
                 onClick={() => setShowCollegeModal(!showCollegeModal)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all shadow-shop-pill ${
                   isBrowsingOtherCollege
@@ -186,13 +308,26 @@ export const Navbar: React.FC = () => {
                 }`}
                 title="Click to switch active campus"
               >
-                <MapPin className={`w-3.5 h-3.5 shrink-0 ${isBrowsingOtherCollege ? 'text-amber-500' : 'text-[#C6DE41]'}`} />
+                <MapPin
+                  className={`w-3.5 h-3.5 shrink-0 ${
+                    isBrowsingOtherCollege
+                      ? 'text-amber-500'
+                      : 'text-[#C6DE41]'
+                  }`}
+                />
+
                 <span className="font-semibold text-white dark:text-white light:text-[#171B13]">
                   {activeCollege ? activeCollege.code : 'All Campuses'}
                 </span>
+
                 <span className="hidden xl:inline text-zinc-400 dark:text-zinc-400 light:text-[#78826F] text-[11px] max-w-[110px] truncate">
-                  ({activeCollege ? activeCollege.name.split('-')[0].trim() : 'Select'})
+                  (
+                  {activeCollege
+                    ? activeCollege.name.split('-')[0].trim()
+                    : 'Select'}
+                  )
                 </span>
+
                 <ChevronDown className="w-3 h-3 text-zinc-400 dark:text-zinc-400 light:text-[#78826F] shrink-0 ml-0.5" />
               </button>
 
@@ -207,12 +342,20 @@ export const Navbar: React.FC = () => {
                       <div className="w-8 h-8 rounded-full bg-[#C6DE41]/15 flex items-center justify-center text-[#C6DE41]">
                         <Building2 className="w-4 h-4" />
                       </div>
+
                       <div>
-                        <h4 className="text-[13px] font-semibold text-white dark:text-white light:text-[#171B13]">Select Campus</h4>
-                        <p className="text-[11px] text-zinc-400 dark:text-zinc-400 light:text-[#57614E]">Browse listings specific to your college</p>
+                        <h4 className="text-[13px] font-semibold text-white dark:text-white light:text-[#171B13]">
+                          Select Campus
+                        </h4>
+
+                        <p className="text-[11px] text-zinc-400 dark:text-zinc-400 light:text-[#57614E]">
+                          Browse listings specific to your college
+                        </p>
                       </div>
                     </div>
+
                     <button
+                      type="button"
                       onClick={() => setShowCollegeModal(false)}
                       className="p-1 rounded-full text-zinc-400 hover:text-white dark:hover:text-white light:hover:text-[#171B13] hover:bg-white/10 light:hover:bg-black/5 transition-colors"
                     >
@@ -220,9 +363,10 @@ export const Navbar: React.FC = () => {
                     </button>
                   </div>
 
-                  {/* Search Campus Input */}
+                  {/* Campus Search */}
                   <div className="relative my-3">
                     <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+
                     <SmoothInput
                       type="text"
                       placeholder="Search college code or name..."
@@ -232,14 +376,17 @@ export const Navbar: React.FC = () => {
                     />
                   </div>
 
-                  {/* College Options List */}
+                  {/* Campus Options */}
                   <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
                     {filteredColleges.map((col) => {
                       const isSelected = activeCollege?.id === col.id;
-                      const isUserHome = user && user.college.id === col.id;
+
+                      const isUserHome =
+                        user && user.college.id === col.id;
 
                       return (
                         <button
+                          type="button"
                           key={col.id}
                           onClick={() => {
                             setSelectedCollegeId(col.id);
@@ -253,14 +400,20 @@ export const Navbar: React.FC = () => {
                         >
                           <div className="flex flex-col">
                             <div className="flex items-center gap-1.5">
-                              <span className="font-semibold text-white dark:text-white light:text-[#171B13]">{col.code}</span>
+                              <span className="font-semibold text-white dark:text-white light:text-[#171B13]">
+                                {col.code}
+                              </span>
+
                               {isUserHome && (
                                 <span className="px-1.5 py-0.2 text-[9px] font-medium rounded-full bg-[#C6DE41]/20 text-[#C6DE41] border border-[#C6DE41]/30">
                                   Home
                                 </span>
                               )}
                             </div>
-                            <span className="text-[11px] text-zinc-400 dark:text-zinc-400 light:text-[#57614E] line-clamp-1">{col.name}</span>
+
+                            <span className="text-[11px] text-zinc-400 dark:text-zinc-400 light:text-[#57614E] line-clamp-1">
+                              {col.name}
+                            </span>
                           </div>
 
                           {isSelected && (
@@ -271,15 +424,21 @@ export const Navbar: React.FC = () => {
                     })}
 
                     {filteredColleges.length === 0 && (
-                      <p className="text-center text-[12px] text-zinc-400 dark:text-zinc-400 light:text-[#57614E] py-4">No colleges match your query.</p>
+                      <p className="text-center text-[12px] text-zinc-400 dark:text-zinc-400 light:text-[#57614E] py-4">
+                        No colleges match your query.
+                      </p>
                     )}
                   </div>
 
-                  {/* Reset to Home Campus Action */}
+                  {/* Reset Home Campus */}
                   {user && isBrowsingOtherCollege && (
                     <div className="pt-3 mt-2 border-t border-[#C6DE41]/20 dark:border-[#C6DE41]/20 light:border-[#DFE5D5] flex items-center justify-between">
-                      <span className="text-[11px] text-amber-400 font-medium">Browsing alternate campus</span>
+                      <span className="text-[11px] text-amber-400 font-medium">
+                        Browsing alternate campus
+                      </span>
+
                       <button
+                        type="button"
                         onClick={() => {
                           resetToHomeCollege();
                           setShowCollegeModal(false);
@@ -287,7 +446,10 @@ export const Navbar: React.FC = () => {
                         className="text-[12px] font-medium text-[#C6DE41] hover:underline flex items-center gap-1"
                       >
                         <RotateCcw className="w-3 h-3" />
-                        <span>Reset to {user.college.code}</span>
+
+                        <span>
+                          Reset to {user.college.code}
+                        </span>
                       </button>
                     </div>
                   )}
@@ -296,108 +458,258 @@ export const Navbar: React.FC = () => {
             </div>
           </div>
 
-          {/* Desktop Menu Pill */}
+          {/* Desktop Navigation */}
           <nav
             className="relative hidden items-center justify-center gap-0.5 rounded-full border border-[#C6DE41]/30 dark:border-[#C6DE41]/30 light:border-[#DFE5D5] bg-[#090B09] dark:bg-[#090B09] light:bg-[#FFFFFF] px-3 py-1.5 shadow-lg lg:flex transition-colors duration-200"
             onMouseLeave={() => setActiveMenu(null)}
-            onKeyDown={(e) => { if (e.key === 'Escape') setActiveMenu(null); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                setActiveMenu(null);
+              }
+            }}
           >
             {marketplaceMode === 'SELLER' ? (
-              /* Seller Mode Desktop Navigation */
+              /* Seller Mode Navigation */
               <>
-                <MenuItem label="Sell Gear" to="/sell" active={activeMenu} setActive={setActiveMenu} current={isActive('/sell')}>
-                  <HoveredLink to="/sell">Submit Item to Sell</HoveredLink>
-                  <HoveredLink to="/profile">Track Payouts & Valuation</HoveredLink>
+                <MenuItem
+                  label="Sell Gear"
+                  to="/sell"
+                  active={activeMenu}
+                  setActive={setActiveMenu}
+                  current={isActive('/sell')}
+                >
+                  <HoveredLink to="/sell">
+                    Submit Item to Sell
+                  </HoveredLink>
+
+                  <HoveredLink to="/profile">
+                    Track Payouts & Valuation
+                  </HoveredLink>
                 </MenuItem>
-                <MenuItem label="My Submissions" to="/profile" active={activeMenu} setActive={setActiveMenu} current={isActive('/profile')}>
-                  <HoveredLink to="/profile">Submission Review Status</HoveredLink>
-                  <HoveredLink to="/profile">Payout Quotes</HoveredLink>
+
+                <MenuItem
+                  label="My Submissions"
+                  to="/profile"
+                  active={activeMenu}
+                  setActive={setActiveMenu}
+                  current={isActive('/profile')}
+                >
+                  <HoveredLink to="/profile">
+                    Submission Review Status
+                  </HoveredLink>
+
+                  <HoveredLink to="/profile">
+                    Payout Quotes
+                  </HoveredLink>
                 </MenuItem>
-                <MenuItem label="Teammates" to="/find-teammates" active={activeMenu} setActive={setActiveMenu} current={isActive('/find-teammates') || isActive('/teams')}>
-                  <HoveredLink to="/find-teammates">Browse Team Openings</HoveredLink>
-                  <HoveredLink to="/teams/create">Create Team Post</HoveredLink>
-                  {user && <HoveredLink to="/my-teams">My Teams</HoveredLink>}
+
+                {/* Seller Teammates Menu */}
+                <MenuItem
+                  label="Teammates"
+                  to="/find-teammates"
+                  active={activeMenu}
+                  setActive={setActiveMenu}
+                  current={isTeammatesActive}
+                >
+                  {teammatesMenu}
                 </MenuItem>
-                <MenuItem label="Heroes" to="/campus-heroes" active={activeMenu} setActive={setActiveMenu} current={isActive('/campus-heroes')}>
-                  <HoveredLink to="/campus-heroes">Campus Hero Program</HoveredLink>
-                  {(user?.role === 'CAMPUS_HERO' || user?.role === 'ADMIN') && (
-                    <HoveredLink to="/hero-dashboard">Hero Operations</HoveredLink>
+
+                <MenuItem
+                  label="Heroes"
+                  to="/campus-heroes"
+                  active={activeMenu}
+                  setActive={setActiveMenu}
+                  current={isActive('/campus-heroes')}
+                >
+                  <HoveredLink to="/campus-heroes">
+                    Campus Hero Program
+                  </HoveredLink>
+
+                  {(user?.role === 'CAMPUS_HERO' ||
+                    user?.role === 'ADMIN') && (
+                    <HoveredLink to="/hero-dashboard">
+                      Hero Operations
+                    </HoveredLink>
                   )}
                 </MenuItem>
+
                 {user && (
-                  <MenuItem label="My Teams" to="/my-teams" active={activeMenu} setActive={setActiveMenu} current={isActive('/my-teams')}>
-                    <HoveredLink to="/my-teams">My Team Applications</HoveredLink>
-                    <HoveredLink to="/find-teammates">Find Teammates</HoveredLink>
+                  <MenuItem
+                    label="My Teams"
+                    to="/my-teams"
+                    active={activeMenu}
+                    setActive={setActiveMenu}
+                    current={isActive('/my-teams')}
+                  >
+                    <HoveredLink to="/my-teams">
+                      My Team Applications
+                    </HoveredLink>
+
+                    <HoveredLink to="/find-teammates">
+                      Find Teammates
+                    </HoveredLink>
                   </MenuItem>
                 )}
-                {(user?.role === 'CAMPUS_HERO' || user?.role === 'ADMIN') && (
-                  <Link to="/hero-dashboard" className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-[#C6DE41]" title="Campus Hero Delivery Operations">
+
+                {(user?.role === 'CAMPUS_HERO' ||
+                  user?.role === 'ADMIN') && (
+                  <Link
+                    to="/hero-dashboard"
+                    className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-[#C6DE41]"
+                    title="Campus Hero Delivery Operations"
+                  >
                     Hero Ops
                   </Link>
                 )}
+
                 {user?.role === 'ADMIN' && (
-                  <Link to="/admin" className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-[#C6DE41]">Admin</Link>
+                  <Link
+                    to="/admin"
+                    className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-[#C6DE41]"
+                  >
+                    Admin
+                  </Link>
                 )}
               </>
             ) : (
-              /* Buyer Mode Desktop Navigation */
+              /* Buyer Mode Navigation */
               <>
-                <MenuItem label="Explore" to="/buy" active={activeMenu} setActive={setActiveMenu} current={isActive('/buy')}>
-                  <HoveredLink to="/buy">Browse Campus Catalog</HoveredLink>
-                  <HoveredLink to="/sell">Sell Your Gear</HoveredLink>
+                <MenuItem
+                  label="Explore"
+                  to="/buy"
+                  active={activeMenu}
+                  setActive={setActiveMenu}
+                  current={isActive('/buy')}
+                >
+                  <HoveredLink to="/buy">
+                    Browse Campus Catalog
+                  </HoveredLink>
+
+                  <HoveredLink to="/sell">
+                    Sell Your Gear
+                  </HoveredLink>
                 </MenuItem>
-                <MenuItem label="Teammates" to="/find-teammates" active={activeMenu} setActive={setActiveMenu} current={isActive('/find-teammates') || isActive('/teams')}>
-                  <HoveredLink to="/find-teammates">Browse Team Openings</HoveredLink>
-                  <HoveredLink to="/teams/create">Create Team Post</HoveredLink>
-                  {user && <HoveredLink to="/my-teams">My Teams</HoveredLink>}
+
+                {/* Buyer Teammates Menu */}
+                <MenuItem
+                  label="Teammates"
+                  to="/find-teammates"
+                  active={activeMenu}
+                  setActive={setActiveMenu}
+                  current={isTeammatesActive}
+                >
+                  {teammatesMenu}
                 </MenuItem>
-                <MenuItem label="Heroes" to="/campus-heroes" active={activeMenu} setActive={setActiveMenu} current={isActive('/campus-heroes')}>
-                  <HoveredLink to="/campus-heroes">Campus Hero Program</HoveredLink>
-                  {(user?.role === 'CAMPUS_HERO' || user?.role === 'ADMIN') && (
-                    <HoveredLink to="/hero-dashboard">Hero Operations</HoveredLink>
+
+                <MenuItem
+                  label="Heroes"
+                  to="/campus-heroes"
+                  active={activeMenu}
+                  setActive={setActiveMenu}
+                  current={isActive('/campus-heroes')}
+                >
+                  <HoveredLink to="/campus-heroes">
+                    Campus Hero Program
+                  </HoveredLink>
+
+                  {(user?.role === 'CAMPUS_HERO' ||
+                    user?.role === 'ADMIN') && (
+                    <HoveredLink to="/hero-dashboard">
+                      Hero Operations
+                    </HoveredLink>
                   )}
                 </MenuItem>
+
                 {user && (
-                  <MenuItem label="My Teams" to="/my-teams" active={activeMenu} setActive={setActiveMenu} current={isActive('/my-teams')}>
-                    <HoveredLink to="/my-teams">My Team Applications</HoveredLink>
-                    <HoveredLink to="/find-teammates">Find Teammates</HoveredLink>
+                  <MenuItem
+                    label="My Teams"
+                    to="/my-teams"
+                    active={activeMenu}
+                    setActive={setActiveMenu}
+                    current={isActive('/my-teams')}
+                  >
+                    <HoveredLink to="/my-teams">
+                      My Team Applications
+                    </HoveredLink>
+
+                    <HoveredLink to="/find-teammates">
+                      Find Teammates
+                    </HoveredLink>
                   </MenuItem>
                 )}
-                {(user?.role === 'CAMPUS_HERO' || user?.role === 'ADMIN') && (
-                  <Link to="/hero-dashboard" className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-[#C6DE41]" title="Campus Hero Delivery Operations">
+
+                {(user?.role === 'CAMPUS_HERO' ||
+                  user?.role === 'ADMIN') && (
+                  <Link
+                    to="/hero-dashboard"
+                    className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-[#C6DE41]"
+                    title="Campus Hero Delivery Operations"
+                  >
                     Hero Ops
                   </Link>
                 )}
+
                 {user?.role === 'ADMIN' && (
-                  <Link to="/admin" className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-[#C6DE41]">Admin</Link>
+                  <Link
+                    to="/admin"
+                    className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-[#C6DE41]"
+                  >
+                    Admin
+                  </Link>
                 )}
-                <MenuItem label="Sell Gear" to="/sell" active={activeMenu} setActive={setActiveMenu} current={isActive('/sell')}>
-                  <HoveredLink to="/sell">Sell Campus Essentials</HoveredLink>
+
+                <MenuItem
+                  label="Sell Gear"
+                  to="/sell"
+                  active={activeMenu}
+                  setActive={setActiveMenu}
+                  current={isActive('/sell')}
+                >
+                  <HoveredLink to="/sell">
+                    Sell Campus Essentials
+                  </HoveredLink>
                 </MenuItem>
               </>
             )}
           </nav>
 
-          {/* Right: Theme Toggle & Auth Profile / Login Actions */}
+          {/* Theme, Account and Login Controls */}
           <div className="flex items-center gap-2">
-            {/* Premium Sun/Moon Theme Toggle */}
             <ThemeToggle />
 
             {user ? (
               <div className="flex items-center gap-2">
-                {/* Mode Switcher Pill */}
+                {/* Buyer / Seller Switch */}
                 <button
-                  onClick={() => setMarketplaceMode(marketplaceMode === 'BUYER' ? 'SELLER' : 'BUYER')}
-                  title={`Switch to ${marketplaceMode === 'BUYER' ? 'Seller' : 'Buyer'} Mode`}
+                  type="button"
+                  onClick={() =>
+                    setMarketplaceMode(
+                      marketplaceMode === 'BUYER'
+                        ? 'SELLER'
+                        : 'BUYER'
+                    )
+                  }
+                  title={`Switch to ${
+                    marketplaceMode === 'BUYER'
+                      ? 'Seller'
+                      : 'Buyer'
+                  } Mode`}
                   className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#C6DE41]/40 dark:border-[#C6DE41]/40 light:border-[#DFE5D5] bg-[#12160F] dark:bg-[#12160F] light:bg-[#FFFFFF] hover:bg-[#C6DE41]/10 text-white dark:text-white light:text-[#171B13] text-[11px] font-bold transition-all shadow-shop-pill group"
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-[#C6DE41] shadow-[0_0_5px_#C6DE41]" />
-                  <span className="text-zinc-400 dark:text-zinc-400 light:text-[#78826F] font-normal">Mode:</span>
+
+                  <span className="text-zinc-400 dark:text-zinc-400 light:text-[#78826F] font-normal">
+                    Mode:
+                  </span>
+
                   <span className="text-[#C6DE41] group-hover:underline">
-                    {marketplaceMode === 'SELLER' ? 'Seller' : 'Buyer'}
+                    {marketplaceMode === 'SELLER'
+                      ? 'Seller'
+                      : 'Buyer'}
                   </span>
                 </button>
 
+                {/* User Profile */}
                 <Link
                   to="/profile"
                   className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#C6DE41]/30 dark:border-[#C6DE41]/30 light:border-[#DFE5D5] bg-[#12160F] dark:bg-[#12160F] light:bg-[#FFFFFF] hover:border-[#C6DE41]/60 transition-all text-[12px] font-medium text-white dark:text-white light:text-[#171B13] shadow-shop-pill"
@@ -405,12 +717,19 @@ export const Navbar: React.FC = () => {
                   <div className="w-6 h-6 rounded-full bg-[#C6DE41]/20 text-[#C6DE41] border border-[#C6DE41]/30 flex items-center justify-center font-bold text-[11px]">
                     {user.name.charAt(0).toUpperCase()}
                   </div>
-                  <span className="hidden sm:inline font-semibold">{user.name.split(' ')[0]}</span>
+
+                  <span className="hidden sm:inline font-semibold">
+                    {user.name.split(' ')[0]}
+                  </span>
+
                   <span className="px-1.5 py-0.2 rounded-full bg-[#C6DE41]/15 text-[10px] text-[#C6DE41] font-semibold">
                     {user.college.code}
                   </span>
                 </Link>
+
+                {/* Logout */}
                 <button
+                  type="button"
                   onClick={handleLogout}
                   title="Logout"
                   className="p-2 text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-[#C6DE41] hover:bg-[#C6DE41]/10 rounded-full transition-colors"
@@ -426,6 +745,7 @@ export const Navbar: React.FC = () => {
                 >
                   <TextRoll text="Log in" />
                 </Link>
+
                 <Link
                   to="/signup"
                   className="px-4 py-1.5 text-[13px] font-bold text-[#090B09] bg-[#C6DE41] hover:bg-[#D7EF59] rounded-full transition-all shadow-shop-pill shadow-[0_0_12px_rgba(198,222,65,0.3)] hover:scale-105 active:scale-95"
@@ -438,12 +758,15 @@ export const Navbar: React.FC = () => {
         </div>
       </header>
 
-      {/* Mobile Bottom Navigation Bar (Shop Pill Rail) */}
+      {/* Mobile Bottom Navigation */}
       <div className="lg:hidden fixed bottom-3 left-4 right-4 z-50 bg-[#090B09]/95 dark:bg-[#090B09]/95 light:bg-[#FFFFFF]/95 backdrop-blur-md border border-[#C6DE41]/30 dark:border-[#C6DE41]/30 light:border-[#DFE5D5] rounded-full px-4 py-2 flex items-center justify-around shadow-shop-float transition-colors duration-200">
+
         <Link
           to="/"
           className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-            isActive('/') ? 'text-[#C6DE41] font-semibold' : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
+            isActive('/')
+              ? 'text-[#C6DE41] font-semibold'
+              : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
           }`}
         >
           <Home className="w-4 h-4 mb-0.5" />
@@ -451,56 +774,97 @@ export const Navbar: React.FC = () => {
         </Link>
 
         {marketplaceMode === 'SELLER' ? (
-          /* Seller Mobile Nav: No Buy button */
           <>
             <Link
               to="/sell"
               className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-                isActive('/sell') ? 'text-[#C6DE41] font-semibold' : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
+                isActive('/sell')
+                  ? 'text-[#C6DE41] font-semibold'
+                  : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
               }`}
             >
               <Tag className="w-4 h-4 mb-0.5" />
-              <span><TextRoll text="Sell" /></span>
+              <span>
+                <TextRoll text="Sell" />
+              </span>
             </Link>
-            <Link
-              to="/find-teammates"
-              className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-                isActive('/find-teammates') || isActive('/teams') ? 'text-[#C6DE41] font-semibold' : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
-              }`}
-            >
-              <Users className="w-4 h-4 mb-0.5" />
-              <span>Teams</span>
-            </Link>
+
+            {TEAMS_ENABLED ? (
+              <Link
+                to="/find-teammates"
+                className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
+                  isTeammatesActive
+                    ? 'text-[#C6DE41] font-semibold'
+                    : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
+                }`}
+              >
+                <Users className="w-4 h-4 mb-0.5" />
+                <span>Teams</span>
+              </Link>
+            ) : (
+              <div
+                aria-label="Teams launching soon"
+                title="Hackathon team matching is launching soon"
+                className="flex cursor-not-allowed select-none flex-col items-center px-2 py-1 text-[10px] font-medium text-zinc-500 light:text-[#62695E]"
+              >
+                <Users className="mb-0.5 h-4 w-4" />
+                <span>Teams</span>
+                <span className="text-[9px] text-[#C6DE41] light:text-[#526800]">Soon</span>
+              </div>
+            )}
           </>
         ) : (
-          /* Buyer Mobile Nav */
           <>
             <Link
               to="/buy"
               className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-                isActive('/buy') ? 'text-[#C6DE41] font-semibold' : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
+                isActive('/buy')
+                  ? 'text-[#C6DE41] font-semibold'
+                  : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
               }`}
             >
               <ShoppingBag className="w-4 h-4 mb-0.5" />
-              <span><TextRoll text="Buy" /></span>
+              <span>
+                <TextRoll text="Buy" />
+              </span>
             </Link>
-            <Link
-              to="/find-teammates"
-              className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-                isActive('/find-teammates') || isActive('/teams') ? 'text-[#C6DE41] font-semibold' : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
-              }`}
-            >
-              <Users className="w-4 h-4 mb-0.5" />
-              <span>Teams</span>
-            </Link>
+
+            {TEAMS_ENABLED ? (
+              <Link
+                to="/find-teammates"
+                className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
+                  isTeammatesActive
+                    ? 'text-[#C6DE41] font-semibold'
+                    : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
+                }`}
+              >
+                <Users className="w-4 h-4 mb-0.5" />
+                <span>Teams</span>
+              </Link>
+            ) : (
+              <div
+                aria-label="Teams launching soon"
+                title="Hackathon team matching is launching soon"
+                className="flex cursor-not-allowed select-none flex-col items-center px-2 py-1 text-[10px] font-medium text-zinc-500 light:text-[#62695E]"
+              >
+                <Users className="mb-0.5 h-4 w-4" />
+                <span>Teams</span>
+                <span className="text-[9px] text-[#C6DE41] light:text-[#526800]">Soon</span>
+              </div>
+            )}
+
             <Link
               to="/sell"
               className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-                isActive('/sell') ? 'text-[#C6DE41] font-semibold' : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
+                isActive('/sell')
+                  ? 'text-[#C6DE41] font-semibold'
+                  : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
               }`}
             >
               <Tag className="w-4 h-4 mb-0.5" />
-              <span><TextRoll text="Sell" /></span>
+              <span>
+                <TextRoll text="Sell" />
+              </span>
             </Link>
           </>
         )}
@@ -509,7 +873,9 @@ export const Navbar: React.FC = () => {
           <Link
             to="/profile"
             className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-              isActive('/profile') ? 'text-[#C6DE41] font-semibold' : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
+              isActive('/profile')
+                ? 'text-[#C6DE41] font-semibold'
+                : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
             }`}
           >
             <UserIcon className="w-4 h-4 mb-0.5" />
@@ -519,7 +885,9 @@ export const Navbar: React.FC = () => {
           <Link
             to="/login"
             className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-              isActive('/login') ? 'text-[#C6DE41] font-semibold' : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
+              isActive('/login')
+                ? 'text-[#C6DE41] font-semibold'
+                : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
             }`}
           >
             <LogIn className="w-4 h-4 mb-0.5" />

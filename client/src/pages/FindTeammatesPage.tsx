@@ -226,7 +226,8 @@ export const FindTeammatesPage: React.FC = () => {
 <div className="relative overflow-hidden rounded-[28px] bg-[#080808] text-white p-8 sm:p-12 border border-[#C6DE41]/20 shadow-2xl">          
 <div className="absolute top-0 right-0 w-80 h-80 bg-transparent rounded-full blur-3xl pointer-events-none" />
             <div className="relative z-10 space-y-6">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+              {/* Hero copy and actions are stacked so buttons never squeeze the heading. */}
+              <div className="flex flex-col gap-6">
                 <div className="max-w-2xl space-y-3">
                   <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#C6DE41]/10 border border-[#C6DE41]/30 text-[#C6DE41] text-[11px] font-bold">
                     <Users className="w-3.5 h-3.5 text-[#C6DE41]" />
@@ -241,26 +242,44 @@ export const FindTeammatesPage: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+                {/* All five actions share one responsive, wrapping row. */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <Link
+                    to="/find-students"
+                    className="inline-flex min-h-11 w-full sm:w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-white/15 bg-[#151515] px-4 py-3 text-[13px] font-semibold text-white transition-all hover:border-[#C6DE41]/40"
+                  >
+                    Browse Students
+                  </Link>
+
+                  <Link
+                    to="/students/create"
+                    className="inline-flex min-h-11 w-full sm:w-auto shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-white/15 bg-[#151515] px-4 py-3 text-[13px] font-semibold text-white transition-all hover:border-[#C6DE41]/40"
+                  >
+                    Looking for a Team?
+                  </Link>
+
                   <Link
                     to="/teams/create"
-                    className="px-5 py-3 rounded-full bg-[#C6DE41] hover:bg-[#D7EF59] text-[#090B09] text-[13px] font-bold shadow-[0_0_20px_rgba(198,222,65,0.25)] transition-all flex items-center justify-center gap-2"
+                    className="inline-flex min-h-11 w-full sm:w-auto shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#C6DE41] px-5 py-3 text-[13px] font-bold text-[#090B09] shadow-[0_0_20px_rgba(198,222,65,0.25)] transition-all hover:bg-[#D7EF59]"
                   >
                     <PlusCircle className="w-4 h-4 text-[#090B09]" />
                     <span>Create Team Post</span>
                   </Link>
+
                   {user && (
                     <Link
                       to="/my-teams"
-                      className="px-4 py-3 rounded-full bg-[#181D14] hover:bg-white/10 border border-white/15 text-white text-[13px] font-semibold transition-all flex items-center justify-center gap-2"
+                      className="inline-flex min-h-11 w-full sm:w-auto shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/15 bg-[#181D14] px-4 py-3 text-[13px] font-semibold text-white transition-all hover:bg-white/10"
                     >
                       <Users className="w-4 h-4 text-[#C6DE41]" />
                       <span>My Teams</span>
                     </Link>
                   )}
+
                   <button
+                    type="button"
                     onClick={openSkillProfileModal}
-                    className="px-4 py-3 rounded-full bg-[#181D14] hover:bg-white/10 border border-white/15 text-white text-[13px] font-semibold transition-all flex items-center justify-center gap-2"
+                    className="inline-flex min-h-11 w-full sm:w-auto shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/15 bg-[#181D14] px-4 py-3 text-[13px] font-semibold text-white transition-all hover:bg-white/10"
                     title="Update your student skills, GitHub, and roles"
                   >
                     <Award className="w-4 h-4 text-[#C6DE41]" />
