@@ -3,8 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api, CampusHeroItem } from '../services/api';
-
-import UnicornHeroBackground from '../components/ui/UnicornHeroBackground';
 import ParticleHeroHeadline from '../components/ui/ParticleHeroHeadline';
 import { CampusHeroStepsGallery } from '../components/ui/CampusHeroStepsGallery';
 import { SmoothInput } from '../components/motion/SmoothInput';
@@ -132,7 +130,7 @@ export const CampusHeroesPage: React.FC = () => {
           1. ANIMATED HERO BACKGROUND
       ======================================= */}
 
-      <UnicornHeroBackground />
+      {/* <UnicornHeroBackground /> */}
 
       {/* =======================================
           2. HERO BANNER
