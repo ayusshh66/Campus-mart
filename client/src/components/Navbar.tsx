@@ -148,7 +148,6 @@ export const Navbar: React.FC = () => {
     resetToHomeCollege,
     isBrowsingOtherCollege,
     marketplaceMode,
-    setMarketplaceMode,
   } = useAuth();
 
   const location = useLocation();
@@ -679,39 +678,9 @@ export const Navbar: React.FC = () => {
 
             {user ? (
               <div className="flex items-center gap-2">
-                {/* Buyer / Seller Switch */}
-                <button
-                  type="button"
-                  onClick={() =>
-                    setMarketplaceMode(
-                      marketplaceMode === 'BUYER'
-                        ? 'SELLER'
-                        : 'BUYER'
-                    )
-                  }
-                  title={`Switch to ${
-                    marketplaceMode === 'BUYER'
-                      ? 'Seller'
-                      : 'Buyer'
-                  } Mode`}
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#C6DE41]/40 dark:border-[#C6DE41]/40 light:border-[#DFE5D5] bg-[#12160F] dark:bg-[#12160F] light:bg-[#FFFFFF] hover:bg-[#C6DE41]/10 text-white dark:text-white light:text-[#171B13] text-[11px] font-bold transition-all shadow-shop-pill group"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#C6DE41] shadow-[0_0_5px_#C6DE41]" />
-
-                  <span className="text-zinc-400 dark:text-zinc-400 light:text-[#78826F] font-normal">
-                    Mode:
-                  </span>
-
-                  <span className="text-[#C6DE41] group-hover:underline">
-                    {marketplaceMode === 'SELLER'
-                      ? 'Seller'
-                      : 'Buyer'}
-                  </span>
-                </button>
-
                 {/* User Profile */}
                 <Link
-                  to="/profile"
+                  to="/settings"
                   className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#C6DE41]/30 dark:border-[#C6DE41]/30 light:border-[#DFE5D5] bg-[#12160F] dark:bg-[#12160F] light:bg-[#FFFFFF] hover:border-[#C6DE41]/60 transition-all text-[12px] font-medium text-white dark:text-white light:text-[#171B13] shadow-shop-pill"
                 >
                   <div className="w-6 h-6 rounded-full bg-[#C6DE41]/20 text-[#C6DE41] border border-[#C6DE41]/30 flex items-center justify-center font-bold text-[11px]">
@@ -871,15 +840,15 @@ export const Navbar: React.FC = () => {
 
         {user ? (
           <Link
-            to="/profile"
+            to="/settings"
             className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-              isActive('/profile')
+              isActive('/settings')
                 ? 'text-[#C6DE41] font-semibold'
                 : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
             }`}
           >
             <UserIcon className="w-4 h-4 mb-0.5" />
-            <span>Profile</span>
+            <span>Settings</span>
           </Link>
         ) : (
           <Link

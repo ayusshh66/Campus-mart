@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Toaster } from 'sonner';
+import { SettingsPage } from './pages/SettingsPage';
 
 import {
   BrowserRouter,
@@ -275,8 +276,17 @@ const AppRoutes: React.FC = () => {
             path="*"
             element={<Navigate to="/" replace />}
           />
+          <Route
+  path="/settings"
+  element={
+    <ProtectedRoute>
+      <SettingsPage />
+    </ProtectedRoute>
+  }
+/>
 
         </Routes>
+      
       </main>
 
       <Footer />

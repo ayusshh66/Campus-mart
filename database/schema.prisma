@@ -53,6 +53,7 @@ model User {
   team_applications        TeamApplication[]       @relation("ApplicantApplications")
   solo_posts SoloPost[] @relation("SoloPosts")
   @@map("users")
+  address String?
 }
 
 model Product {

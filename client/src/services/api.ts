@@ -22,14 +22,23 @@ export interface User {
   name: string;
   email: string;
   phone: string;
-  role: 'USER' | 'ADMIN' | 'CAMPUS_HERO';
-  marketplace_mode: 'BUYER' | 'SELLER';
+
+  role:
+    | 'USER'
+    | 'ADMIN'
+    | 'CAMPUS_HERO';
+
+  marketplace_mode:
+    | 'BUYER'
+    | 'SELLER';
+
   college: {
     id: string;
     code: string;
     name: string;
   };
 }
+
 
 export interface Product {
   id: string;
@@ -497,6 +506,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 export const api = {
+  
   // Colleges
   getColleges: async () => {
     const res = await request<{ success: boolean; data: College[] }>('/colleges');
@@ -516,6 +526,7 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+    
   },
 
   getMe: async () => {
@@ -523,12 +534,26 @@ export const api = {
     return res.data;
   },
 
-  updateMarketplaceMode: async (marketplace_mode: 'BUYER' | 'SELLER') => {
-    return request<{ success: boolean; message: string; data: { marketplace_mode: 'BUYER' | 'SELLER' } }>('/auth/mode', {
-      method: 'PATCH',
-      body: JSON.stringify({ marketplace_mode }),
-    });
-  },
+  updateMarketplaceMode: async (
+  mode: 'BUYER' | 'SELLER'
+) => {
+  return request<{
+    success: boolean;
+    message: string;
+
+    data: {
+      marketplace_mode:
+        | 'BUYER'
+        | 'SELLER';
+    };
+  }>('/auth/marketplace-mode', {
+    method: 'PATCH',
+
+    body: JSON.stringify({
+      marketplace_mode: mode,
+    }),
+  });
+},
 
   // Products
   getProducts: async (college_id?: string) => {
@@ -650,6 +675,7 @@ export const api = {
     }
     return data.data as Array<{ url: string; filename: string }>;
   },
+  
 
   // Admin APIs
   admin: {

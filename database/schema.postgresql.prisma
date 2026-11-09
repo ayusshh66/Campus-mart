@@ -62,6 +62,7 @@ model User {
   hackathon_profile        HackathonProfile?
   created_teams            TeamPost[]              @relation("CreatedTeams")
   team_applications        TeamApplication[]       @relation("ApplicantApplications")
+  address String?
 
   @@map("users")
 }

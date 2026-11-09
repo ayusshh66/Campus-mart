@@ -81,17 +81,21 @@ router.post('/register', async (req: Request, res: Response) => {
       data: {
         token,
         user: {
-          id: newUser.id,
-          name: newUser.name,
-          email: newUser.email,
-          phone: newUser.phone,
-          role: newUser.role,
-          college: {
-            id: newUser.college.id,
-            code: newUser.college.code,
-            name: newUser.college.name,
-          },
-        },
+  id: newUser.id,
+  name: newUser.name,
+  email: newUser.email,
+  phone: newUser.phone,
+  role: newUser.role,
+
+  marketplace_mode:
+    newUser.marketplace_mode,
+
+  college: {  
+    id: newUser.college.id,
+    code: newUser.college.code,
+    name: newUser.college.name,
+  },
+},
       },
     });
   } catch (error: any) {
@@ -164,6 +168,7 @@ router.post('/login', async (req: Request, res: Response) => {
           email: user.email,
           phone: user.phone,
           role: user.role,
+          marketplace_mode: user.marketplace_mode,
           college: {
             id: user.college.id,
             code: user.college.code,
@@ -209,6 +214,7 @@ router.get('/me', authenticateToken, requireAuth, async (req: AuthRequest, res: 
         email: user.email,
         phone: user.phone,
         role: user.role,
+        marketplace_mode: user.marketplace_mode,
         college: {
           id: user.college.id,
           code: user.college.code,
@@ -224,5 +230,61 @@ router.get('/me', authenticateToken, requireAuth, async (req: AuthRequest, res: 
     });
   }
 });
+// PATCH /api/auth/marketplace-mode
+router.patch(
+  '/marketplace-mode',
+  authenticateToken,
+  requireAuth,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { marketplace_mode } = req.body;
+
+      if (
+        marketplace_mode !== 'BUYER' &&
+        marketplace_mode !== 'SELLER'
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            'Marketplace mode must be BUYER or SELLER.',
+        });
+      }
+
+      const updatedUser = await prisma.user.update({
+        where: {
+          id: req.user!.id,
+        },
+
+        data: {
+          marketplace_mode,
+        },
+
+        select: {
+          marketplace_mode: true,
+        },
+      });
+
+      return res.json({
+        success: true,
+        message: `Marketplace mode changed to ${marketplace_mode}.`,
+        data: {
+          marketplace_mode:
+            updatedUser.marketplace_mode,
+        },
+      });
+    } catch (error: any) {
+      console.error(
+        'Marketplace mode update failed:',
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message:
+          'Failed to update marketplace mode.',
+      });
+    }
+  }
+);
 
 export default router;

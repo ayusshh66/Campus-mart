@@ -8,6 +8,7 @@ import collegeRoutes from './routes/colleges';
 import productRoutes from './routes/products';
 import soloPostsRoutes from './routes/soloPosts';
 import sellRequestRoutes from './routes/sellRequests';
+import accountRoutes from './routes/account';
 import buyRequestRoutes from './routes/buyRequests';
 import campusHeroRoutes from './routes/campusHeroes';
 import adminRoutes from './routes/admin';
@@ -111,6 +112,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/hero', heroRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/teams', teamRoutes);
+app.use('/api/account', accountRoutes);
 
 // Error Handling Middleware
 app.use((err: any, _req: Request, res: Response, _next: any) => {
