@@ -348,7 +348,11 @@ export const AdminCustomSubmissions: React.FC<Props> = ({ onAction }) => {
                     {/* Student's Asking Price */}
                     <div className="pt-1">
                       <span className="text-xs text-[#A6B09F]">Student Expected Price: </span>
-                      <span className="text-sm font-black text-[#F5F7F0]">₹{sub.expected_price.toLocaleString('en-IN')}</span>
+                      <span className="text-sm font-black text-[#F5F7F0]">
+  {sub.expected_price != null
+    ? `₹${sub.expected_price.toLocaleString('en-IN')}`
+    : 'Not provided'}
+</span>
                     </div>
 
                     {/* Rejection notice if rejected */}
