@@ -23,6 +23,7 @@ import {
   Check,
   Building2,
   RotateCcw,
+  Settings as SettingsIcon,
 } from 'lucide-react';
 
 // Original spring animation settings
@@ -153,12 +154,15 @@ export const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [colleges, setColleges] = useState<College[]>([]);
-  const [activeMenu, setActiveMenu] = useState<string | null>(null);
-  const [showCollegeModal, setShowCollegeModal] = useState(false);
-  const [collegeSearch, setCollegeSearch] = useState('');
+const [colleges, setColleges] = useState<College[]>([]);
+const [activeMenu, setActiveMenu] = useState<string | null>(null);
+const [showCollegeModal, setShowCollegeModal] = useState(false);
+const [collegeSearch, setCollegeSearch] = useState('');
 
-  const modalRef = useRef<HTMLDivElement>(null);
+const [showAccountMenu, setShowAccountMenu] = useState(false);
+
+  const modalRef = useRef<HTMLDivElement>(null);  
+  const accountMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchColleges = async () => {
@@ -192,6 +196,29 @@ export const Navbar: React.FC = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showCollegeModal]);
+
+  useEffect(() => {
+  const handleAccountClickOutside = (e: MouseEvent) => {
+    if (
+      accountMenuRef.current &&
+      !accountMenuRef.current.contains(e.target as Node)
+    ) {
+      setShowAccountMenu(false);
+    }
+  };
+
+  document.addEventListener(
+    'mousedown',
+    handleAccountClickOutside
+  );
+
+  return () => {
+    document.removeEventListener(
+      'mousedown',
+      handleAccountClickOutside
+    );
+  };
+}, []);
 
   const handleLogout = () => {
     logout();
@@ -679,32 +706,365 @@ export const Navbar: React.FC = () => {
             {user ? (
               <div className="flex items-center gap-2">
                 {/* User Profile */}
-                <Link
-                  to="/settings"
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#C6DE41]/30 dark:border-[#C6DE41]/30 light:border-[#DFE5D5] bg-[#12160F] dark:bg-[#12160F] light:bg-[#FFFFFF] hover:border-[#C6DE41]/60 transition-all text-[12px] font-medium text-white dark:text-white light:text-[#171B13] shadow-shop-pill"
-                >
-                  <div className="w-6 h-6 rounded-full bg-[#C6DE41]/20 text-[#C6DE41] border border-[#C6DE41]/30 flex items-center justify-center font-bold text-[11px]">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
+                {user ? (
+  <div className="flex items-center gap-2">
 
-                  <span className="hidden sm:inline font-semibold">
-                    {user.name.split(' ')[0]}
+    {/* =========================================
+        ACCOUNT DROPDOWN
+    ========================================= */}
+
+    <div
+      ref={accountMenuRef}
+      className="relative"
+      onMouseEnter={() => {
+        setShowAccountMenu(true);
+        setActiveMenu(null);
+      }}
+      onMouseLeave={() => {
+        setShowAccountMenu(false);
+      }}
+    >
+
+      {/* USER PILL */}
+
+      <button
+        type="button"
+        onClick={() => {
+          setShowAccountMenu((prev) => !prev);
+          setActiveMenu(null);
+        }}
+        onFocus={() => {
+          setShowAccountMenu(true);
+          setActiveMenu(null);
+        }}
+        aria-expanded={showAccountMenu}
+        aria-haspopup="menu"
+        className="
+          flex items-center gap-2
+          px-3 py-1.5
+          rounded-full
+
+          border
+          border-[#C6DE41]/30
+          dark:border-[#C6DE41]/30
+          light:border-[#DFE5D5]
+
+          bg-[#12160F]
+          dark:bg-[#12160F]
+          light:bg-[#FFFFFF]
+
+          hover:border-[#C6DE41]/60
+
+          transition-all
+
+          text-[12px]
+          font-medium
+
+          text-white
+          dark:text-white
+          light:text-[#171B13]
+
+          shadow-shop-pill
+        "
+      >
+
+        {/* Avatar */}
+
+        <div
+          className="
+            w-6 h-6
+            rounded-full
+            bg-[#C6DE41]/20
+            text-[#C6DE41]
+            border
+            border-[#C6DE41]/30
+            flex
+            items-center
+            justify-center
+            font-bold
+            text-[11px]
+          "
+        >
+          {user.name.charAt(0).toUpperCase()}
+        </div>
+
+        {/* Name */}
+
+        <span className="hidden sm:inline font-semibold">
+          {user.name.split(' ')[0]}
+        </span>
+
+        {/* College */}
+
+        <span
+          className="
+            px-1.5 py-0.5
+            rounded-full
+            bg-[#C6DE41]/15
+            text-[10px]
+            text-[#C6DE41]
+            font-semibold
+          "
+        >
+          {user.college.code}
+        </span>
+
+        {/* Arrow */}
+
+        <ChevronDown
+          className={`
+            w-3 h-3
+            text-zinc-400
+            transition-transform
+            duration-200
+
+            ${
+              showAccountMenu
+                ? 'rotate-180 text-[#C6DE41]'
+                : ''
+            }
+          `}
+        />
+
+      </button>
+
+      {/* =========================================
+          ANIMATED DROPDOWN
+      ========================================= */}
+
+      {showAccountMenu && (
+        <motion.div
+          initial={{
+            opacity: 0,
+            scale: 0.85,
+            y: 10,
+          }}
+          animate={{
+            opacity: 1,
+            scale: 1,
+            y: 0,
+          }}
+          transition={menuTransition}
+          className="
+            absolute
+            right-0
+            top-full
+            z-[80]
+            pt-4
+          "
+        >
+
+          <motion.div
+            layout
+            transition={menuTransition}
+            className="
+              overflow-hidden
+              min-w-[210px]
+
+              rounded-2xl
+
+              border
+              border-[#C6DE41]/30
+              light:border-[#DFE5D5]
+
+              bg-[#0A0D08]/95
+              light:bg-[#FFFFFF]/98
+
+              shadow-xl
+              backdrop-blur-md
+            "
+          >
+
+            <motion.div
+              layout
+              className="flex flex-col gap-1 p-3"
+            >
+
+              {/* VIEW PROFILE */}
+
+              <Link
+                to="/profile"
+                onClick={() => setShowAccountMenu(false)}
+                className="
+                  flex items-center gap-3
+
+                  rounded-xl
+                  px-3 py-2.5
+
+                  text-[12px]
+                  font-medium
+
+                  text-zinc-300
+                  dark:text-zinc-300
+                  light:text-[#171B13]
+
+                  transition-all
+
+                  hover:bg-[#C6DE41]/15
+                  hover:text-[#C6DE41]
+
+                  light:hover:bg-[#C6DE41]/20
+                  light:hover:text-[#7E9E0A]
+                "
+              >
+
+                <div
+                  className="
+                    flex
+                    w-8 h-8
+                    items-center
+                    justify-center
+
+                    rounded-full
+
+                    bg-[#C6DE41]/10
+                    border
+                    border-[#C6DE41]/20
+                  "
+                >
+                  <UserIcon className="w-4 h-4" />
+                </div>
+
+                <div className="flex flex-col">
+
+                  <span className="font-semibold">
+                    View Profile
                   </span>
 
-                  <span className="px-1.5 py-0.2 rounded-full bg-[#C6DE41]/15 text-[10px] text-[#C6DE41] font-semibold">
-                    {user.college.code}
+                  <span className="text-[10px] text-zinc-500">
+                    Orders & activity
                   </span>
-                </Link>
 
-                {/* Logout */}
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  title="Logout"
-                  className="p-2 text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-[#C6DE41] hover:bg-[#C6DE41]/10 rounded-full transition-colors"
+                </div>
+
+              </Link>
+
+              {/* Separator */}
+
+              <div
+                className="
+                  my-1
+                  border-t
+                  border-white/10
+                  light:border-[#DFE5D5]
+                "
+              />
+
+              {/* SETTINGS */}
+
+              <Link
+                to="/settings"
+                onClick={() => setShowAccountMenu(false)}
+                className="
+                  flex items-center gap-3
+
+                  rounded-xl
+                  px-3 py-2.5
+
+                  text-[12px]
+                  font-medium
+
+                  text-zinc-300
+                  dark:text-zinc-300
+                  light:text-[#171B13]
+
+                  transition-all
+
+                  hover:bg-[#C6DE41]/15
+                  hover:text-[#C6DE41]
+
+                  light:hover:bg-[#C6DE41]/20
+                  light:hover:text-[#7E9E0A]
+                "
+              >
+
+                <div
+                  className="
+                    flex
+                    w-8 h-8
+                    items-center
+                    justify-center
+
+                    rounded-full
+
+                    bg-[#C6DE41]/10
+                    border
+                    border-[#C6DE41]/20
+                  "
                 >
-                  <LogOut className="w-4 h-4" />
-                </button>
+                  <SettingsIcon className="w-4 h-4" />
+                </div>
+
+                <div className="flex flex-col">
+
+                  <span className="font-semibold">
+                    Account Settings
+                  </span>
+
+                  <span className="text-[10px] text-zinc-500">
+                    Profile, mode & password
+                  </span>
+
+                </div>
+
+              </Link>
+
+            </motion.div>
+
+          </motion.div>
+
+        </motion.div>
+      )}
+
+    </div>
+
+    {/* =========================================
+        LOGOUT
+    ========================================= */}
+
+    <button
+      type="button"
+      onClick={handleLogout}
+      title="Logout"
+      className="
+        p-2
+
+        text-zinc-400
+        dark:text-zinc-400
+        light:text-[#57614E]
+
+        hover:text-[#C6DE41]
+        hover:bg-[#C6DE41]/10
+
+        rounded-full
+        transition-colors
+      "
+    >
+      <LogOut className="w-4 h-4" />
+    </button>
+
+  </div>
+) : (
+  <div className="flex items-center gap-2">
+
+    <Link
+      to="/login"
+      className="px-4 py-1.5 text-[13px] font-medium text-white dark:text-white light:text-[#171B13] hover:text-[#C6DE41] rounded-full transition-colors"
+    >
+      <TextRoll text="Log in" />
+    </Link>
+
+    <Link
+      to="/signup"
+      className="px-4 py-1.5 text-[13px] font-bold text-[#090B09] bg-[#C6DE41] hover:bg-[#D7EF59] rounded-full transition-all shadow-shop-pill shadow-[0_0_12px_rgba(198,222,65,0.3)] hover:scale-105 active:scale-95"
+    >
+      <TextRoll text="Sign up" />
+    </Link>
+
+  </div>
+)}
+
+                
               </div>
             ) : (
               <div className="flex items-center gap-2">

@@ -1,923 +1,688 @@
-import { SmoothInput } from '../../components/motion/SmoothInput';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { api, Product } from '../../services/api';
-import { 
-  Package, 
-  PlusCircle, 
-  Check, 
-  X, 
-  Edit3, 
-  Trash2, 
-  Upload, 
-  CheckCircle2, 
+import {
   AlertCircle,
-  HelpCircle,
+  AlertTriangle,
+  ArrowDownToLine,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  FileImage,
+  FilterX,
+  ImagePlus,
+  Info,
+  Loader2,
+  Package,
+  Pencil,
+  Plus,
+  RefreshCcw,
+  RotateCcw,
+  Save,
   Search,
-  Filter
+  ShieldCheck,
+  SlidersHorizontal,
+  Trash2,
+  X,
 } from 'lucide-react';
 
-export interface QuestionOption {
+type QualityOption = {
   label: string;
   description?: string;
   deduction: number;
-}
-
-export interface QualityQuestion {
+};
+type QualityQuestion = {
   id: string;
   question: string;
-  options: QuestionOption[];
+  options: QualityOption[];
+};
+type CatalogProduct = Product & {
+  images: string[];
+  quality_questions: QualityQuestion[];
+};
+type ProductForm = {
+  name: string;
+  category: string;
+  description: string;
+  images: string[];
+  buy_price: number;
+  upto_buy_price: number;
+  sell_price: number;
+  is_buying_enabled: boolean;
+  is_active: boolean;
+  quality_questions: QualityQuestion[];
+};
+type Feedback = { kind: 'success' | 'error'; message: string } | null;
+type CatalogFilter = 'ALL' | 'ACTIVE' | 'INACTIVE';
+type BuyingFilter = 'ALL' | 'BUYING' | 'PAUSED';
+
+interface Props {
+  /** Retained for compatibility with the previous AdminDashboard. */
+  onAddClick?: () => void;
+  forceNewForm?: boolean;
+  onSaved?: () => void;
+  onCloseForm?: () => void;
 }
 
-const GADGET_TEMPLATE: QualityQuestion[] = [
+const calculatorQuestions: QualityQuestion[] = [
   {
     id: 'q_power',
-    question: 'Does the device power on and work normally?',
+    question: 'Does the calculator power on and work correctly?',
     options: [
-      { label: 'Powers On & Works Flawlessly', description: 'Boots instantly, crystal-clear LCD display', deduction: 0 },
-      { label: 'Minor Response Lag / Dim Display', description: 'Buttons need firm press or faint contrast', deduction: 40 },
-      { label: 'Power Issue / Weak Battery', description: 'Requires battery replacement or service', deduction: 120 },
+      { label: 'Works perfectly', description: 'All keys, display and functions work', deduction: 0 },
+      { label: 'Minor issue', description: 'Weak battery or worn keys', deduction: 40 },
+      { label: 'Major issue', description: 'Display or power requires repair', deduction: 120 },
     ],
   },
   {
     id: 'q_screen',
-    question: 'What is the condition of the screen or display?',
+    question: 'What is the screen and body condition?',
     options: [
-      { label: 'Flawless (No Scratches)', description: 'Crystal-clear screen with zero lines or spots', deduction: 0 },
-      { label: 'Light Surface Scratches', description: 'Minor scuffs visible only under direct light', deduction: 30 },
-      { label: 'Deep Scratches or Marks', description: 'Noticeable scratch lines or minor display flaws', deduction: 70 },
+      { label: 'Like new', description: 'No noticeable scratches', deduction: 0 },
+      { label: 'Light wear', description: 'Small cosmetic scratches', deduction: 30 },
+      { label: 'Visible damage', description: 'Deep scratches or marks', deduction: 70 },
     ],
   },
   {
     id: 'q_cover',
-    question: 'Is the original protective cover / cable included?',
+    question: 'Is the original cover or accessory included?',
     options: [
-      { label: 'Original Cover / Cable Included', description: 'Protective hard cover or original cable included', deduction: 0 },
-      { label: 'Device Only', description: 'Protective cover or cable is missing', deduction: 50 },
+      { label: 'Included', deduction: 0 },
+      { label: 'Missing', deduction: 50 },
     ],
   },
 ];
 
-const BOOK_TEMPLATE: QualityQuestion[] = [
+const bookQuestions: QualityQuestion[] = [
   {
-    id: 'q_cover',
-    question: 'What is the condition of the book cover & binding?',
+    id: 'q_binding',
+    question: 'What is the condition of the cover and binding?',
     options: [
-      { label: 'Like New (Pristine)', description: 'Clean cover, unbent spine, crisp corners', deduction: 0 },
-      { label: 'Good Condition', description: 'Intact binding with light shelf wear', deduction: 15 },
-      { label: 'Fair (Noticeable Wear)', description: 'Cover creased or rubbed corners', deduction: 35 },
+      { label: 'Like new', deduction: 0 },
+      { label: 'Light wear', deduction: 15 },
+      { label: 'Visible wear', deduction: 35 },
     ],
   },
   {
-    id: 'q_markings',
-    question: 'Are there any handwritten notes or highlights inside?',
+    id: 'q_marks',
+    question: 'Are there highlights or handwritten notes?',
     options: [
-      { label: 'Clean Pages', description: 'Zero pencil or pen markings on any pages', deduction: 0 },
-      { label: 'Light Pencil / Neat Highlights', description: 'Occasional light pencil notes or highlights', deduction: 15 },
-      { label: 'Frequent Pen Markings', description: 'Solved questions or extensive ink notes', deduction: 30 },
+      { label: 'No markings', deduction: 0 },
+      { label: 'Some pencil marks', deduction: 15 },
+      { label: 'Frequent pen markings', deduction: 30 },
     ],
   },
   {
-    id: 'q_integrity',
-    question: 'Are all pages and index complete?',
+    id: 'q_pages',
+    question: 'Are all pages present and intact?',
     options: [
-      { label: '100% Complete & Intact', description: 'All pages, syllabus chapters, and index intact', deduction: 0 },
-      { label: 'Minor Loose Page', description: 'One or two loose pages inside', deduction: 25 },
+      { label: 'Complete', deduction: 0 },
+      { label: 'Loose or damaged pages', deduction: 25 },
     ],
   },
 ];
 
-interface Props {
-  onAddClick: () => void;
-  forceNewForm?: boolean;
-  onSaved?: () => void;
-}
+const DEFAULT_CATEGORIES = [
+  'Calculator', 'Books', 'Electronics', 'Lab Equipment',
+  'Drafters & Engineering Kits', 'Stationery', 'Other',
+];
 
-export const AdminProducts: React.FC<Props> = ({ onAddClick, forceNewForm, onSaved }) => {
-  const [products, setProducts] = useState<Product[]>([]);
+const currency = (value: number | null | undefined) =>
+  `₹${Number(value ?? 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+
+const safeJSONList = <T,>(value: unknown): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (typeof value !== 'string') return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) ? (parsed as T[]) : [];
+  } catch {
+    return [];
+  }
+};
+
+// Existing Prisma backend stores both arrays as JSON-encoded TEXT.
+const normalizeProduct = (item: Product): CatalogProduct => ({
+  ...item,
+  images: safeJSONList<string>((item as any).images),
+  quality_questions: safeJSONList<QualityQuestion>((item as any).quality_questions),
+});
+
+const emptyForm = (): ProductForm => ({
+  name: '',
+  category: 'Calculator',
+  description: '',
+  images: [],
+  buy_price: 500,
+  upto_buy_price: 650,
+  sell_price: 750,
+  is_buying_enabled: true,
+  is_active: true,
+  quality_questions: calculatorQuestions.map((q) => ({
+    ...q, options: q.options.map((option) => ({ ...option })),
+  })),
+});
+
+const fromProduct = (p: CatalogProduct): ProductForm => ({
+  name: p.name,
+  category: p.category,
+  description: p.description,
+  images: p.images.length ? [...p.images] : p.image_url ? [p.image_url] : [],
+  buy_price: Number(p.buy_price) || 0,
+  upto_buy_price: Number(p.upto_buy_price ?? p.buy_price) || 0,
+  sell_price: Number(p.sell_price) || 0,
+  is_buying_enabled: Boolean(p.is_buying_enabled),
+  is_active: Boolean(p.is_active),
+  quality_questions: p.quality_questions.map((q) => ({
+    ...q, options: q.options.map((o) => ({ ...o })),
+  })),
+});
+
+const inputClass = 'w-full rounded-xl border border-white/10 bg-[#0B0D0A] px-3.5 py-2.5 text-sm text-[#F5F7F0] outline-none placeholder:text-[#656C61] focus:border-[#C6DE41]/70';
+const labelClass = 'mb-1.5 block text-[11px] font-bold uppercase tracking-[0.06em] text-[#B4BBAE]';
+const panelClass = 'rounded-2xl border border-white/10 bg-[#181D14] p-4 sm:p-5';
+
+const metricItems = (
+  total: number,
+  active: number,
+  accepting: number,
+  paused: number
+) => [
+  { title: 'Total SKU Listings', value: total, caption: 'Products in the master catalog', color: '#C6DE41', denominator: total },
+  { title: 'Active on Storefront', value: active, caption: 'Visible student listings', color: '#C6DE41', denominator: total },
+  { title: 'Active Buyback Engine', value: accepting, caption: 'Currently accepting sell requests', color: '#C6DE41', denominator: total },
+  { title: 'Buying Paused', value: paused, caption: 'Products not accepting new intake', color: '#FBBF24', denominator: total },
+];
+
+export const AdminProducts: React.FC<Props> = ({ forceNewForm = false, onSaved, onCloseForm }) => {
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(Boolean(forceNewForm));
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState<CatalogFilter>('ALL');
+  const [buyingFilter, setBuyingFilter] = useState<BuyingFilter>('ALL');
+  const [editorOpen, setEditorOpen] = useState(forceNewForm);
+  const [editing, setEditing] = useState<CatalogProduct | null>(null);
+  const [form, setForm] = useState<ProductForm>(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
+  const [formError, setFormError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [confirmDeactivate, setConfirmDeactivate] = useState<CatalogProduct | null>(null);
+  const [confirmPhrase, setConfirmPhrase] = useState('');
+  const [feedback, setFeedback] = useState<Feedback>(null);
 
-  // Form State
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('Calculator');
-  const [description, setDescription] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [galleryUrls, setGalleryUrls] = useState<string[]>([]);
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [buyPrice, setBuyPrice] = useState<number>(500);
-  const [uptoBuyPrice, setUptoBuyPrice] = useState<number>(650);
-  const [sellPrice, setSellPrice] = useState<number>(750);
-  const [qualityQuestions, setQualityQuestions] = useState<QualityQuestion[]>(GADGET_TEMPLATE);
-  const [isBuyingEnabled, setIsBuyingEnabled] = useState(true);
-  const [isActive, setIsActive] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Search & Filter state
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
-  const [confirmDeactivateModal, setConfirmDeactivateModal] = useState<Product | null>(null);
-
-  const fetchProducts = async () => {
+  const loadProducts = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
-      const data = await api.admin.getProducts();
-      setProducts(data);
-    } catch (err) {
-      console.error('Failed to load products:', err);
+      const result = await api.admin.getProducts();
+      setProducts(result.map(normalizeProduct));
+    } catch (error: any) {
+      setLoadError(error?.message || 'Could not load the product catalog.');
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchProducts();
   }, []);
 
-  const openNewForm = () => {
-    setEditingProduct(null);
-    setName('');
-    setCategory('Calculator');
-    setDescription('');
-    setImageUrl('https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?auto=format&fit=crop&w=800&q=80');
-    setGalleryUrls(['https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?auto=format&fit=crop&w=800&q=80']);
-    setBuyPrice(500);
-    setUptoBuyPrice(650);
-    setSellPrice(750);
-    setQualityQuestions(GADGET_TEMPLATE);
-    setIsBuyingEnabled(true);
-    setIsActive(true);
-    setShowAddModal(true);
+  useEffect(() => { void loadProducts(); }, [loadProducts]);
+  useEffect(() => {
+    if (!feedback) return;
+    const timeout = window.setTimeout(() => setFeedback(null), 4500);
+    return () => window.clearTimeout(timeout);
+  }, [feedback]);
+
+  const categories = useMemo(() =>
+    Array.from(new Set([...DEFAULT_CATEGORIES, ...products.map((p) => p.category)]))
+      .filter(Boolean).sort((a, b) => a.localeCompare(b)), [products]);
+
+  const filtered = useMemo(() => products.filter((p) => {
+    const haystack = `${p.name} ${p.category} ${p.description}`.toLowerCase();
+    if (search.trim() && !haystack.includes(search.trim().toLowerCase())) return false;
+    if (category !== 'ALL' && p.category !== category) return false;
+    if (statusFilter === 'ACTIVE' && !p.is_active) return false;
+    if (statusFilter === 'INACTIVE' && p.is_active) return false;
+    if (buyingFilter === 'BUYING' && !p.is_buying_enabled) return false;
+    if (buyingFilter === 'PAUSED' && p.is_buying_enabled) return false;
+    return true;
+  }), [products, search, category, statusFilter, buyingFilter]);
+
+  const activeCount = products.filter((p) => p.is_active).length;
+  const buyingCount = products.filter((p) => p.is_buying_enabled && p.is_active).length;
+  const pausedCount = products.filter((p) => !p.is_buying_enabled).length;
+
+  const showSuccess = (message: string) => setFeedback({ kind: 'success', message });
+  const showError = (message: string) => setFeedback({ kind: 'error', message });
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm(emptyForm());
+    setUrlInput('');
+    setFormError(null);
+    setEditorOpen(true);
+  };
+  const openEdit = (p: CatalogProduct) => {
+    setEditing(p);
+    setForm(fromProduct(p));
+    setUrlInput('');
+    setFormError(null);
+    setEditorOpen(true);
+  };
+  const closeEditor = () => {
+    if (saving || uploading) return;
+    setEditorOpen(false);
+    setFormError(null);
+    if (forceNewForm && onCloseForm) onCloseForm();
   };
 
-  const openEditForm = (p: Product) => {
-    setEditingProduct(p);
-    setName(p.name);
-    setCategory(p.category);
-    setDescription(p.description);
-    setImageUrl(p.image_url);
-    setGalleryUrls(p.images && p.images.length > 0 ? p.images : [p.image_url]);
-    setBuyPrice(p.buy_price);
-    setUptoBuyPrice(p.upto_buy_price || p.buy_price * 1.2);
-    setSellPrice(p.sell_price);
-    if (p.quality_questions && p.quality_questions.length > 0) {
-      setQualityQuestions(p.quality_questions);
-    } else {
-      setQualityQuestions(p.category.toLowerCase().includes('book') ? BOOK_TEMPLATE : GADGET_TEMPLATE);
+  const updateForm = <K extends keyof ProductForm>(field: K, value: ProductForm[K]) =>
+    setForm((previous) => ({ ...previous, [field]: value }));
+
+  const saveProduct = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setFormError(null);
+    const imageUrls = form.images.map((url) => url.trim()).filter(Boolean);
+    if (form.name.trim().length < 2) return setFormError('Enter a product name with at least two characters.');
+    if (!form.category.trim()) return setFormError('Choose a product category.');
+    if (!form.description.trim()) return setFormError('Enter a product description.');
+    if (!imageUrls.length) return setFormError('Upload or add at least one product image.');
+    if (![form.buy_price, form.upto_buy_price, form.sell_price].every((n) => Number.isFinite(n) && n > 0)) {
+      return setFormError('All three prices must be greater than zero.');
     }
-    setIsBuyingEnabled(p.is_buying_enabled);
-    setIsActive(Boolean(p.is_active));
-    setShowAddModal(true);
-  };
-
-  const addNewQuestion = () => {
-    const newQ: QualityQuestion = {
-      id: `q_${Date.now()}`,
-      question: 'New Condition Question',
-      options: [
-        { label: 'Flawless Condition', description: 'Like new, no issues', deduction: 0 },
-        { label: 'Average Condition', description: 'Minor cosmetic wear', deduction: 30 },
-      ],
-    };
-    setQualityQuestions((prev) => [...prev, newQ]);
-  };
-
-  const removeQuestion = (qIdx: number) => {
-    setQualityQuestions((prev) => prev.filter((_, idx) => idx !== qIdx));
-  };
-
-  const updateQuestionPrompt = (qIdx: number, val: string) => {
-    setQualityQuestions((prev) => {
-      const copy = [...prev];
-      copy[qIdx] = { ...copy[qIdx], question: val };
-      return copy;
-    });
-  };
-
-  const addOptionToQuestion = (qIdx: number) => {
-    setQualityQuestions((prev) => {
-      const copy = [...prev];
-      const q = { ...copy[qIdx] };
-      q.options = [...q.options, { label: 'New Option', description: 'Option details', deduction: 20 }];
-      copy[qIdx] = q;
-      return copy;
-    });
-  };
-
-  const updateOption = (qIdx: number, oIdx: number, field: keyof QuestionOption, val: any) => {
-    setQualityQuestions((prev) => {
-      const copy = [...prev];
-      const q = { ...copy[qIdx] };
-      const opts = [...q.options];
-      opts[oIdx] = { ...opts[oIdx], [field]: val };
-      q.options = opts;
-      copy[qIdx] = q;
-      return copy;
-    });
-  };
-
-  const removeOptionFromQuestion = (qIdx: number, oIdx: number) => {
-    setQualityQuestions((prev) => {
-      const copy = [...prev];
-      const q = { ...copy[qIdx] };
-      q.options = q.options.filter((_, idx) => idx !== oIdx);
-      copy[qIdx] = q;
-      return copy;
-    });
-  };
-
-  const handleAdminImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    const file = e.target.files[0];
-    setUploadingImage(true);
-    try {
-      const res = await api.uploadImage(file);
-      setGalleryUrls((prev) => [...prev, res.url]);
-      if (!imageUrl) setImageUrl(res.url);
-    } catch (err: any) {
-      console.error('Upload failed, using local URL:', err);
-      const local = URL.createObjectURL(file);
-      setGalleryUrls((prev) => [...prev, local]);
-    } finally {
-      setUploadingImage(false);
-    }
-  };
-
-  const removeGalleryImage = (idxToRemove: number) => {
-    setGalleryUrls((prev) => prev.filter((_, idx) => idx !== idxToRemove));
-  };
-
-  const handleSaveProduct = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setError(null);
-
-    try {
-      const finalImages = galleryUrls.length > 0 ? galleryUrls : [imageUrl];
-      const primaryImage = finalImages[0] || imageUrl;
-
-      if (editingProduct) {
-        await api.admin.updateProduct(editingProduct.id, {
-          name,
-          category,
-          description,
-          image_url: primaryImage,
-          images: finalImages,
-          buy_price: buyPrice,
-          upto_buy_price: uptoBuyPrice,
-          sell_price: sellPrice,
-          quality_questions: qualityQuestions,
-          is_buying_enabled: isBuyingEnabled,
-          is_active: isActive,
-        });
-      } else {
-        await api.admin.createProduct({
-          name,
-          category,
-          description,
-          image_url: primaryImage,
-          images: finalImages,
-          buy_price: buyPrice,
-          upto_buy_price: uptoBuyPrice,
-          sell_price: sellPrice,
-          quality_questions: qualityQuestions,
-          is_buying_enabled: isBuyingEnabled,
-          is_active: isActive,
-        });
+    if (form.buy_price > form.upto_buy_price) return setFormError('Base Buy Price cannot exceed Maximum Buy Price.');
+    for (const question of form.quality_questions) {
+      if (!question.question.trim() || question.options.length < 2) {
+        return setFormError('Each quality question needs text and at least two answer options.');
       }
-
-      setShowAddModal(false);
-      await fetchProducts();
-      if (onSaved) onSaved();
-    } catch (err: any) {
-      setError(err.message || 'Failed to save product');
+      if (question.options.some((option) => !option.label.trim() || !Number.isFinite(option.deduction) || option.deduction < 0)) {
+        return setFormError('Quality answer labels are required and deductions cannot be negative.');
+      }
+    }
+    const payload = {
+      name: form.name.trim(), category: form.category.trim(), description: form.description.trim(),
+      image_url: imageUrls[0], images: imageUrls,
+      buy_price: form.buy_price, upto_buy_price: form.upto_buy_price, sell_price: form.sell_price,
+      is_active: form.is_active, is_buying_enabled: form.is_buying_enabled,
+      quality_questions: form.quality_questions,
+    };
+    setSaving(true);
+    try {
+      if (editing) await api.admin.updateProduct(editing.id, payload);
+      else await api.admin.createProduct(payload);
+      setEditorOpen(false);
+      showSuccess(`Product ${editing ? 'updated' : 'created'} successfully.`);
+      await loadProducts();
+      onSaved?.();
+    } catch (error: any) {
+      setFormError(error?.message || 'Unable to save the product.');
     } finally {
-      setSubmitting(false);
+      setSaving(false);
     }
   };
 
-  const handleToggleBuying = async (product: Product) => {
+  const uploadImages = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setUploading(true);
+    setFormError(null);
+    const urls: string[] = [];
     try {
-      await api.admin.updateProduct(product.id, {
-        is_buying_enabled: !product.is_buying_enabled,
-      });
-      await fetchProducts();
-    } catch (err: any) {
-      alert(err.message || 'Failed to update buying status');
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith('image/')) throw new Error('Please select image files only.');
+        const result = await api.uploadImage(file);
+        if (!result?.url) throw new Error(`Upload succeeded without a URL for ${file.name}.`);
+        urls.push(result.url);
+      }
+      setForm((current) => ({ ...current, images: [...current.images, ...urls] }));
+    } catch (error: any) {
+      if (urls.length) setForm((current) => ({ ...current, images: [...current.images, ...urls] }));
+      setFormError(error?.message || 'Image upload failed. Please retry.');
+    } finally {
+      setUploading(false);
     }
   };
 
-  const handleToggleActive = async (product: Product) => {
+  const addImageUrl = () => {
+    const value = urlInput.trim();
+    if (!value) return;
+    if (!value.startsWith('/') && !/^https?:\/\//i.test(value)) {
+      setFormError('Image URL must start with https://, http://, or /.');
+      return;
+    }
+    updateForm('images', [...form.images, value]);
+    setUrlInput('');
+    setFormError(null);
+  };
+
+  const updateQuestion = (index: number, update: Partial<QualityQuestion>) => {
+    const next = form.quality_questions.map((q, i) => i === index ? { ...q, ...update } : q);
+    updateForm('quality_questions', next);
+  };
+  const updateOption = (qi: number, oi: number, update: Partial<QualityOption>) => {
+    const next = form.quality_questions.map((q, i) => i === qi ? {
+      ...q,
+      options: q.options.map((option, j) => j === oi ? { ...option, ...update } : option),
+    } : q);
+    updateForm('quality_questions', next);
+  };
+  const addQuestion = () => updateForm('quality_questions', [
+    ...form.quality_questions,
+    { id: `q_${Date.now()}`, question: '', options: [
+      { label: '', deduction: 0 }, { label: '', deduction: 0 },
+    ] },
+  ]);
+  const loadTemplate = (kind: 'calculator' | 'book') => {
+    if (form.quality_questions.length && !window.confirm('Replace the current quality questions with this template?')) return;
+    const source = kind === 'book' ? bookQuestions : calculatorQuestions;
+    updateForm('quality_questions', source.map((q) => ({ ...q, options: q.options.map((o) => ({ ...o })) })));
+  };
+
+  const toggle = async (p: CatalogProduct, field: 'is_active' | 'is_buying_enabled', value: boolean) => {
+    setBusyId(p.id);
     try {
-      await api.admin.updateProduct(product.id, {
-        is_active: !product.is_active,
-      });
-      await fetchProducts();
-    } catch (err: any) {
-      alert(err.message || 'Failed to update status');
+      await api.admin.updateProduct(p.id, { [field]: value });
+      await loadProducts();
+      showSuccess(`${p.name}: ${field === 'is_active' ? (value ? 'listing activated' : 'listing deactivated') : (value ? 'buying enabled' : 'buying paused')}.`);
+    } catch (error: any) {
+      showError(error?.message || 'Unable to update the product.');
+    } finally {
+      setBusyId(null);
     }
   };
+  const deactivate = async () => {
+    if (!confirmDeactivate || confirmPhrase !== 'DEACTIVATE') return;
+    const p = confirmDeactivate;
+    setBusyId(p.id);
+    try {
+      await api.admin.updateProduct(p.id, { is_active: false });
+      await loadProducts();
+      setConfirmDeactivate(null);
+      setConfirmPhrase('');
+      showSuccess(`${p.name} has been deactivated.`);
+    } catch (error: any) {
+      showError(error?.message || 'Unable to deactivate product.');
+    } finally {
+      setBusyId(null);
+    }
+  };
+  const clearFilters = () => { setSearch(''); setCategory('ALL'); setStatusFilter('ALL'); setBuyingFilter('ALL'); };
 
-  const categories = Array.from(new Set(products.map((p) => p.category))).filter(Boolean);
-
-  const filteredProducts = products.filter((p) => {
-    const q = searchTerm.toLowerCase();
-    const matchesSearch =
-      searchTerm === '' ||
-      p.name.toLowerCase().includes(q) ||
-      p.category.toLowerCase().includes(q) ||
-      p.description.toLowerCase().includes(q);
-
-    const matchesCategory = categoryFilter === 'ALL' || p.category === categoryFilter;
-    const matchesStatus =
-      statusFilter === 'ALL' ||
-      (statusFilter === 'ACTIVE' && p.is_active) ||
-      (statusFilter === 'INACTIVE' && !p.is_active);
-
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+  const exportCSV = () => {
+    const cells = (values: Array<string | number | boolean>) => values.map((v) => {
+      const raw = String(v);
+      // Prevent CSV spreadsheet formula injection from student-controlled text.
+      const safe = /^[\s]*[=+@-]/.test(raw) && typeof v === 'string' ? `\'${raw}` : raw;
+      return `"${safe.replace(/"/g, '""')}"`;
+    }).join(',');
+    const lines = [
+      cells(['ID', 'Product', 'Category', 'Base buy price', 'Maximum buy price', 'Selling price', 'Active', 'Buying enabled']),
+      ...filtered.map((p) => cells([p.id, p.name, p.category, p.buy_price, p.upto_buy_price ?? p.buy_price, p.sell_price, Boolean(p.is_active), Boolean(p.is_buying_enabled)])),
+    ];
+    const blob = new Blob(['\ufeff', lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'campusmart-product-catalog.csv';
+    document.body.appendChild(link);
+    link.click(); link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
 
   return (
-    <div className="space-y-6">
-      {/* Title & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-extrabold text-slate-900">Catalog Management</h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Admin controls what products exist, the fixed buying & selling prices, and whether new sell requests are accepted.
+    <div className="space-y-6 text-[#F5F7F0]">
+      {/* Catalog header: matches Stitch catalog-management screen. */}
+      <div className="flex flex-wrap items-start justify-between gap-5">
+        <div className="min-w-0">
+          <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#C6DE41]">
+            Catalog Operations <span className="mx-1 text-[#777F70]">•</span> CampusMart Marketplace
+          </p>
+          <h1 className="text-3xl font-extrabold tracking-tight sm:text-[34px]">Product Catalog</h1>
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-[#AAB2A4]">
+            Manage campus inventory, valuations, quality checks, and student storefront availability.
           </p>
         </div>
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+          <button type="button" onClick={exportCSV} disabled={!filtered.length} className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-[#1C211A] px-4 py-3 text-xs font-bold transition hover:bg-[#293026] disabled:opacity-40">
+            <ArrowDownToLine className="h-4 w-4" /> Export Catalog (CSV)
+          </button>
+          <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-xl bg-[#C6DE41] px-5 py-3 text-xs font-extrabold text-[#0B0D08] transition hover:bg-[#D7EF59]">
+            <Plus className="h-4 w-4" /> Add New Product
+          </button>
+        </div>
+      </div>
 
-        <button
-          onClick={openNewForm}
-          className="px-4 py-2.5 rounded-xl bg-campus-primary hover:bg-campus-primary-hover text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 self-start sm:self-auto"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>Add New Product</span>
+      {/* Live database metrics – no hardcoded example values from the Stitch export. */}
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        {metricItems(products.length, activeCount, buyingCount, pausedCount).map((metric) => (
+          <div key={metric.title} className="flex min-h-[156px] flex-col justify-between rounded-2xl border border-white/[0.07] bg-[#181D14] p-4 sm:p-5">
+            <div className="text-[11px] font-semibold text-[#B5BDAE]">{metric.title}</div>
+            <div>
+              <div className="text-3xl font-extrabold tabular-nums tracking-tight">{loading ? '—' : metric.value}</div>
+              <p className="mt-1 min-h-[30px] text-[11px] leading-4 text-[#929C8D]">{metric.caption}</p>
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#30362E]">
+                <div className="h-full rounded-full transition-all" style={{ width: `${metric.denominator ? (metric.value / metric.denominator) * 100 : 0}%`, background: metric.color }} />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Product toolbar */}
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/[0.07] bg-[#181D14] p-3">
+        <div className="relative min-w-[200px] flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8E9689]" />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search catalog by title, category or description" aria-label="Search products" className={`${inputClass} h-11 pl-9`} />
+        </div>
+        <select value={category} onChange={(event) => setCategory(event.target.value)} aria-label="Filter by category" className={`${inputClass} h-11 w-full sm:w-auto sm:min-w-[150px]`}>
+          <option value="ALL">All Categories</option>
+          {categories.map((item) => <option key={item} value={item}>{item}</option>)}
+        </select>
+        <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as CatalogFilter)} aria-label="Filter by listing status" className={`${inputClass} h-11 w-full sm:w-auto sm:min-w-[155px]`}>
+          <option value="ALL">Storefront: All</option><option value="ACTIVE">Active</option><option value="INACTIVE">Inactive</option>
+        </select>
+        <select value={buyingFilter} onChange={(event) => setBuyingFilter(event.target.value as BuyingFilter)} aria-label="Filter by buying status" className={`${inputClass} h-11 w-full sm:w-auto sm:min-w-[150px]`}>
+          <option value="ALL">Intake Status: All</option><option value="BUYING">Accepting</option><option value="PAUSED">Paused</option>
+        </select>
+        <button type="button" onClick={clearFilters} className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#292F27] px-4 text-xs font-semibold text-[#D5D9D0] transition hover:bg-[#384034]">
+          <FilterX className="h-4 w-4" /> Reset
         </button>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
-        <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <SmoothInput
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search catalog products..."
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-campus-primary/20 outline-none"
-          />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
-          {/* Category Filter */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
-            <span>Category:</span>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold bg-slate-50 text-slate-800 outline-none"
-            >
-              <option value="ALL">All Categories</option>
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Status Filter */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-            <span>Status:</span>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold bg-slate-50 text-slate-800 outline-none"
-            >
-              <option value="ALL">All Statuses ({products.length})</option>
-              <option value="ACTIVE">Active ({products.filter((p) => p.is_active).length})</option>
-              <option value="INACTIVE">Inactive ({products.filter((p) => !p.is_active).length})</option>
-            </select>
-          </div>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs text-[#ABB4A5]">
+        <span>Showing <strong className="text-white">{loading ? '—' : filtered.length}</strong> of {products.length} products</span>
+        <span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#C6DE41]" /> Data loaded from CampusMart admin API</span>
       </div>
 
-      {/* Product Table */}
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-subtle overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-[#F8FAF9] text-slate-400 font-bold uppercase tracking-wider border-b border-slate-200/80">
-              <tr>
-                <th className="py-4 px-6">Product</th>
-                <th className="py-4 px-4">Buy Price</th>
-                <th className="py-4 px-4">Sell Price</th>
-                <th className="py-4 px-4">We are Buying?</th>
-                <th className="py-4 px-4">Status</th>
-                <th className="py-4 px-6 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">Loading catalog...</td>
-                </tr>
-              ) : filteredProducts.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-slate-400">No matching products found.</td>
-                </tr>
-              ) : (
-                filteredProducts.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={p.image_url}
-                          alt={p.name}
-                          className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0"
-                        />
-                        <div>
-                          <div className="font-extrabold text-slate-900 text-sm">{p.name}</div>
-                          <span className="text-[11px] text-slate-500">{p.category}</span>
-                        </div>
-                      </div>
-                    </td>
+      {feedback && (
+        <div role={feedback.kind === 'error' ? 'alert' : 'status'} className={`fixed right-4 top-24 z-[145] flex w-[min(380px,calc(100vw-2rem))] items-start justify-between gap-3 rounded-xl border bg-[#1B2419] p-4 text-sm shadow-2xl ${feedback.kind === 'success' ? 'border-[#C6DE41]/40 text-[#D9ED83]' : 'border-rose-400/40 text-rose-200'}`}>
+          <div className="flex items-start gap-2">{feedback.kind === 'success' ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" /> : <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />}{feedback.message}</div>
+          <button aria-label="Dismiss message" type="button" onClick={() => setFeedback(null)} className="shrink-0"><X className="h-4 w-4" /></button>
+        </div>
+      )}
 
-                    <td className="py-4 px-4">
-                      <div className="font-bold text-campus-dark text-sm">₹{p.buy_price}</div>
-                      {p.upto_buy_price && p.upto_buy_price > p.buy_price && (
-                        <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
-                          Up to ₹{p.upto_buy_price}
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="py-4 px-4 font-bold text-slate-900 text-sm">
-                      ₹{p.sell_price}
-                    </td>
-
-                    <td className="py-4 px-4">
-                      <button
-                        onClick={() => handleToggleBuying(p)}
-                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                          p.is_buying_enabled
-                            ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
-                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                        }`}
-                      >
-                        <span className={`w-2 h-2 rounded-full ${p.is_buying_enabled ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-                        <span>{p.is_buying_enabled ? 'YES (Accepting)' : 'NO (Paused)'}</span>
-                      </button>
-                    </td>
-
-                    <td className="py-4 px-4">
-                      <button
-                        onClick={() => handleToggleActive(p)}
-                        className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold transition-all ${
-                          p.is_active
-                            ? 'bg-blue-50 text-blue-700'
-                            : 'bg-slate-100 text-slate-400'
-                        }`}
-                      >
-                        {p.is_active ? 'Active' : 'Inactive'}
-                      </button>
-                    </td>
-
-                    <td className="py-4 px-6 text-right">
-                      <div className="inline-flex items-center gap-1.5">
-                        <button
-                          onClick={() => openEditForm(p)}
-                          className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 font-semibold text-xs transition-colors inline-flex items-center gap-1"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                          <span>Edit</span>
-                        </button>
-                        {p.is_active && (
-                          <button
-                            onClick={() => setConfirmDeactivateModal(p)}
-                            className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                            title="Deactivate Product"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
+      {loadError ? (
+        <div className="rounded-2xl border border-rose-500/30 bg-[#181D14] p-8 text-center">
+          <AlertCircle className="mx-auto mb-3 h-7 w-7 text-rose-300" />
+          <p className="mb-4 text-sm text-rose-200">{loadError}</p>
+          <button type="button" onClick={() => void loadProducts()} className="inline-flex items-center gap-2 rounded-xl bg-[#C6DE41] px-4 py-2 text-xs font-bold text-[#090B09]"><RefreshCcw className="h-4 w-4" /> Retry</button>
+        </div>
+      ) : loading ? (
+        <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#181D14] p-4" aria-label="Loading products">
+          {Array.from({ length: 6 }, (_, i) => <div key={i} className="mb-3 flex animate-pulse items-center gap-3 border-b border-white/5 pb-3"><div className="h-12 w-12 rounded-lg bg-[#343B2E]" /><div className="h-4 flex-1 rounded bg-[#343B2E]" /><div className="hidden h-4 w-16 rounded bg-[#343B2E] sm:block" /></div>)}
+        </div>
+      ) : !filtered.length ? (
+        <div className="rounded-2xl border border-white/10 bg-[#181D14] p-10 text-center">
+          <Package className="mx-auto mb-3 h-8 w-8 text-[#C6DE41]" />
+          <h3 className="text-lg font-bold">No products match your filters</h3>
+          <p className="mt-1 text-sm text-[#9AA493]">{products.length ? 'Try resetting the search or status filters.' : 'Create your first catalog product to get started.'}</p>
+          <div className="mt-5 flex justify-center gap-2">
+            <button type="button" onClick={clearFilters} className="rounded-lg border border-white/10 px-4 py-2 text-xs font-bold">Clear Filters</button>
+            {!products.length && <button type="button" onClick={openCreate} className="rounded-lg bg-[#C6DE41] px-4 py-2 text-xs font-bold text-[#090B09]">Add Product</button>}
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Desktop: Stitch-style information-dense catalog table */}
+          <div className="hidden overflow-hidden rounded-2xl border border-white/[0.08] bg-[#181D14] md:block">
+            <div className="w-full overflow-x-auto">
+              <table className="min-w-[970px] w-full text-left text-xs">
+                <thead className="bg-[#0D100D] text-[10px] uppercase tracking-[0.05em] text-[#BBC3B2]">
+                  <tr>
+                    <th className="px-4 py-4 font-bold">Product Identification</th>
+                    <th className="px-3 py-4 text-right font-bold">Base Buy</th>
+                    <th className="px-3 py-4 text-right font-bold">Max Buy</th>
+                    <th className="px-3 py-4 text-right font-bold">Storefront Price</th>
+                    <th className="px-3 py-4 text-center font-bold">Buying</th>
+                    <th className="px-3 py-4 text-center font-bold">Listing</th>
+                    <th className="px-4 py-4 text-right font-bold">Actions</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Add / Edit Product Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
-              <h3 className="text-xl font-bold text-campus-dark">
-                {editingProduct ? 'Edit Catalog Product' : 'Add New Catalog Product'}
-              </h3>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {error && (
-              <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSaveProduct} className="space-y-4">
-              {/* Product Name */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Product Name</label>
-                <SmoothInput
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Casio FX-991ES Plus"
-                  className="w-full p-3 text-xs sm:text-sm rounded-xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30"
-                />
-              </div>
-
-              {/* Category */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Category</label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full p-3 text-xs sm:text-sm rounded-xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30 cursor-pointer"
-                >
-                  <option value="Calculator">Calculator</option>
-                  <option value="Books">Books</option>
-                  <option value="Electronics">Electronics</option>
-                  <option value="Lab Equipment">Lab Equipment</option>
-                  <option value="Stationery">Stationery</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Description</label>
-                <textarea
-                  rows={3}
-                  required
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Specs, functions, condition expectations..."
-                  className="w-full p-3 text-xs sm:text-sm rounded-xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30 resize-none"
-                />
-              </div>
-
-              {/* Gallery Images (Requirement 3: Multi-image product showcase) */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-slate-700">
-                    Product Showcase Gallery ({galleryUrls.length} Images)
-                  </label>
-                  <span className="text-[11px] text-slate-400">Displayed on /buy/:productId</span>
-                </div>
-
-                {/* Thumbnails list */}
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {galleryUrls.map((url, idx) => (
-                    <div key={idx} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 shadow-sm group">
-                      <img src={url} alt={`Thumb ${idx + 1}`} className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => removeGalleryImage(idx)}
-                        className="absolute top-1 right-1 p-0.5 rounded-full bg-slate-900/80 text-white hover:bg-rose-600 transition-colors"
-                        title="Remove image"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-
-                  <label className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-300 hover:border-campus-primary flex flex-col items-center justify-center cursor-pointer bg-slate-50 transition-colors">
-                    <Upload className="w-4 h-4 text-slate-400" />
-                    <span className="text-[9px] font-bold text-slate-500 mt-0.5">
-                      {uploadingImage ? '...' : '+ Upload'}
-                    </span>
-                    <SmoothInput
-                      type="file"
-                      accept="image/*"
-                      onChange={handleAdminImageUpload}
-                      disabled={uploadingImage}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-
-                <div className="flex gap-2">
-                  <SmoothInput
-                    type="url"
-                    value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
-                    placeholder="Or paste primary image URL (https://...)"
-                    className="flex-grow p-2.5 text-xs rounded-xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (imageUrl && !galleryUrls.includes(imageUrl)) {
-                        setGalleryUrls((prev) => [...prev, imageUrl]);
-                      }
-                    }}
-                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors shrink-0"
-                  >
-                    Add URL
-                  </button>
-                </div>
-              </div>
-
-              {/* Pricing (Base Buy, Upto Buy, Sell Price) */}
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Base Buy (₹)
-                    <span className="block text-[9px] text-slate-400 font-normal">Min payout</span>
-                  </label>
-                  <SmoothInput
-                    type="number"
-                    required
-                    value={buyPrice}
-                    onChange={(e) => setBuyPrice(parseFloat(e.target.value) || 0)}
-                    className="w-full p-2.5 text-sm font-bold rounded-xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Up To Buy (₹)
-                    <span className="block text-[9px] text-slate-400 font-normal">Max payout</span>
-                  </label>
-                  <SmoothInput
-                    type="number"
-                    required
-                    value={uptoBuyPrice}
-                    onChange={(e) => setUptoBuyPrice(parseFloat(e.target.value) || 0)}
-                    className="w-full p-2.5 text-sm font-bold rounded-xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30 text-emerald-800"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Sell Price (₹)
-                    <span className="block text-[9px] text-slate-400 font-normal">Buyer pays</span>
-                  </label>
-                  <SmoothInput
-                    type="number"
-                    required
-                    value={sellPrice}
-                    onChange={(e) => setSellPrice(parseFloat(e.target.value) || 0)}
-                    className="w-full p-2.5 text-sm font-bold rounded-xl border border-slate-200 bg-[#F8FAF9] focus:outline-none focus:ring-2 focus:ring-campus-primary/30"
-                  />
-                </div>
-              </div>
-
-              {/* Toggles */}
-              <div className="space-y-3 pt-2">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <SmoothInput
-                    type="checkbox"
-                    checked={isBuyingEnabled}
-                    onChange={(e) => setIsBuyingEnabled(e.target.checked)}
-                    className="w-4 h-4 rounded text-campus-primary focus:ring-campus-primary"
-                  />
-                  <div>
-                    <span className="text-xs font-bold text-slate-800">We are currently buying this item?</span>
-                    <span className="block text-[11px] text-slate-400">If checked, students will see it on the Sell page and can submit requests.</span>
-                  </div>
-                </label>
-
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <SmoothInput
-                    type="checkbox"
-                    checked={isActive}
-                    onChange={(e) => setIsActive(e.target.checked)}
-                    className="w-4 h-4 rounded text-campus-primary focus:ring-campus-primary"
-                  />
-                  <div>
-                    <span className="text-xs font-bold text-slate-800">Product is Active in Catalog?</span>
-                    <span className="block text-[11px] text-slate-400">Visible to students in campus inventory.</span>
-                  </div>
-                </label>
-              </div>
-
-              {/* Condition Check Questions & Pricing Deductions Builder */}
-              <div className="space-y-4 pt-4 border-t border-slate-200">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div>
-                    <h3 className="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
-                      <HelpCircle className="w-4 h-4 text-campus-primary" />
-                      <span>Condition Questions & Deductions Builder</span>
-                    </h3>
-                    <p className="text-[11px] text-slate-500">
-                      Configures the step-by-step diagnostic questionnaire students answer to determine payout from Up To ₹{uptoBuyPrice}.
-                    </p>
-                  </div>
-
-                  {/* Template quick-loaders */}
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setQualityQuestions(GADGET_TEMPLATE)}
-                      className="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 transition-colors"
-                    >
-                      + Gadget Template
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setQualityQuestions(BOOK_TEMPLATE)}
-                      className="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100 transition-colors"
-                    >
-                      + Book Template
-                    </button>
-                  </div>
-                </div>
-
-                {/* Questions List */}
-                <div className="space-y-4 max-h-96 overflow-y-auto pr-1">
-                  {qualityQuestions.map((q, qIdx) => (
-                    <div key={q.id || qIdx} className="p-4 rounded-2xl bg-[#F8FAF9] border border-slate-200/80 space-y-3">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-extrabold text-campus-dark uppercase tracking-wider">
-                          Question {qIdx + 1}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removeQuestion(qIdx)}
-                          className="text-xs font-bold text-rose-600 hover:text-rose-800 flex items-center gap-1"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" /> Remove Question
-                        </button>
+                </thead>
+                <tbody className="divide-y divide-white/[0.06]">
+                  {filtered.map((p) => <tr key={p.id} className="transition-colors hover:bg-[#252B22]">
+                    <td className="px-4 py-3"><div className="flex min-w-[250px] items-center gap-3">
+                      <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-[#30382D]">
+                        {p.image_url ? <img src={p.image_url} alt="" className="h-full w-full object-cover" /> : <FileImage className="m-auto mt-3 h-6 w-6 text-[#81897D]" />}
                       </div>
-
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                          Question Prompt
-                        </label>
-                        <SmoothInput
-                          type="text"
-                          required
-                          value={q.question}
-                          onChange={(e) => updateQuestionPrompt(qIdx, e.target.value)}
-                          placeholder="e.g. What is the condition of the screen?"
-                          className="w-full p-2.5 text-xs font-semibold rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-1 focus:ring-campus-primary"
-                        />
-                      </div>
-
-                      {/* Options list */}
-                      <div className="space-y-2 pt-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                            Selectable Options & Deductions (Hidden from Student UI)
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => addOptionToQuestion(qIdx)}
-                            className="text-[10px] font-bold text-campus-primary hover:underline"
-                          >
-                            + Add Option
-                          </button>
-                        </div>
-
-                        {q.options.map((opt, oIdx) => (
-                          <div key={oIdx} className="p-2.5 rounded-xl bg-white border border-slate-200 grid grid-cols-1 sm:grid-cols-12 gap-2 items-center text-xs">
-                            <div className="sm:col-span-5">
-                              <SmoothInput
-                                type="text"
-                                required
-                                placeholder="Option label (e.g. Flawless)"
-                                value={opt.label}
-                                onChange={(e) => updateOption(qIdx, oIdx, 'label', e.target.value)}
-                                className="w-full p-1.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-campus-primary font-medium"
-                              />
-                            </div>
-                            <div className="sm:col-span-4">
-                              <SmoothInput
-                                type="text"
-                                placeholder="Subtitle (e.g. No scratches)"
-                                value={opt.description || ''}
-                                onChange={(e) => updateOption(qIdx, oIdx, 'description', e.target.value)}
-                                className="w-full p-1.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-campus-primary text-slate-500"
-                              />
-                            </div>
-                            <div className="sm:col-span-2 flex items-center gap-1">
-                              <span className="text-[10px] font-bold text-slate-400">Deduct ₹</span>
-                              <SmoothInput
-                                type="number"
-                                min={0}
-                                value={opt.deduction}
-                                onChange={(e) => updateOption(qIdx, oIdx, 'deduction', parseFloat(e.target.value) || 0)}
-                                className="w-16 p-1.5 text-xs font-bold rounded-lg border border-slate-200 text-slate-800"
-                              />
-                            </div>
-                            <div className="sm:col-span-1 text-right">
-                              {q.options.length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => removeOptionFromQuestion(qIdx, oIdx)}
-                                  className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors"
-                                  title="Remove option"
-                                >
-                                  <X className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-
-                  <button
-                    type="button"
-                    onClick={addNewQuestion}
-                    className="w-full py-2.5 rounded-xl border border-dashed border-campus-primary/50 text-campus-primary hover:bg-campus-soft/30 text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <PlusCircle className="w-4 h-4" />
-                    <span>+ Add Another Condition Question</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-3 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 py-3 rounded-xl bg-campus-primary hover:bg-campus-primary-hover text-white font-bold text-xs shadow-md transition-all disabled:opacity-50"
-                >
-                  {submitting ? 'Saving...' : editingProduct ? 'Update Product' : 'Create Product'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Confirmation Modal for Deactivation */}
-      {confirmDeactivateModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2.5 rounded-2xl bg-rose-100 text-rose-700">
-                <Trash2 className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-extrabold text-sm text-slate-900">Deactivate Product?</h3>
-                <p className="text-[11px] text-slate-500">Remove from active catalog</p>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-600 mb-5 leading-relaxed">
-              Are you sure you want to deactivate <strong className="text-slate-900">{confirmDeactivateModal.name}</strong>? Students will no longer see it in the buy/sell catalog.
-            </p>
-
-            <div className="flex items-center justify-end gap-2.5">
-              <button
-                type="button"
-                onClick={() => setConfirmDeactivateModal(null)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  const p = confirmDeactivateModal;
-                  setConfirmDeactivateModal(null);
-                  await handleToggleActive(p);
-                }}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white transition-all shadow-sm"
-              >
-                Confirm Deactivate
-              </button>
+                      <div className="min-w-0"><div className="max-w-[340px] truncate text-[13px] font-semibold text-[#F5F7F0]" title={p.name}>{p.name}</div>
+                        <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-[#9DA694]"><span className="rounded bg-white/10 px-1.5 py-0.5">{p.category}</span><span className="font-mono opacity-70">{p.id.slice(0, 8)}</span></div>
+                      </div></div></td>
+                    <td className="px-3 py-3 text-right font-bold tabular-nums">{currency(p.buy_price)}</td>
+                    <td className="px-3 py-3 text-right font-bold tabular-nums text-[#C6DE41]">{currency(p.upto_buy_price ?? p.buy_price)}</td>
+                    <td className="px-3 py-3 text-right font-bold tabular-nums">{currency(p.sell_price)}</td>
+                    <td className="px-3 py-3 text-center"><button disabled={busyId === p.id} type="button" aria-label={`${p.is_buying_enabled ? 'Pause' : 'Enable'} buying for ${p.name}`} onClick={() => void toggle(p, 'is_buying_enabled', !p.is_buying_enabled)} className={`rounded-full px-2.5 py-1 text-[10px] font-bold transition disabled:opacity-40 ${p.is_buying_enabled ? 'bg-[#C6DE41]/15 text-[#C6DE41]' : 'bg-amber-500/10 text-amber-300'}`}>{p.is_buying_enabled ? '● Accepting' : '● Paused'}</button></td>
+                    <td className="px-3 py-3 text-center"><span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${p.is_active ? 'bg-[#D9E4D3]/10 text-[#DEE7D7]' : 'bg-white/5 text-[#8F988B]'}`}>{p.is_active ? 'Active' : 'Inactive'}</span></td>
+                    <td className="px-4 py-3 text-right"><div className="inline-flex items-center gap-1.5">
+                      <button disabled={busyId === p.id} onClick={() => openEdit(p)} className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2.5 py-1.5 font-bold transition hover:border-[#C6DE41]/40 hover:text-[#C6DE41]"><Pencil className="h-3.5 w-3.5" /> Edit</button>
+                      {p.is_active ? <button disabled={busyId === p.id} title={`Deactivate ${p.name}`} aria-label={`Deactivate ${p.name}`} onClick={() => {setConfirmDeactivate(p);setConfirmPhrase('');}} className="rounded-lg border border-white/10 p-1.5 text-[#AAB4A3] hover:border-rose-400/40 hover:text-rose-300"><Trash2 className="h-3.5 w-3.5" /></button>
+                        : <button disabled={busyId === p.id} onClick={() => void toggle(p, 'is_active', true)} title={`Reactivate ${p.name}`} aria-label={`Reactivate ${p.name}`} className="rounded-lg border border-white/10 p-1.5 text-[#C6DE41] hover:border-[#C6DE41]/50"><RotateCcw className="h-3.5 w-3.5" /></button>}
+                    </div></td>
+                  </tr>)}
+                </tbody>
+              </table>
             </div>
           </div>
-        </div>
+          {/* Mobile: readable cards, same live actions */}
+          <div className="grid gap-3 md:hidden">
+            {filtered.map((p) => <div key={p.id} className="rounded-xl border border-white/10 bg-[#181D14] p-4">
+              <div className="mb-3 flex gap-3"><div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#2A3324]">{p.image_url && <img src={p.image_url} className="h-full w-full object-cover" alt="" />}</div><div className="min-w-0"><h3 className="font-bold">{p.name}</h3><span className="text-xs text-[#929C8D]">{p.category}</span></div></div>
+              <div className="grid grid-cols-3 gap-2 border-t border-white/10 py-3 text-xs"><div><div className="mb-1 text-[10px] text-[#9AA493]">Base</div>{currency(p.buy_price)}</div><div><div className="mb-1 text-[10px] text-[#9AA493]">Max</div>{currency(p.upto_buy_price ?? p.buy_price)}</div><div><div className="mb-1 text-[10px] text-[#9AA493]">Selling</div>{currency(p.sell_price)}</div></div>
+              <div className="flex flex-wrap items-center justify-between gap-2"><button disabled={busyId === p.id} type="button" onClick={() => void toggle(p, 'is_buying_enabled', !p.is_buying_enabled)} className="rounded-lg border border-white/10 px-2.5 py-2 text-[11px] font-bold">{p.is_buying_enabled ? 'Buying: Accepting' : 'Buying: Paused'}</button><span className="text-xs text-[#ABB4A5]">{p.is_active ? 'Active' : 'Inactive'}</span><button onClick={() => openEdit(p)} className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold">Edit</button>{p.is_active ? <button onClick={() => { setConfirmDeactivate(p);setConfirmPhrase(''); }} className="text-xs text-rose-300">Deactivate</button> : <button onClick={() => void toggle(p, 'is_active', true)} className="text-xs text-[#C6DE41]">Reactivate</button>}</div>
+            </div>)}
+          </div>
+        </>
       )}
+
+      {/* Stitch's add/edit drawer: wide, full height, scrollable body with fixed actions. */}
+      {editorOpen && <div className="fixed inset-0 z-[120] flex justify-end" role="presentation">
+        <div className="absolute inset-0 bg-black/75" onClick={closeEditor} />
+        <section role="dialog" aria-modal="true" aria-labelledby="product-editor-title" className="relative flex h-full w-full max-w-[760px] flex-col border-l border-white/15 bg-[#12160F] text-[#F5F7F0] shadow-2xl">
+          <div className="shrink-0 border-b border-white/10 bg-[#1A1E19] px-5 py-5 sm:px-7">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="mb-3 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[#C6DE41]"><span className="rounded bg-[#C6DE41] px-2 py-1 text-[#15200B]">Catalog Item Configuration</span> CampusMart</div>
+                <h2 id="product-editor-title" className="text-xl font-extrabold tracking-tight sm:text-2xl">{editing ? `Edit Product: ${editing.name}` : 'Add New Catalog Product'}</h2>
+                <p className="mt-1 text-[11px] text-[#A9B2A2]">{editing ? `Product ID: ${editing.id.slice(0, 12)}` : 'Configure the item before publishing it to the student storefront.'}</p>
+              </div>
+              <button type="button" onClick={closeEditor} aria-label="Close product editor" className="rounded-lg p-2 text-[#AFB8A8] hover:bg-white/10 hover:text-white"><X className="h-5 w-5" /></button>
+            </div>
+          </div>
+
+          <form id="campusmart-product-editor-form" onSubmit={saveProduct} className="flex min-h-0 flex-1 flex-col">
+            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-5 sm:px-7">
+              {formError && <div role="alert" className="flex gap-2 rounded-xl border border-rose-400/30 bg-rose-500/10 p-3 text-sm text-rose-200"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />{formError}</div>}
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-[#D5ED73]"><SlidersHorizontal className="h-4 w-4" /> Product Information</h3>
+                <div className={panelClass}>
+                  <div className="mb-4"><label className={labelClass} htmlFor="catalog-product-name">Product Name & Series</label><input id="catalog-product-name" required minLength={2} value={form.name} onChange={(event) => updateForm('name', event.target.value)} className={inputClass} placeholder="e.g. Casio FX-991ES Plus" /></div>
+                  <div className="mb-4 grid gap-3 sm:grid-cols-2"><div><label className={labelClass} htmlFor="catalog-category">Category</label><select id="catalog-category" value={form.category} onChange={(event) => updateForm('category', event.target.value)} className={inputClass}>{categories.map((c) => <option key={c} value={c}>{c}</option>)}</select></div><div><label className={labelClass} htmlFor="catalog-active">Listing Visibility</label><select id="catalog-active" value={form.is_active ? 'active' : 'inactive'} onChange={(event) => updateForm('is_active', event.target.value === 'active')} className={inputClass}><option value="active">Active / Visible</option><option value="inactive">Inactive / Hidden</option></select></div></div>
+                  <div><label className={labelClass} htmlFor="catalog-description">Description</label><textarea id="catalog-description" required rows={3} value={form.description} onChange={(event) => updateForm('description', event.target.value)} className={`${inputClass} resize-y`} placeholder="Product specifications and important details" /></div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-[#D5ED73]"><FileImage className="h-4 w-4" /> Product Showcase Gallery</h3>
+                <div className={panelClass}>
+                  <p className="mb-4 text-xs text-[#A5AEA0]">The first image is the primary storefront photo. Drag-free controls allow choosing another primary image.</p>
+                  <div className="mb-4 flex flex-wrap gap-2">
+                    {form.images.map((url, index) => <div key={`${url}-${index}`} className="group relative h-24 w-24 overflow-hidden rounded-xl border border-white/15 bg-[#30372B]">
+                      <img src={url} alt={`Product image ${index + 1}`} className="h-full w-full object-cover" />
+                      {index === 0 && <span className="absolute bottom-1 left-1 rounded bg-[#C6DE41] px-1.5 py-0.5 text-[9px] font-bold text-[#090B09]">Primary</span>}
+                      <div className="absolute right-1 top-1 flex gap-1">
+                        {index > 0 && <button type="button" title="Make primary" aria-label={`Make image ${index + 1} primary`} onClick={() => updateForm('images', [url, ...form.images.filter((_, i) => i !== index)])} className="rounded bg-black/80 p-1 text-white hover:text-[#C6DE41]"><Check className="h-3 w-3" /></button>}
+                        <button type="button" title="Remove image" aria-label={`Remove image ${index + 1}`} onClick={() => updateForm('images', form.images.filter((_, i) => i !== index))} className="rounded bg-black/80 p-1 text-white hover:text-rose-300"><X className="h-3 w-3" /></button>
+                      </div>
+                    </div>)}
+                    <label className="flex h-24 w-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 bg-[#10150E] text-[#BCC5B6] hover:border-[#C6DE41]/70">
+                      {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-5 w-5" />}
+                      <span className="text-[10px] font-semibold">{uploading ? 'Uploading' : 'Upload'}</span>
+                      <input type="file" accept="image/*" multiple disabled={uploading} onChange={(event) => { void uploadImages(event.target.files); event.target.value = ''; }} className="sr-only" />
+                    </label>
+                  </div>
+                  <div className="flex gap-2"><input aria-label="Image URL" value={urlInput} onChange={(event) => setUrlInput(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); addImageUrl(); } }} placeholder="Or paste an image URL" className={`${inputClass} flex-1`} /><button type="button" onClick={addImageUrl} className="rounded-xl border border-[#C6DE41]/30 px-3 text-xs font-bold text-[#C6DE41]">Add URL</button></div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-[#D5ED73]"><ShieldCheck className="h-4 w-4" /> Pricing Configuration</h3>
+                <div className={panelClass}>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    <div><label className={labelClass} htmlFor="base-buy">Base Buy (₹)</label><input id="base-buy" type="number" min="0.01" step="0.01" value={form.buy_price} onChange={(event) => updateForm('buy_price', Number(event.target.value))} className={inputClass} /></div>
+                    <div><label className={labelClass} htmlFor="max-buy">Maximum Buy (₹)</label><input id="max-buy" type="number" min="0.01" step="0.01" value={form.upto_buy_price} onChange={(event) => updateForm('upto_buy_price', Number(event.target.value))} className={inputClass} /></div>
+                    <div><label className={labelClass} htmlFor="sell-price">Selling Price (₹)</label><input id="sell-price" type="number" min="0.01" step="0.01" value={form.sell_price} onChange={(event) => updateForm('sell_price', Number(event.target.value))} className={inputClass} /></div>
+                  </div>
+                  <p className="mt-3 flex items-start gap-2 text-xs leading-5 text-[#A4AD9D]"><Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#C6DE41]" /> These are catalog pricing inputs. Actual student payouts and margins can differ depending on inspection, matching and operations.</p>
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 className="flex items-center gap-2 text-base font-bold text-[#D5ED73]"><SlidersHorizontal className="h-4 w-4" /> Quality Questionnaire Builder</h3><div className="flex flex-wrap gap-2"><button type="button" onClick={() => loadTemplate('calculator')} className="rounded-md border border-white/10 px-2.5 py-1.5 text-[10px] text-[#B5BEB0]">Calculator template</button><button type="button" onClick={() => loadTemplate('book')} className="rounded-md border border-white/10 px-2.5 py-1.5 text-[10px] text-[#B5BEB0]">Book template</button></div></div>
+                <div className="space-y-3">
+                  {form.quality_questions.map((q, qi) => <div key={q.id} className={panelClass}>
+                    <div className="mb-3 flex items-center gap-2"><span className="rounded-md bg-[#C6DE41]/10 px-2 py-1 text-[10px] font-extrabold text-[#C6DE41]">Q{qi + 1}</span><input aria-label={`Question ${qi + 1}`} value={q.question} onChange={(event) => updateQuestion(qi, { question: event.target.value })} placeholder="Question text" className={`${inputClass} flex-1`} /><button type="button" aria-label={`Delete question ${qi + 1}`} onClick={() => updateForm('quality_questions', form.quality_questions.filter((_, i) => i !== qi))} className="rounded-lg p-2 text-[#AAB0A4] hover:text-rose-300"><Trash2 className="h-4 w-4" /></button></div>
+                    <div className="space-y-2">
+                      {q.options.map((option, oi) => <div key={oi} className="grid grid-cols-12 items-center gap-2">
+                        <div className="col-span-12 sm:col-span-5"><input aria-label={`Question ${qi + 1} option ${oi + 1} label`} value={option.label} onChange={(event) => updateOption(qi, oi, { label: event.target.value })} placeholder="Answer option" className={inputClass} /></div>
+                        <div className="col-span-7 sm:col-span-4"><input aria-label={`Question ${qi + 1} option ${oi + 1} description`} value={option.description || ''} onChange={(event) => updateOption(qi, oi, { description: event.target.value })} placeholder="Description (optional)" className={inputClass} /></div>
+                        <div className="col-span-4 sm:col-span-2"><input aria-label={`Question ${qi + 1} option ${oi + 1} deduction in rupees`} type="number" min="0" step="1" value={option.deduction} onChange={(event) => updateOption(qi, oi, { deduction: Number(event.target.value) })} className={inputClass} title="Deduction (₹)" /></div>
+                        <button type="button" aria-label={`Remove option ${oi + 1}`} onClick={() => updateQuestion(qi, { options: q.options.filter((_, i) => i !== oi) })} className="col-span-1 flex justify-center text-[#9EA79B] hover:text-rose-300"><X className="h-4 w-4" /></button>
+                      </div>)}
+                    </div>
+                    <button type="button" onClick={() => updateQuestion(qi, { options: [...q.options, { label: '', description: '', deduction: 0 }] })} className="mt-3 flex items-center gap-1 text-xs font-bold text-[#C6DE41]"><Plus className="h-3.5 w-3.5" /> Add answer option</button>
+                  </div>)}
+                  <button type="button" onClick={addQuestion} className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#C6DE41]/35 px-4 py-3 text-xs font-bold text-[#C6DE41] hover:bg-[#C6DE41]/10"><Plus className="h-4 w-4" /> Add Quality Question</button>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-[#D5ED73]"><ChevronDown className="h-4 w-4" /> Availability & Visibility</h3>
+                <div className={`${panelClass} space-y-3`}>
+                  <label className="flex cursor-pointer items-center justify-between gap-3"><div><div className="text-sm font-semibold">Accepting Sell Requests</div><div className="text-xs text-[#9FA998]">Allows students to submit offers for this product</div></div><input type="checkbox" checked={form.is_buying_enabled} onChange={(event) => updateForm('is_buying_enabled', event.target.checked)} className="h-5 w-5 accent-[#C6DE41]" /></label>
+                  <div className="border-t border-white/10" />
+                  <label className="flex cursor-pointer items-center justify-between gap-3"><div><div className="text-sm font-semibold">Active Product Listing</div><div className="text-xs text-[#9FA998]">Controls storefront visibility independently from buying</div></div><input type="checkbox" checked={form.is_active} onChange={(event) => updateForm('is_active', event.target.checked)} className="h-5 w-5 accent-[#C6DE41]" /></label>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-[#1A1E19] px-5 py-3 sm:px-7">
+              <div className="hidden items-center gap-2 text-xs text-[#A3AEA0] sm:flex"><span className="h-2 w-2 rounded-full bg-[#C6DE41]" /> {saving ? 'Saving changes...' : 'Review changes before saving'}</div>
+              <div className="ml-auto flex gap-2"><button type="button" onClick={closeEditor} disabled={saving || uploading} className="rounded-xl border border-white/10 px-4 py-2.5 text-xs font-bold hover:bg-white/5">Cancel</button><button type="submit" disabled={saving || uploading} className="inline-flex items-center gap-2 rounded-xl bg-[#C6DE41] px-5 py-2.5 text-xs font-extrabold text-[#101708] hover:bg-[#D7EF59] disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}{saving ? 'Saving...' : editing ? 'Save Changes' : 'Create Product'}</button></div>
+            </div>
+          </form>
+        </section>
+      </div>}
+
+      {/* Safety guardrail from Stitch's third screen, backed by real is_active field. */}
+      {confirmDeactivate && <div className="fixed inset-0 z-[130] flex items-center justify-center bg-black/80 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !busyId) setConfirmDeactivate(null); }}>
+        <section role="alertdialog" aria-modal="true" aria-labelledby="deactivate-title" className="w-full max-w-lg rounded-2xl border border-amber-400/20 bg-[#1C2319] p-6 text-white shadow-2xl">
+          <div className="mb-4 flex items-start gap-3"><div className="rounded-xl bg-amber-500/10 p-3 text-amber-300"><AlertTriangle className="h-6 w-6" /></div><div><p className="text-[10px] font-bold uppercase tracking-[0.08em] text-amber-300">Operational Action</p><h2 id="deactivate-title" className="mt-1 text-lg font-extrabold">Deactivate “{confirmDeactivate.name}”?</h2></div></div>
+          <p className="rounded-xl bg-[#101610] p-4 text-sm leading-6 text-[#BDC6B7]">This hides the product from the student catalog. It does not delete the product or its existing order history. You can reactivate it later.</p>
+          <label className="mb-2 mt-4 block text-xs font-semibold text-[#CFD8C9]" htmlFor="deactivate-input">Type <strong className="text-rose-300">DEACTIVATE</strong> to confirm</label>
+          <input id="deactivate-input" autoFocus value={confirmPhrase} onChange={(event) => setConfirmPhrase(event.target.value)} className={inputClass} placeholder="DEACTIVATE" />
+          <div className="mt-5 flex justify-end gap-2"><button disabled={busyId === confirmDeactivate.id} type="button" onClick={() => setConfirmDeactivate(null)} className="rounded-xl border border-white/10 px-4 py-2.5 text-xs font-bold">Keep Active</button><button disabled={confirmPhrase !== 'DEACTIVATE' || busyId === confirmDeactivate.id} type="button" onClick={() => void deactivate()} className="inline-flex items-center gap-2 rounded-xl bg-rose-300 px-4 py-2.5 text-xs font-bold text-[#290B0B] disabled:opacity-40">{busyId === confirmDeactivate.id && <Loader2 className="h-4 w-4 animate-spin" />}Deactivate Product</button></div>
+        </section>
+      </div>}
     </div>
   );
 };
+
+export default AdminProducts;

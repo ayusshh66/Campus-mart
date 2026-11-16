@@ -3,50 +3,55 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api, CampusHeroItem } from '../services/api';
+import { AnimatedFeatureCard } from '../components/ui/animated-feature-card';
 
-import ParticleHeroHeadline from '../components/ui/ParticleHeroHeadline';
+import { CinematicHero } from '../components/ui/cinematic-hero';
 import { CampusHeroStepsGallery } from '../components/ui/CampusHeroStepsGallery';
 import { SmoothInput } from '../components/motion/SmoothInput';
 
 import {
   MapPin,
-  Award,
-  Users,
   Sparkles,
   CheckCircle,
   Clock,
   Send,
   AlertCircle,
-  Gift,
-  Briefcase,
   ChevronDown,
   Star,
 } from 'lucide-react';
 
 const benefits = [
   {
-    title: 'Leadership Credential',
+    index: '001',
+    tag: 'LEADERSHIP CREDENTIAL',
     description:
-      'Official certificate & signed recommendation letter from CampusMart founders for your LinkedIn, internships, and placements.',
-    Icon: Award,
+      'Earn an official certificate and signed founder recommendation for LinkedIn, internships & placements.',
+    imageSrc: 'https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Trophy/3D/trophy_3d.png',
+    fallbackEmoji: '🏆',
   },
   {
-    title: 'Perks & Swag',
+    index: '002',
+    tag: 'PERKS & SWAG',
     description:
-      'Custom CampusMart oversized hoodies, badges, stickers, plus performance-linked cash stipends for campus milestones.',
-    Icon: Gift,
+      'Get CampusMart hoodies, badges, stickers & milestone-based cash stipends.',
+    imageSrc: 'https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Wrapped%20gift/3D/wrapped_gift_3d.png',
+    fallbackEmoji: '🎁',
   },
   {
-    title: 'Campus-Wide Influence',
+    index: '003',
+    tag: 'CAMPUS-WIDE INFLUENCE',
     description:
-      'Build direct contacts across branches, societies, and academic years. You become the go-to student leader on campus.',
-    Icon: Users,
+      'Build connections across branches, societies & batches, and become your campus’s go-to student leader.',
+    imageSrc: 'https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Handshake/3D/handshake_3d.png',
+    fallbackEmoji: '🤝',
   },
   {
-    title: 'Fast-Track Internship',
+    index: '004',
+    tag: 'FAST-TRACK INTERNSHIP',
     description:
-      'Direct access to our startup core team with priority consideration for summer tech, marketing, and operations roles.',
-    Icon: Briefcase,
+      'Get startup-team access and priority consideration for tech, marketing & operations internships.',
+    imageSrc: 'https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Briefcase/3D/briefcase_3d.png',
+    fallbackEmoji: '💼',
   },
 ];
 
@@ -208,7 +213,7 @@ export const CampusHeroesPage: React.FC = () => {
     <div
       className="
         relative isolate min-h-screen
-        space-y-16 overflow-hidden
+        space-y-6
         bg-[#090B09] pb-20 text-white
         transition-colors duration-200
         light:bg-[#F7F8F2]
@@ -216,127 +221,38 @@ export const CampusHeroesPage: React.FC = () => {
       "
     >
       {/* =====================================
-          1. HERO BANNER
-          Heavy Unicorn background disabled
+          1. 21st.dev CINEMATIC SCROLL HERO
+          Uses the same scroll-driven reveal,
+          rising phone card and closing CTA.
+          All text/colors use CampusMart.
       ===================================== */}
-
-      <section
-        className="
-          relative z-10 mx-auto
-          max-w-[1200px]
-          overflow-hidden rounded-[28px]
-          border border-[#C6DE41]/20
-          bg-[#12160F]/60
-          px-4 pb-24 pt-16
-          text-white
-          shadow-[0_0_60px_rgba(198,222,65,0.08)]
-          backdrop-blur-md
-          sm:px-6 lg:px-8
-          light:border-[#DFE5D5]
-          light:bg-white/85
-          light:text-[#171B13]
-        "
-      >
-        <div className="relative z-10 mx-auto max-w-5xl text-center">
-          <div
-            className="
-              mb-6 inline-flex items-center gap-2
-              rounded-full
-              border border-[#C6DE41]/30
-              bg-[#C6DE41]/10
-              px-4 py-1.5
-              text-xs font-bold text-[#C6DE41]
-            "
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            CAMPUS LEADERSHIP PROGRAM 2026
-          </div>
-
-          <h1 className="sr-only">
-            Become the Face of CampusMart at Your College.
-          </h1>
-
-          <ParticleHeroHeadline
-            text="Become the Face of CampusMart at Your College."
-            className="mb-6 h-[175px] sm:h-[195px] lg:h-[215px]"
-          />
-
-          <p
-            className="
-              mx-auto mb-10 max-w-2xl
-              text-sm leading-relaxed
-              text-stone-300
-              sm:text-base
-              light:text-[#57614E]
-            "
-          >
-            Represent your campus, help batchmates buy & sell
-            verified gear safely, earn exclusive rewards,
-            and lead the circular student economy.
-          </p>
-
-          <div
-            className="
-              mx-auto grid max-w-3xl
-              grid-cols-2 gap-3
-              border-t border-white/10
-              pt-6 text-left
-              sm:grid-cols-4
-              light:border-[#DFE5D5]
-            "
-          >
-            {[
-              ['4+', 'Partner Campuses (BPIT, MAIT, MSIT, USAR)'],
-              ['₹2.5L+', 'Saved by College Students'],
-              ['100%', 'Safe Inside-Campus Handovers'],
-              ['Official', 'Signed Leadership Credential'],
-            ].map(([value, description]) => (
-              <div
-                key={value}
-                className="
-                  rounded-2xl
-                  border border-white/10
-                  bg-[#181D14] p-4
-                  light:border-[#DFE5D5]
-                  light:bg-white
-                "
-              >
-                <span
-                  className="
-                    block text-2xl font-black
-                    tracking-tight text-[#C6DE41]
-                    sm:text-3xl
-                  "
-                >
-                  {value}
-                </span>
-
-                <span
-                  className="
-                    text-[11px] font-medium
-                    text-stone-400
-                    light:text-[#57614E]
-                  "
-                >
-                  {description}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
+      <section className="relative w-full">
+        <CinematicHero
+          brandName="CampusMart"
+          tagline1="Become the Face of"
+          tagline2="CampusMart at Your College."
+          cardHeading="Lead Your Campus."
+          cardDescription={
+            <>
+              Represent your campus, help batchmates buy &amp; sell verified
+              gear safely, earn exclusive rewards, and lead the circular
+              student economy.
+            </>
+          }
+          metricValue={4}
+          metricLabel="Partner Campuses"
+          ctaHeading="Become a Campus Hero."
+          ctaDescription="Represent your college, lead safe student exchanges, and earn exclusive campus leadership rewards."
+        />
       </section>
-
-      {/* =====================================
-          2. BENEFITS
-      ===================================== */}
-
       <section
-        className="
-          relative z-10 mx-auto
-          max-w-6xl px-4
-          sm:px-6 lg:px-8
-        "
-      >
+  className="
+    relative z-10 mx-auto
+    max-w-6xl px-4
+    sm:px-6 lg:px-8
+  "
+  style={{ marginTop: '-80px' }}
+>
         <div className="mx-auto mb-12 max-w-2xl text-center">
           <span
             className="
@@ -377,91 +293,73 @@ export const CampusHeroesPage: React.FC = () => {
             lg:grid-cols-4
           "
         >
-          {benefits.map(({ title, description, Icon }) => (
-            <div
-              key={title}
-              className="
-                rounded-[28px]
-                border border-white/10
-                bg-[#12160F] p-6
-                shadow-lg transition-all
-                hover:border-[#C6DE41]/40
-                hover:shadow-[0_0_30px_rgba(198,222,65,0.1)]
-                light:border-[#DFE5D5]
-                light:bg-white
-              "
-            >
-              <div
-                className="
-                  mb-4 flex h-12 w-12
-                  items-center justify-center
-                  rounded-full
-                  border border-[#C6DE41]/20
-                  bg-[#C6DE41]/10
-                  text-[#C6DE41]
-                "
-              >
-                <Icon className="h-5 w-5" />
-              </div>
-
-              <h3
-                className="
-                  mb-2 text-lg font-bold
-                  text-white
-                  light:text-[#171B13]
-                "
-              >
-                {title}
-              </h3>
-
-              <p
-                className="
-                  text-[13px] leading-relaxed
-                  text-stone-400
-                  light:text-[#57614E]
-                "
-              >
-                {description}
-              </p>
-            </div>
+          {benefits.map(({ index, tag, description, imageSrc, fallbackEmoji }) => (
+            <AnimatedFeatureCard
+              key={index}
+              index={index}
+              tag={tag}
+              title={description}
+              imageSrc={imageSrc}
+              fallbackEmoji={fallbackEmoji}
+            />
           ))}
         </div>
       </section>
 
       {/* =====================================
-          3. JOURNEY + APPLICATION
-          Wider desktop layout
-
-          Left  = 4-step gallery
-          Right = application form
-
-          Mobile = stacked
+          3. FOUR-STEP JOURNEY ABOVE THE FORM
+          Both centered within the existing page width.
       ===================================== */}
+      <section className="relative z-10 mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8">
+        <div className="flex w-full flex-col gap-8 lg:gap-10">
+          {/* TOP: INTERACTIVE FOUR-STEP GALLERY */}
+          <div
+            id="hero-journey"
+            className="
+              mx-auto w-full max-w-[1040px] min-w-0 scroll-mt-28 overflow-hidden
+              rounded-[28px]
+              border border-white/10
+              bg-[#12160F]
+              p-5 shadow-xl
+              sm:p-7 xl:p-6
+              2xl:p-8
+              light:border-[#DFE5D5]
+              light:bg-white
+            "
+          >
+            <div className="mb-8 text-center">
+              <span
+                className="
+                  text-xs font-bold
+                  uppercase tracking-wider
+                  text-[#C6DE41]
+                "
+              >
+                Zero Hassle Onboarding
+              </span>
 
-      <section
-        className="
-          relative z-10 mx-auto
-          w-full max-w-[1700px]
-          px-4 sm:px-6 lg:px-8
-        "
-      >
-        <div
-          className="
-            grid grid-cols-1
-            items-start gap-7
-            xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]
-            xl:gap-8
-          "
-        >
-          {/* LEFT: ANIMATED JOURNEY */}
+              <h2
+                className="
+                  mx-auto mt-3 max-w-xl
+                  text-2xl font-extrabold
+                  leading-tight tracking-tight
+                  text-white sm:text-3xl
+                  light:text-[#171B13]
+                "
+              >
+                Your 4-Step Journey to Becoming a Hero
+              </h2>
+            </div>
 
-          
+            <div className="min-w-0">
+              <CampusHeroStepsGallery />
+            </div>
+          </div>
 
-          {/* RIGHT: APPLICATION FORM */}
-
+          {/* BELOW: CAMPUS HERO APPLICATION / STATUS */}
           <div
             id="apply-form"
-            className="min-w-0 scroll-mt-28"
+            className="mx-auto w-full max-w-[800px] min-w-0 scroll-mt-28"
           >
             {success ? (
               /* SUCCESS MESSAGE */
@@ -978,48 +876,6 @@ export const CampusHeroesPage: React.FC = () => {
                 </form>
               </div>
             )}
-          </div>
-
-          <div
-            className="
-              min-w-0 overflow-hidden
-              rounded-[28px]
-              border border-white/10
-              bg-[#12160F]
-              p-5 shadow-xl
-              sm:p-7 xl:p-6
-              2xl:p-8
-              light:border-[#DFE5D5]
-              light:bg-white
-            "
-          >
-            <div className="mb-8 text-center">
-              <span
-                className="
-                  text-xs font-bold
-                  uppercase tracking-wider
-                  text-[#C6DE41]
-                "
-              >
-                Zero Hassle Onboarding
-              </span>
-
-              <h2
-                className="
-                  mx-auto mt-3 max-w-xl
-                  text-2xl font-extrabold
-                  leading-tight tracking-tight
-                  text-white sm:text-3xl
-                  light:text-[#171B13]
-                "
-              >
-                Your 4-Step Journey to Becoming a Hero
-              </h2>
-            </div>
-
-            <div className="min-w-0">
-              <CampusHeroStepsGallery />
-            </div>
           </div>
         </div>
       </section>
