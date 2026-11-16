@@ -1,129 +1,100 @@
-/**
- * CampusMart Admin upgrade installer.
- * Run from the project root after extracting this folder inside it:
- *   node CampusMart_Admin_Complete_Upgrade/tools/install.cjs
- * Makes backups; safely patches App.tsx when recognizable, does NOT replace
- * auth.ts, schema.prisma, or server route implementations with snapshots.
- */
-const fs = require('node:fs');
-const path = require('node:path');
-const bundle = path.resolve(__dirname, '..');
-const root = path.resolve(bundle, '..');
-const backup = path.join(root, `.campusmart-admin-backup-${new Date().toISOString().replace(/[:.]/g, '-')}`);
-const changes = [];
-function verifyPatchTarget(relative, alreadyPresent, oldNeedle) {
-  const f = pathInRoot(relative);
-  if (!fs.existsSync(f)) throw Error(`Required route missing: ${relative}`);
-  const text = fs.readFileSync(f,'utf8');
-  if (!text.includes(alreadyPresent) && !text.includes(oldNeedle)) {
-    throw Error(`Cannot safely patch ${relative}. Your local code differs from this snapshot. Back up and merge manually using INSTALL.md.`);
-  }
-}
-// Validate ALL route patterns before writing any files.
-verifyPatchTarget('server/src/routes/admin.ts', "router.post('/products', validateCatalogProduct,", "router.post('/products', async");
-verifyPatchTarget('server/src/routes/admin.ts', "router.put('/products/:id', validateCatalogProduct,", "router.put('/products/:id', async");
-verifyPatchTarget('server/src/routes/sellRequests.ts', 'requireAuth, verifySellQuote, async', "router.post('/', authenticateToken, requireAuth, async");
-function pathInRoot(rel) { return path.join(root, ...rel.split('/')); }
-function copy(relative, sourceRelative=relative) {
-  const original = pathInRoot(relative);
-  const replacement = path.join(bundle, ...sourceRelative.split('/'));
-  if (!fs.existsSync(replacement)) throw Error(`Missing upgrade file: ${relative}`);
-  if (fs.existsSync(original)) {
-    const backupPath = path.join(backup, ...relative.split('/'));
-    fs.mkdirSync(path.dirname(backupPath), {recursive:true});
-    fs.copyFileSync(original,backupPath);
-  }
-  fs.mkdirSync(path.dirname(original), {recursive:true});
-  fs.copyFileSync(replacement, original);
-  changes.push(relative);
-}
-function replaceWithin(relative, operation) {
-  const file = pathInRoot(relative);
-  if (!fs.existsSync(file)) { console.warn(`SKIP: ${relative} missing`); return; }
-  const old = fs.readFileSync(file, 'utf8');
-  const next = operation(old);
-  if (next === old) { console.log(`Unchanged/skipped: ${relative}`); return; }
-  const b = path.join(backup, ...relative.split('/'));
-  fs.mkdirSync(path.dirname(b),{recursive:true});
-  fs.copyFileSync(file,b);
-  fs.writeFileSync(file,next);
-  changes.push(relative);
-}
-const adminDir='client/src/pages/admin';
-for(const file of fs.readdirSync(path.join(bundle,adminDir))) {
-  if (file === 'AdminTeamModeration.tsx') continue; // team system paused
-  if (file.endsWith('.tsx') || file === 'admin-theme.css') copy(`${adminDir}/${file}`);
-}
-copy('server/src/middleware/validateCatalogProduct.ts');
-copy('server/src/middleware/verifySellQuote.ts');
-replaceWithin('server/src/routes/admin.ts', source=>{
-  let content=source;
-  if (!content.includes("import { validateCatalogProduct } from '../middleware/validateCatalogProduct';")) {
-    content = "import { validateCatalogProduct } from '../middleware/validateCatalogProduct';\n"+content;
-  }
-  if (!content.includes("router.post('/products', validateCatalogProduct,")) {
-    content=content.replace("router.post('/products', async", "router.post('/products', validateCatalogProduct, async");
-  }
-  if (!content.includes("router.put('/products/:id', validateCatalogProduct,")) {
-    content=content.replace("router.put('/products/:id', async", "router.put('/products/:id', validateCatalogProduct, async");
-  }
-  if (!content.includes("router.post('/products', validateCatalogProduct,") || !content.includes("router.put('/products/:id', validateCatalogProduct,")) {
-    throw Error('Your admin.ts product route pattern differs; no safe patch available. See INSTALL.md.');
-  }
-  return content;
-});
-replaceWithin('server/src/routes/sellRequests.ts', source=>{
-  let content=source;
-  if (!content.includes("import { verifySellQuote } from '../middleware/verifySellQuote';")) {
-    content="import { verifySellQuote } from '../middleware/verifySellQuote';\n"+content;
-  }
-  if (!content.includes("requireAuth, verifySellQuote, async")) {
-    content=content.replace("router.post('/', authenticateToken, requireAuth, async", "router.post('/', authenticateToken, requireAuth, verifySellQuote, async");
-  }
-  if (!content.includes("requireAuth, verifySellQuote, async")) {
-    throw Error('Your sellRequests.ts route pattern differs. Check INSTALL.md before merging.');
-  }
-  return content;
-});
+#!/usr/bin/env node
+/* Safe, additive CampusMart Hero Operations installer.
+   Usage (from CampusMart project root):
+   node .\\CampusMart_Hero_Operations_Integration\\tools\\install.cjs
+*/
+const fs = require('fs');
+const path = require('path');
+const base = path.resolve(__dirname, '..');
+const root = path.resolve(base, '..');
+const read = p => fs.readFileSync(p, 'utf8');
+const exists = p => fs.existsSync(p);
+const target = p => path.join(root, p);
+function assert(condition, message) { if (!condition) throw new Error(message); }
+const appFile = target('client/src/App.tsx');
+const indexFile = target('server/src/index.ts');
+const schemaFile = target('database/schema.prisma');
+for (const f of [appFile,indexFile,schemaFile]) assert(exists(f), `Missing ${f}; extract the folder inside the real CampusMart project root.`);
 
-// Preserve all existing app routes; modify only admin/non-admin page chrome.
-replaceWithin('client/src/App.tsx', source => {
-  if (source.includes('isAdminRoute') || source.includes('hideStudentChrome')) return source;
-  if (!source.includes('const AppRoutes: React.FC = () => {') ||
-      !source.includes('<Navbar />') || !source.includes('<Footer />')) {
-    console.warn('App.tsx structure differs; follow the small manual App snippet in INSTALL.md.');
-    return source;
-  }
-  let content=source.replace(/import\s*\{([^}]*)\}\s*from\s*['"]react-router-dom['"];?/, (match, imports) => {
-    if (imports.includes('useLocation')) return match;
-    return match.replace(imports, imports.trimEnd() + ', useLocation ');
-  });
-  if (!content.includes('useLocation')) { console.warn('Could not safely import useLocation; App.tsx unchanged');return source; }
-  content=content.replace('const AppRoutes: React.FC = () => {',
-    "const AppRoutes: React.FC = () => {\n  const adminRoutePathname = useLocation().pathname;\n  const hideStudentChrome = adminRoutePathname === '/admin' || adminRoutePathname.startsWith('/admin/');");
-  content=content.replace('<Navbar />', '{!hideStudentChrome && <Navbar />}');
-  content=content.replace('<Footer />', '{!hideStudentChrome && <Footer />}');
-  content=content.replace('className="flex-grow pb-20 md:pb-0"',
-    'className={hideStudentChrome ? "flex-grow" : "flex-grow pb-20 md:pb-0"}');
-  return content;
-});
-
-// Avoid overwriting newer product-route bugfixes. Only install the stock
-// availability correction if the local file exactly matches our old snapshot.
-const crypto=require('node:crypto');
-const productRoute='server/src/routes/products.ts';
-const productFile=pathInRoot(productRoute);
-if (fs.existsSync(productFile)) {
-  const before=fs.readFileSync(productFile);
-  const hash=crypto.createHash('sha256').update(before).digest('hex');
-  if(hash==='ac076e5aee82295ee161e92a1518725eaddd3828a2f19e4de4467c858625a6e8') {
-    copy(productRoute, 'reference-server/products.ts');
-    console.log('Applied inventory-availability fix to matching snapshot.');
-  } else {
-    console.warn('Your products.ts differs from the snapshot; kept it intact. Review supplied products.ts to merge stock availability safely.');
-  }
+function addSchemaField(source, model, line, match) {
+  const reg = new RegExp(`(model\\s+${model}\\s*\\{)([\\s\\S]*?)(\\n\\})`);
+  const m = source.match(reg);
+  assert(m, `Missing model ${model} in schema.prisma`);
+  if (m[2].includes(match)) return source;
+  return source.replace(reg, (_full,start,body,end)=>`${start}${body}\n  ${line}${end}`);
 }
-console.log(`\nModified ${changes.length} files:`);
-changes.forEach(x=>console.log(`  ${x}`));
-console.log(`Backup folder: ${backup}`);
-console.log('Reminder: App.tsx admin chrome and available inventory require manual changes in INSTALL.md.');
+let schema=read(schemaFile);
+const modelDefinitions=read(path.join(base,'database/HERO_OPS_SCHEMA_ADDITIONS.prisma.txt'));
+if (!schema.includes('model HeroManagerAssignment {')) schema += '\n\n' + modelDefinitions.slice(modelDefinitions.indexOf('model HeroManagerAssignment {')) + '\n';
+for (const [model,line,key] of [
+ ['College','hero_manager_assignments HeroManagerAssignment[]','hero_manager_assignments'],
+ ['College','hero_announcements HeroAnnouncement[]','hero_announcements'],
+ ['User','hero_manager_assignments HeroManagerAssignment[]','hero_manager_assignments'],
+ ['User','hero_availability HeroAvailability?','hero_availability'],
+ ['User','hero_task_events HeroTaskEvent[]','hero_task_events'],
+ ['User','hero_task_issues HeroTaskIssue[] @relation("HeroIssueReporter")','hero_task_issues'],
+ ['User','hero_task_proofs HeroTaskProof[] @relation("HeroProofUploader")','hero_task_proofs'],
+ ['User','hero_announcements HeroAnnouncement[] @relation("HeroAnnouncementAuthor")','hero_announcements'],
+ ['DeliveryTask','due_at DateTime?','due_at '],
+ ['DeliveryTask','hero_task_events HeroTaskEvent[]','hero_task_events'],
+ ['DeliveryTask','hero_task_issues HeroTaskIssue[]','hero_task_issues'],
+ ['DeliveryTask','hero_task_proofs HeroTaskProof[]','hero_task_proofs'],
+]) schema=addSchemaField(schema,model,line,key);
+
+let server=read(indexFile);
+if (!server.includes("from './routes/heroOps'")) server = "import heroOpsRoutes from './routes/heroOps';\n" + server;
+if (!server.includes("app.use('/api/hero-ops'")) {
+  const marker="app.use('/api/hero', heroRoutes);";
+  assert(server.includes(marker),'Could not locate hero router mount in server/src/index.ts. Not changing files; integrate manually.');
+  server=server.replace(marker,marker+"\napp.use('/api/hero-ops', heroOpsRoutes);");
+}
+let app=read(appFile);
+assert(app.includes('<Routes>'),'Could not locate React Router routes in App.tsx. Not changing files.');
+assert(app.includes('ProtectedRoute'),'No ProtectedRoute in App.tsx. Add a login guard and integrate manually.');
+// Keep the old hero source file as a rollback option; route the old URLs to the new screen.
+if (app.includes("import { CampusHeroDashboardPage } from './pages/CampusHeroDashboardPage';")) {
+  app=app.replace("import { CampusHeroDashboardPage } from './pages/CampusHeroDashboardPage';", "import { HeroOperationsCenter } from './pages/HeroOperationsCenter';\nimport { HeroManagerDashboardPage } from './pages/HeroManagerDashboardPage';");
+} else {
+  if (!app.includes("from './pages/HeroOperationsCenter'")) app="import { HeroOperationsCenter } from './pages/HeroOperationsCenter';\n"+app;
+  if (!app.includes("from './pages/HeroManagerDashboardPage'")) app="import { HeroManagerDashboardPage } from './pages/HeroManagerDashboardPage';\n"+app;
+}
+app=app.replace(/<CampusHeroDashboardPage\s*\/>/g,'<HeroOperationsCenter />');
+if (!app.includes('path="/hero-operations"')) app=app.replace('<Routes>', '<Routes>\n          <Route path="/hero-operations" element={<ProtectedRoute><HeroOperationsCenter /></ProtectedRoute>} />');
+if (!app.includes('path="/hero-manager"')) app=app.replace('<Routes>', '<Routes>\n          <Route path="/hero-manager" element={<ProtectedRoute><HeroManagerDashboardPage /></ProtectedRoute>} />');
+// Existing global navbar/footer: avoid rendering student chrome on the new full-screen operations consoles.
+if (app.includes('const AppRoutes: React.FC = () => {') && !app.includes('const isHeroOpsScreen =')) {
+  if (!app.includes('useLocation')) {
+    app=app.replace(/(import\s*\{)([^}]*)(\}\s*from\s*['"]react-router-dom['"])/,(_all,left,inner,right)=>`${left}${inner.trimEnd()}, useLocation ${right}`);
+  }
+  app=app.replace('const AppRoutes: React.FC = () => {','const AppRoutes: React.FC = () => {\n  const { pathname } = useLocation();\n  const isHeroOpsScreen = ["/hero-operations", "/hero-manager", "/hero-dashboard", "/hero/dashboard", "/campus-hero-dashboard"].includes(pathname);');
+  // Handle both bare Navbar/Footer and the newer admin-conditional variants.
+  for(const name of ['Navbar','Footer']) {
+    const conditional = new RegExp('\\{\\s*(!isAdminRoute)\\s*&&\\s*<'+name+'\\s*/>\\s*\\}');
+    if(conditional.test(app)) app=app.replace(conditional, `{!isAdminRoute && !isHeroOpsScreen && <${name} />}`);
+    else app=app.replace(`<${name} />`, `{!isHeroOpsScreen && <${name} />}`);
+  }
+  app=app.replace('className="flex-grow pb-20 md:pb-0"','className={isHeroOpsScreen ? "flex-grow" : "flex-grow pb-20 md:pb-0"}');
+}
+// Preflight passed: now back up all touched files, then copy new files and write modifications.
+const backupDir=path.join(base,'backups',new Date().toISOString().replace(/[:.]/g,'-'));
+fs.mkdirSync(backupDir,{recursive:true});
+for(const rel of ['client/src/App.tsx','server/src/index.ts','database/schema.prisma']){
+  const dest=path.join(backupDir,rel);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(target(rel),dest);
+}
+for(const rel of [
+  'server/src/routes/heroOps.ts','client/src/services/heroOps.ts',
+  'client/src/components/hero-ops/HeroOpsUI.tsx',
+  'client/src/pages/HeroOperationsCenter.tsx','client/src/pages/HeroManagerDashboardPage.tsx'
+]){
+  const source=path.join(base,rel), destination=target(rel);
+  assert(exists(source),'Missing integration file: '+source);
+  if(exists(destination)){
+    const backup=path.join(backupDir,rel);fs.mkdirSync(path.dirname(backup),{recursive:true});fs.copyFileSync(destination,backup);
+  }
+  fs.mkdirSync(path.dirname(destination),{recursive:true});fs.copyFileSync(source,destination);
+  console.log('Installed: '+rel);
+}
+fs.writeFileSync(schemaFile,schema);fs.writeFileSync(indexFile,server);fs.writeFileSync(appFile,app);
+console.log('Updated: database/schema.prisma');console.log('Updated: server/src/index.ts');console.log('Updated: client/src/App.tsx');
+console.log('Backups saved to:',backupDir);
+console.log('\nNEXT: Stop backend, check DATABASE_URL, then validate/generate/apply Prisma changes (see INSTALL.md).');

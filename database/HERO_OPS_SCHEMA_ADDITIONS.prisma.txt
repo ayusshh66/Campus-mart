@@ -1,0 +1,89 @@
+// These models are automatically merged into database/schema.prisma by tools/install.cjs.
+// Never paste this file directly: the installer adds the required reverse relations too.
+
+model HeroManagerAssignment {
+  id         String   @id @default(uuid())
+  user_id    String
+  college_id String
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  college    College  @relation(fields: [college_id], references: [id], onDelete: Cascade)
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  @@unique([user_id, college_id])
+  @@index([college_id, is_active])
+  @@map("hero_manager_assignments")
+}
+
+model HeroAvailability {
+  user_id    String   @id
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  status     String   @default("AVAILABLE")
+  updated_at DateTime @updatedAt
+  @@map("hero_availability")
+}
+
+model HeroTaskEvent {
+  id          String       @id @default(uuid())
+  task_id     String
+  task        DeliveryTask @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  actor_id    String
+  actor       User         @relation(fields: [actor_id], references: [id], onDelete: Cascade)
+  action      String
+  from_status String?
+  to_status   String?
+  details     String?
+  created_at  DateTime     @default(now())
+  @@index([task_id, created_at])
+  @@index([actor_id, created_at])
+  @@map("hero_task_events")
+}
+
+model HeroTaskIssue {
+  id               String       @id @default(uuid())
+  task_id          String
+  task             DeliveryTask @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  reporter_id      String
+  reporter         User         @relation("HeroIssueReporter", fields: [reporter_id], references: [id], onDelete: Cascade)
+  category         String
+  severity         String       @default("MEDIUM")
+  description      String
+  status           String       @default("OPEN")
+  resolution_notes String?
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  @@index([task_id, status])
+  @@index([reporter_id, created_at])
+  @@map("hero_task_issues")
+}
+
+model HeroTaskProof {
+  id          String       @id @default(uuid())
+  task_id     String
+  task        DeliveryTask @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  uploader_id String
+  uploader    User         @relation("HeroProofUploader", fields: [uploader_id], references: [id], onDelete: Cascade)
+  kind        String
+  image_url   String
+  note        String?
+  review_status String  @default("PENDING")
+  reviewed_by String?
+  review_note String?
+  reviewed_at DateTime?
+  created_at  DateTime     @default(now())
+  @@index([task_id, created_at])
+  @@map("hero_task_proofs")
+}
+
+model HeroAnnouncement {
+  id         String   @id @default(uuid())
+  college_id String
+  college    College  @relation(fields: [college_id], references: [id], onDelete: Cascade)
+  author_id  String
+  author     User     @relation("HeroAnnouncementAuthor", fields: [author_id], references: [id], onDelete: Cascade)
+  title      String
+  content    String
+  priority   String   @default("NORMAL")
+  created_at DateTime @default(now())
+  @@index([college_id, created_at])
+  @@map("hero_announcements")
+}
