@@ -182,7 +182,7 @@ export const TeamDetailPage: React.FC = () => {
   const isTeamFull = acceptedCount >= post.max_team_size;
 
   return (
-    <div className="min-h-screen bg-[#090B09] text-[#F5F7F0] py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#090B09] dark:bg-[#090B09] light:bg-[#F7F8F2] text-[#F5F7F0] dark:text-[#F5F7F0] light:text-[#171B13] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-200">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Navigation Breadcrumb */}
         <div className="flex items-center justify-between">

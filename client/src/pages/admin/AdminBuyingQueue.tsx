@@ -41,13 +41,13 @@ export const AdminBuyingQueue: React.FC = () => {
     <div className="space-y-6">
       <div>
         <div className="flex items-center gap-2 text-xs font-bold text-campus-primary uppercase tracking-wider mb-1">
-          <Flame className="w-4 h-4 text-emerald-500" />
+          <Flame className="w-4 h-4 text-[#C6DE41]" />
           <span>Demand Control</span>
         </div>
-        <h2 className="text-xl font-extrabold text-slate-900">
+        <h2 className="text-xl font-extrabold text-[#F5F7F0]">
           WE ARE BUYING QUEUE
         </h2>
-        <p className="text-xs text-slate-500 mt-0.5">
+        <p className="text-xs text-[#A6B09F] mt-0.5">
           Control which items CampusMart is actively accepting from students with one-click toggles.
         </p>
       </div>
@@ -55,7 +55,7 @@ export const AdminBuyingQueue: React.FC = () => {
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-48 bg-slate-100 rounded-3xl animate-pulse" />
+            <div key={i} className="h-48 bg-[#242C20] rounded-3xl animate-pulse" />
           ))}
         </div>
       ) : (
@@ -68,8 +68,8 @@ export const AdminBuyingQueue: React.FC = () => {
                 key={product.id}
                 className={`rounded-3xl p-6 border transition-all flex flex-col justify-between ${
                   isBuying
-                    ? 'bg-white border-emerald-200 shadow-card hover:shadow-card-hover'
-                    : 'bg-slate-50 border-slate-200 opacity-80'
+                    ? 'bg-[#181D14] border-[#C6DE41]/20 shadow-card hover:shadow-card-hover'
+                    : 'bg-[#12160F] border-white/10 opacity-80'
                 }`}
               >
                 <div>
@@ -77,31 +77,31 @@ export const AdminBuyingQueue: React.FC = () => {
                     <img
                       src={product.image_url}
                       alt={product.name}
-                      className="w-16 h-16 rounded-2xl object-cover border border-slate-200"
+                      className="w-16 h-16 rounded-2xl object-cover border border-white/10"
                     />
                     <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
-                      isBuying ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
+                      isBuying ? 'bg-[#C6DE41]/15 text-[#D9EBA8]' : 'bg-[#343C30] text-[#B7C1B0]'
                     }`}>
                       {product.category}
                     </span>
                   </div>
 
-                  <h3 className="font-bold text-base text-slate-900 line-clamp-1 mb-1">
+                  <h3 className="font-bold text-base text-[#F5F7F0] line-clamp-1 mb-1">
                     {product.name}
                   </h3>
 
-                  <div className="text-xs text-slate-500 mb-3">
-                    We'll pay students: <strong className="text-campus-dark text-sm font-extrabold">₹{product.buy_price}</strong>
+                  <div className="text-xs text-[#A6B09F] mb-3">
+                    We'll pay students: <strong className="text-[#F5F7F0] text-sm font-extrabold">₹{product.buy_price}</strong>
                   </div>
 
                   <div className="flex items-center gap-1.5 text-xs font-bold mb-6">
                     {isBuying ? (
-                      <span className="flex items-center gap-1.5 text-emerald-700">
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span className="flex items-center gap-1.5 text-[#C6DE41]">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#C6DE41]/100 animate-pulse" />
                         🟢 Currently accepting sell requests
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1.5 text-slate-500">
+                      <span className="flex items-center gap-1.5 text-[#A6B09F]">
                         <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
                         ⚪ Paused / Not accepting items
                       </span>
@@ -114,7 +114,7 @@ export const AdminBuyingQueue: React.FC = () => {
                   disabled={togglingId === product.id}
                   className={`w-full py-3 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm ${
                     isBuying
-                      ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                      ? 'bg-rose-500/10 hover:bg-rose-100 text-rose-700 border border-rose-200'
                       : 'bg-campus-primary hover:bg-campus-primary-hover text-white shadow-campus-primary/20'
                   }`}
                 >

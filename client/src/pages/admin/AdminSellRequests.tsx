@@ -112,19 +112,19 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
       {/* Filter and Title bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-extrabold text-slate-900">
+          <h2 className="text-xl font-extrabold text-[#F5F7F0]">
             Review Submitted Sell Requests
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-[#A6B09F] mt-0.5">
             Approving an item locks the pricing and makes the product available for that student's college.
           </p>
         </div>
 
-        <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 text-xs font-bold">
+        <div className="inline-flex rounded-xl bg-[#242C20] p-1 border border-white/10 text-xs font-bold">
           <button
             onClick={() => setFilter('PENDING')}
             className={`px-3 py-1.5 rounded-lg transition-all ${
-              filter === 'PENDING' ? 'bg-white text-campus-dark shadow-sm' : 'text-slate-500 hover:text-slate-800'
+              filter === 'PENDING' ? 'bg-[#181D14] text-[#F5F7F0] shadow-sm' : 'text-[#A6B09F] hover:text-[#E8EDE2]'
             }`}
           >
             Pending Only
@@ -132,7 +132,7 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
           <button
             onClick={() => setFilter('ALL')}
             className={`px-3 py-1.5 rounded-lg transition-all ${
-              filter === 'ALL' ? 'bg-white text-campus-dark shadow-sm' : 'text-slate-500 hover:text-slate-800'
+              filter === 'ALL' ? 'bg-[#181D14] text-[#F5F7F0] shadow-sm' : 'text-[#A6B09F] hover:text-[#E8EDE2]'
             }`}
           >
             All Submissions
@@ -141,25 +141,25 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
       </div>
 
       {/* Search Input Bar */}
-      <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-2">
-        <Search className="w-4 h-4 text-slate-400 ml-1" />
+      <div className="bg-[#181D14] p-3.5 rounded-2xl border border-white/10 shadow-sm flex items-center gap-2">
+        <Search className="w-4 h-4 text-[#8F9A89] ml-1" />
         <SmoothInput
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search by product name, student, email, or campus..."
-          className="w-full text-xs bg-transparent border-none outline-none text-slate-800 placeholder-slate-400"
+          className="w-full text-xs bg-transparent border-none outline-none text-[#E8EDE2] placeholder-slate-400"
         />
         {searchTerm && (
-          <button onClick={() => setSearchTerm('')} className="text-xs text-slate-400 hover:text-slate-600 px-2 font-bold">
+          <button onClick={() => setSearchTerm('')} className="text-xs text-[#8F9A89] hover:text-[#B7C1B0] px-2 font-bold">
             Clear
           </button>
         )}
       </div>
 
       {message && (
-        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
-          <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+        <div className="p-4 rounded-2xl bg-[#C6DE41]/10 border border-[#C6DE41]/20 text-[#D9EBA8] text-xs font-semibold flex items-center gap-2">
+          <CheckCircle className="w-4 h-4 text-[#C6DE41] shrink-0" />
           <span>{message}</span>
         </div>
       )}
@@ -167,14 +167,14 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
       {loading ? (
         <div className="space-y-4">
           {[1, 2].map((i) => (
-            <div key={i} className="h-44 bg-slate-100 rounded-2xl animate-pulse" />
+            <div key={i} className="h-44 bg-[#242C20] rounded-2xl animate-pulse" />
           ))}
         </div>
       ) : filteredRequests.length === 0 ? (
-        <div className="bg-white rounded-3xl p-12 text-center border border-slate-200">
+        <div className="bg-[#181D14] rounded-3xl p-12 text-center border border-white/10">
           <Tag className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <h3 className="font-bold text-slate-800 text-base">No Matching Sell Requests</h3>
-          <p className="text-xs text-slate-500 mt-1">There are currently no items matching your filter.</p>
+          <h3 className="font-bold text-[#E8EDE2] text-base">No Matching Sell Requests</h3>
+          <p className="text-xs text-[#A6B09F] mt-1">There are currently no items matching your filter.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-5">
@@ -184,12 +184,12 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
             return (
               <div
                 key={item.id}
-                className="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-subtle flex flex-col lg:flex-row lg:items-center justify-between gap-6"
+                className="bg-[#181D14] rounded-3xl p-6 border border-white/10/90 shadow-subtle flex flex-col lg:flex-row lg:items-center justify-between gap-6"
               >
                 {/* Left: Product & Student info */}
                 <div className="flex flex-col sm:flex-row gap-5 items-start">
                   {/* Photo preview */}
-                  <div className="relative w-24 h-24 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                  <div className="relative w-24 h-24 rounded-2xl overflow-hidden bg-[#242C20] border border-white/10 shrink-0">
                     <img
                       src={item.images?.[0] || item.product_image || 'https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?auto=format&fit=crop&w=400&q=80'}
                       alt={item.product_name}
@@ -203,11 +203,11 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
                   {/* Details */}
                   <div className="space-y-1.5">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-lg font-extrabold text-slate-900 leading-tight">
+                      <h3 className="text-lg font-extrabold text-[#F5F7F0] leading-tight">
                         {item.product_name}
                       </h3>
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                        item.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-800' :
+                        item.status === 'APPROVED' ? 'bg-[#C6DE41]/15 text-[#D9EBA8]' :
                         item.status === 'REJECTED' ? 'bg-rose-100 text-rose-800' :
                         'bg-amber-100 text-amber-800'
                       }`}>
@@ -216,21 +216,21 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
                     </div>
 
                     {/* Student & College */}
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
-                      <span className="font-bold text-slate-900">{item.student_name}</span>
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-[#B7C1B0]">
+                      <span className="font-bold text-[#F5F7F0]">{item.student_name}</span>
                       <span className="inline-flex items-center gap-1 font-bold text-campus-primary">
                         <MapPin className="w-3.5 h-3.5" />
                         {item.college_code} ({item.college_name})
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-4 text-xs text-slate-500">
+                    <div className="flex items-center gap-4 text-xs text-[#A6B09F]">
                       <span className="flex items-center gap-1">
-                        <Phone className="w-3 h-3 text-slate-400" />
+                        <Phone className="w-3 h-3 text-[#8F9A89]" />
                         {item.student_phone}
                       </span>
                       <span className="flex items-center gap-1">
-                        <Mail className="w-3 h-3 text-slate-400" />
+                        <Mail className="w-3 h-3 text-[#8F9A89]" />
                         {item.student_email}
                       </span>
                     </div>
@@ -238,7 +238,7 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
                     {/* Student uploaded photos */}
                     {item.images && item.images.length > 0 && (
                       <div className="flex items-center gap-1.5 pt-1">
-                        <span className="text-[10px] uppercase font-bold text-slate-400">Photos ({item.images.length}):</span>
+                        <span className="text-[10px] uppercase font-bold text-[#8F9A89]">Photos ({item.images.length}):</span>
                         <div className="flex gap-1.5">
                           {item.images.map((img, iIdx) => (
                             <button
@@ -248,7 +248,7 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
                                 setInspectImages(item.images || []);
                                 setInspectIndex(iIdx);
                               }}
-                              className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 hover:border-campus-primary hover:scale-105 transition-all cursor-pointer"
+                              className="w-8 h-8 rounded-lg overflow-hidden border border-white/10 hover:border-campus-primary hover:scale-105 transition-all cursor-pointer"
                               title="Click to inspect photo"
                             >
                               <img src={img} alt="" className="w-full h-full object-cover" />
@@ -261,11 +261,11 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
                     {/* Quality Assessment Answers */}
                     {item.quality_answers && Object.keys(item.quality_answers).length > 0 && (
                       <div className="p-2.5 bg-campus-soft/50 rounded-xl border border-campus-primary/20 text-[11px] space-y-1">
-                        <span className="font-bold text-campus-dark block text-[10px] uppercase tracking-wider">
+                        <span className="font-bold text-[#F5F7F0] block text-[10px] uppercase tracking-wider">
                           Student Quality Assessment (Calculated: ₹{item.estimated_price || item.admin_buy_price}):
                         </span>
                         {Object.entries(item.quality_answers).map(([key, ans], aIdx) => (
-                          <div key={aIdx} className="text-slate-700 flex items-center gap-1">
+                          <div key={aIdx} className="text-[#D3DACD] flex items-center gap-1">
                             <span className="text-campus-primary font-bold">•</span>
                             <span>{ans}</span>
                           </div>
@@ -274,7 +274,7 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
                     )}
 
                     {item.description && (
-                      <p className="text-xs text-slate-600 italic bg-slate-50 p-2 rounded-xl border border-slate-100 mt-2">
+                      <p className="text-xs text-[#B7C1B0] italic bg-[#12160F] p-2 rounded-xl border border-white/10 mt-2">
                         "{item.description}"
                       </p>
                     )}
@@ -282,36 +282,36 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
                 </div>
 
                 {/* Right: Pricing Controls & Approve/Reject */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4 lg:pt-0 border-t lg:border-t-0 border-white/10">
                   
                   {/* Buying Price Input */}
-                  <div className="bg-[#F8FAF9] p-3 rounded-2xl border border-slate-200/80">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block">
+                  <div className="bg-[#12160F] p-3 rounded-2xl border border-white/10/80">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-[#A6B09F] block">
                       Buying Price (Pay Student)
                     </span>
                     <div className="flex items-center gap-1 mt-1">
-                      <span className="text-sm font-bold text-slate-400">₹</span>
+                      <span className="text-sm font-bold text-[#8F9A89]">₹</span>
                       <SmoothInput
                         type="number"
                         value={draft.buy}
                         onChange={(e) => handlePriceChange(item.id, 'buy', parseFloat(e.target.value) || 0)}
-                        className="w-24 text-sm font-extrabold text-campus-dark bg-white border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-campus-primary"
+                        className="w-24 text-sm font-extrabold text-[#F5F7F0] bg-[#181D14] border border-white/10 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-campus-primary"
                       />
                     </div>
                   </div>
 
                   {/* Selling Price Input */}
-                  <div className="bg-[#F8FAF9] p-3 rounded-2xl border border-slate-200/80">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500 block">
+                  <div className="bg-[#12160F] p-3 rounded-2xl border border-white/10/80">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-[#A6B09F] block">
                       Selling Price (Buyer Pays)
                     </span>
                     <div className="flex items-center gap-1 mt-1">
-                      <span className="text-sm font-bold text-slate-400">₹</span>
+                      <span className="text-sm font-bold text-[#8F9A89]">₹</span>
                       <SmoothInput
                         type="number"
                         value={draft.sell}
                         onChange={(e) => handlePriceChange(item.id, 'sell', parseFloat(e.target.value) || 0)}
-                        className="w-24 text-sm font-extrabold text-campus-dark bg-white border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-campus-primary"
+                        className="w-24 text-sm font-extrabold text-[#F5F7F0] bg-[#181D14] border border-white/10 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-campus-primary"
                       />
                     </div>
                   </div>
@@ -353,7 +353,7 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
                           })
                         }
                         disabled={processingId === item.id}
-                        className="px-4 py-2.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold transition-all flex items-center gap-1.5"
+                        className="px-4 py-2.5 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-500/10 text-xs font-bold transition-all flex items-center gap-1.5"
                       >
                         <XCircle className="w-4 h-4" />
                         <span>Reject</span>
@@ -375,19 +375,19 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
           onClick={() => setInspectImages(null)}
         >
           <div
-            className="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl relative"
+            className="bg-[#181D14] rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl relative"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+            <div className="p-4 border-b border-white/10 flex items-center justify-between">
+              <span className="text-xs font-bold text-[#D3DACD] flex items-center gap-1.5">
                 <ImageIcon className="w-4 h-4 text-campus-primary" />
                 <span>Uploaded Photo Inspection ({inspectIndex + 1} of {inspectImages.length})</span>
               </span>
               <button
                 type="button"
                 onClick={() => setInspectImages(null)}
-                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all"
+                className="w-8 h-8 rounded-full bg-[#242C20] hover:bg-[#343C30] text-[#B7C1B0] flex items-center justify-center transition-all"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -423,7 +423,7 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
 
             {/* Thumbnails row */}
             {inspectImages.length > 1 && (
-              <div className="p-3 bg-slate-50 flex items-center justify-center gap-2 border-t border-slate-100">
+              <div className="p-3 bg-[#12160F] flex items-center justify-center gap-2 border-t border-white/10">
                 {inspectImages.map((img, idx) => (
                   <button
                     key={idx}
@@ -432,7 +432,7 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
                     className={`w-12 h-12 rounded-xl overflow-hidden border-2 transition-all ${
                       inspectIndex === idx
                         ? 'border-campus-primary ring-2 ring-campus-primary/30 scale-105'
-                        : 'border-slate-200 opacity-60 hover:opacity-100'
+                        : 'border-white/10 opacity-60 hover:opacity-100'
                     }`}
                   >
                     <img src={img} alt="" className="w-full h-full object-cover" />
@@ -446,29 +446,29 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
       {/* Confirmation Modal */}
       {confirmModal && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-[#181D14] rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-white/10 animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center gap-3 mb-4">
               <div
                 className={`p-2.5 rounded-2xl ${
-                  confirmModal.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                  confirmModal.status === 'APPROVED' ? 'bg-[#C6DE41]/15 text-[#C6DE41]' : 'bg-rose-100 text-rose-700'
                 }`}
               >
                 {confirmModal.status === 'APPROVED' ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
               </div>
               <div>
-                <h3 className="font-extrabold text-sm text-slate-900">
+                <h3 className="font-extrabold text-sm text-[#F5F7F0]">
                   {confirmModal.status === 'APPROVED' ? 'Approve Sell Request?' : 'Reject Sell Request?'}
                 </h3>
-                <p className="text-[11px] text-slate-500">Confirm catalog item status</p>
+                <p className="text-[11px] text-[#A6B09F]">Confirm catalog item status</p>
               </div>
             </div>
 
-            <p className="text-xs text-slate-600 mb-4 leading-relaxed">
-              Are you sure you want to mark the sell request for <strong className="text-slate-900">{confirmModal.productName}</strong> by <strong className="text-slate-900">{confirmModal.studentName}</strong> ({confirmModal.collegeCode}) as <span className="font-bold uppercase">{confirmModal.status}</span>?
+            <p className="text-xs text-[#B7C1B0] mb-4 leading-relaxed">
+              Are you sure you want to mark the sell request for <strong className="text-[#F5F7F0]">{confirmModal.productName}</strong> by <strong className="text-[#F5F7F0]">{confirmModal.studentName}</strong> ({confirmModal.collegeCode}) as <span className="font-bold uppercase">{confirmModal.status}</span>?
             </p>
 
             {confirmModal.status === 'APPROVED' && (
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] text-emerald-800 mb-5 leading-normal">
+              <div className="p-3 bg-[#C6DE41]/10 border border-[#C6DE41]/20 rounded-xl text-[11px] text-[#D9EBA8] mb-5 leading-normal">
                 Approved price: <strong className="font-bold">₹{confirmModal.buyPrice}</strong> (Student payout) • <strong className="font-bold">₹{confirmModal.sellPrice}</strong> (Selling price on {confirmModal.collegeCode} campus).
               </div>
             )}
@@ -476,7 +476,7 @@ export const AdminSellRequests: React.FC<Props> = ({ onAction }) => {
             <div className="flex items-center justify-end gap-2.5">
               <button
                 onClick={() => setConfirmModal(null)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-[#B7C1B0] hover:bg-[#30392A] transition-colors"
               >
                 Cancel
               </button>

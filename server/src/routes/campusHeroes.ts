@@ -16,6 +16,15 @@ router.post('/apply', authenticateToken, requireAuth, async (req: AuthRequest, r
       });
     }
 
+    // A current Campus Hero already has privileges; do not create a new
+    // PENDING application that could later interfere with an approved role.
+    if (req.user!.role === 'CAMPUS_HERO') {
+      return res.status(409).json({
+        success: false,
+        message: 'You are already a Campus Hero.',
+      });
+    }
+
     // Check if user already has an active application
     const existingApplication = await prisma.campusHeroApplication.findFirst({
       where: { user_id: req.user!.id },

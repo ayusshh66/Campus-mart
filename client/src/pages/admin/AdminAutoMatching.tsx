@@ -1,4 +1,5 @@
 import { SmoothInput } from '../../components/motion/SmoothInput';
+import { QualityQuestionEditor } from './QualityQuestionEditor';
 import React, { useEffect, useState } from 'react';
 import { api, AutoMatchRule } from '../../services/api';
 import { 
@@ -128,10 +129,10 @@ export const AdminAutoMatching: React.FC = () => {
     <div className="space-y-6">
       {/* Top Banner & Control Deck */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-lg border border-indigo-900/50 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-80 h-80 bg-[#C6DE41]/100/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-bold mb-2 border border-indigo-500/30">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#C6DE41]/100/20 text-indigo-300 text-xs font-bold mb-2 border border-indigo-500/30">
               <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
               <span>Smart Recommerce Logic</span>
             </div>
@@ -147,7 +148,7 @@ export const AdminAutoMatching: React.FC = () => {
             <button
               onClick={handleRunScan}
               disabled={runningCycle}
-              className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-campus-primary hover:from-indigo-600 hover:to-campus-primary-hover text-white text-xs font-extrabold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-campus-primary hover:from-[#1F321A] hover:to-campus-primary-hover text-white text-xs font-extrabold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 ${runningCycle ? 'animate-spin' : ''}`} />
               <span>{runningCycle ? 'Scanning Requests...' : 'Run Auto-Match Scan Now'}</span>
@@ -155,7 +156,7 @@ export const AdminAutoMatching: React.FC = () => {
             <Link
               to="/hero-dashboard"
               target="_blank"
-              className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 transition-all flex items-center justify-center gap-1.5"
+              className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-[#181D14]/10 hover:bg-[#181D14]/20 text-white text-xs font-bold border border-white/20 transition-all flex items-center justify-center gap-1.5"
             >
               <Truck className="w-4 h-4 text-emerald-400" />
               <span>Preview Hero View</span>
@@ -165,7 +166,7 @@ export const AdminAutoMatching: React.FC = () => {
         </div>
 
         {scanResult && (
-          <div className="mt-4 p-3.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-200 text-xs font-bold flex items-center gap-2 animate-fade-in">
+          <div className="mt-4 p-3.5 rounded-xl bg-[#C6DE41]/100/20 border border-emerald-500/40 text-emerald-200 text-xs font-bold flex items-center gap-2 animate-fade-in">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>{scanResult}</span>
           </div>
@@ -173,13 +174,13 @@ export const AdminAutoMatching: React.FC = () => {
       </div>
 
       {/* Tabs Switcher */}
-      <div className="flex items-center gap-3 border-b border-slate-200 pb-2">
+      <div className="flex items-center gap-3 border-b border-white/10 pb-2">
         <button
           onClick={() => setActiveTab('rules')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
             activeTab === 'rules'
               ? 'bg-campus-primary text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
+              : 'text-[#B7C1B0] hover:bg-[#30392A]'
           }`}
         >
           <Layers className="w-4 h-4" />
@@ -191,7 +192,7 @@ export const AdminAutoMatching: React.FC = () => {
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 ${
             activeTab === 'tasks'
               ? 'bg-campus-primary text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
+              : 'text-[#B7C1B0] hover:bg-[#30392A]'
           }`}
         >
           <Truck className="w-4 h-4" />
@@ -202,7 +203,7 @@ export const AdminAutoMatching: React.FC = () => {
       {/* Tab 1: Product Matching Rules */}
       {activeTab === 'rules' && (
         <div className="space-y-4">
-          <div className="bg-amber-50/70 border border-amber-200 p-4 rounded-2xl flex items-start gap-3">
+          <div className="bg-amber-500/10/70 border border-amber-200 p-4 rounded-2xl flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <div className="text-xs text-amber-900 leading-relaxed">
               <strong className="font-bold">Inventory & Capacity Rule:</strong> If a campus already reaches the configured cap (e.g. 10 calculators), subsequent requests are held in standard pending review instead of auto-matching. Adjust limits below per item.
@@ -210,14 +211,14 @@ export const AdminAutoMatching: React.FC = () => {
           </div>
 
           {loading ? (
-            <div className="bg-white rounded-3xl p-12 text-center text-slate-400 text-xs">
+            <div className="bg-[#181D14] rounded-3xl p-12 text-center text-[#8F9A89] text-xs">
               Loading Auto-Match Rules...
             </div>
           ) : rules.length === 0 ? (
-            <div className="bg-white rounded-3xl p-12 text-center border border-slate-200">
+            <div className="bg-[#181D14] rounded-3xl p-12 text-center border border-white/10">
               <Package className="w-12 h-12 text-slate-300 mx-auto mb-2" />
-              <h3 className="font-bold text-slate-800 text-base">No Products Found</h3>
-              <p className="text-xs text-slate-500">Add products to your catalog first to configure auto-matching.</p>
+              <h3 className="font-bold text-[#E8EDE2] text-base">No Products Found</h3>
+              <p className="text-xs text-[#A6B09F]">Add products to your catalog first to configure auto-matching.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-5">
@@ -233,37 +234,37 @@ export const AdminAutoMatching: React.FC = () => {
                 return (
                   <div
                     key={product.id}
-                    className={`bg-white rounded-3xl p-6 border transition-all shadow-subtle ${
-                      isEnabled ? 'border-indigo-200 ring-1 ring-indigo-50/50' : 'border-slate-200 opacity-80'
+                    className={`bg-[#181D14] rounded-3xl p-6 border transition-all shadow-subtle ${
+                      isEnabled ? 'border-indigo-200 ring-1 ring-indigo-50/50' : 'border-white/10 opacity-80'
                     }`}
                   >
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-5 border-b border-slate-100">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-5 border-b border-white/10">
                       {/* Product Overview */}
                       <div className="flex items-center gap-4">
                         <img
                           src={product.image_url}
                           alt={product.name}
-                          className="w-16 h-16 rounded-2xl object-cover border border-slate-200 shrink-0"
+                          className="w-16 h-16 rounded-2xl object-cover border border-white/10 shrink-0"
                         />
                         <div>
                           <div className="flex items-center gap-2">
-                            <h3 className="font-extrabold text-slate-900 text-base">{product.name}</h3>
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
+                            <h3 className="font-extrabold text-[#F5F7F0] text-base">{product.name}</h3>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#242C20] text-[#D3DACD]">
                               {product.category}
                             </span>
                           </div>
-                          <div className="flex items-center gap-3 text-xs text-slate-500 mt-1 font-medium">
-                            <span>Admin Buy: <strong className="text-slate-800">₹{product.buy_price}</strong></span>
+                          <div className="flex items-center gap-3 text-xs text-[#A6B09F] mt-1 font-medium">
+                            <span>Admin Buy: <strong className="text-[#E8EDE2]">₹{product.buy_price}</strong></span>
                             <span>•</span>
-                            <span>Selling: <strong className="text-slate-800">₹{product.sell_price}</strong></span>
+                            <span>Selling: <strong className="text-[#E8EDE2]">₹{product.sell_price}</strong></span>
                           </div>
                         </div>
                       </div>
 
                       {/* Master Toggle */}
                       <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-200">
-                          <span className="text-xs font-bold text-slate-700">
+                        <div className="flex items-center gap-3 bg-[#12160F] px-4 py-2 rounded-2xl border border-white/10">
+                          <span className="text-xs font-bold text-[#D3DACD]">
                             Auto-Match Engine:
                           </span>
                           <button
@@ -274,12 +275,12 @@ export const AdminAutoMatching: React.FC = () => {
                             }`}
                           >
                             <span
-                              className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform ${
+                              className={`w-5 h-5 rounded-full bg-[#181D14] shadow-md transform transition-transform ${
                                 isEnabled ? 'translate-x-6' : 'translate-x-0'
                               }`}
                             />
                           </button>
-                          <span className={`text-xs font-extrabold ${isEnabled ? 'text-indigo-600' : 'text-slate-400'}`}>
+                          <span className={`text-xs font-extrabold ${isEnabled ? 'text-[#C6DE41]' : 'text-[#8F9A89]'}`}>
                             {isEnabled ? 'ACTIVE' : 'OFF'}
                           </span>
                         </div>
@@ -315,14 +316,14 @@ export const AdminAutoMatching: React.FC = () => {
                     {/* Rule Parameters Row */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-5">
                       {/* Parameter 1: Max Campus Inventory Cap (e.g. 10 calculators) */}
-                      <div className="bg-[#F8FAF9] p-4 rounded-2xl border border-slate-200/80">
+                      <div className="bg-[#12160F] p-4 rounded-2xl border border-white/10/80">
                         <div className="flex items-center justify-between mb-1.5">
-                          <label className="text-xs font-bold text-slate-800">
+                          <label className="text-xs font-bold text-[#E8EDE2]">
                             Max Campus Inventory Limit
                           </label>
-                          <span className="text-[10px] text-slate-400 font-semibold">Per College</span>
+                          <span className="text-[10px] text-[#8F9A89] font-semibold">Per College</span>
                         </div>
-                        <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">
+                        <p className="text-[11px] text-[#A6B09F] mb-3 leading-relaxed">
                           Auto-match stops once college stock hits this quota (e.g. max 10 calculators).
                         </p>
                         <div className="flex items-center gap-2">
@@ -338,18 +339,18 @@ export const AdminAutoMatching: React.FC = () => {
                                 parseInt(e.target.value) || 1
                               )
                             }
-                            className="w-24 px-3 py-2 rounded-xl border border-slate-300 text-sm font-bold text-slate-900 bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-center"
+                            className="w-24 px-3 py-2 rounded-xl border border-white/15 text-sm font-bold text-[#F5F7F0] bg-[#181D14] focus:ring-2 focus:ring-indigo-500 outline-none text-center"
                           />
-                          <span className="text-xs font-semibold text-slate-500">units per campus</span>
+                          <span className="text-xs font-semibold text-[#A6B09F]">units per campus</span>
                         </div>
                       </div>
 
                       {/* Parameter 2: Allowed Condition Grades */}
-                      <div className="bg-[#F8FAF9] p-4 rounded-2xl border border-slate-200/80">
-                        <label className="text-xs font-bold text-slate-800 block mb-1.5">
+                      <div className="bg-[#12160F] p-4 rounded-2xl border border-white/10/80">
+                        <label className="text-xs font-bold text-[#E8EDE2] block mb-1.5">
                           Auto-Accept Conditions
                         </label>
-                        <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">
+                        <p className="text-[11px] text-[#A6B09F] mb-3 leading-relaxed">
                           Only submissions with selected condition will trigger instant match & pickup.
                         </p>
                         <div className="flex flex-wrap gap-1.5">
@@ -363,7 +364,7 @@ export const AdminAutoMatching: React.FC = () => {
                                 className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all border ${
                                   isChecked
                                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                                    : 'bg-[#181D14] text-[#B7C1B0] border-white/10 hover:bg-[#30392A]'
                                 }`}
                               >
                                 {cond}
@@ -374,30 +375,38 @@ export const AdminAutoMatching: React.FC = () => {
                       </div>
 
                       {/* Parameter 3: Photos Mandatory */}
-                      <div className="bg-[#F8FAF9] p-4 rounded-2xl border border-slate-200/80 flex flex-col justify-between">
+                      <div className="bg-[#12160F] p-4 rounded-2xl border border-white/10/80 flex flex-col justify-between">
                         <div>
-                          <label className="text-xs font-bold text-slate-800 block mb-1.5">
+                          <label className="text-xs font-bold text-[#E8EDE2] block mb-1.5">
                             Mandatory Photos Check
                           </label>
-                          <p className="text-[11px] text-slate-500 mb-3 leading-relaxed">
+                          <p className="text-[11px] text-[#A6B09F] mb-3 leading-relaxed">
                             Require student to upload at least one real photo before auto-assigning hero pickup.
                           </p>
                         </div>
-                        <label className="flex items-center gap-2.5 cursor-pointer bg-white px-3 py-2 rounded-xl border border-slate-200">
+                        <label className="flex items-center gap-2.5 cursor-pointer bg-[#181D14] px-3 py-2 rounded-xl border border-white/10">
                           <SmoothInput
                             type="checkbox"
                             checked={reqPhotos}
                             onChange={(e) =>
                               handleFieldChange(product.id, 'require_photos_for_auto', e.target.checked)
                             }
-                            className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                            className="w-4 h-4 text-[#C6DE41] rounded focus:ring-indigo-500"
                           />
-                          <span className="text-xs font-bold text-slate-700">
-                            Require Uploaded Photos
+                          <span className="text-xs font-bold text-[#D3DACD]">
+                                                        Require Uploaded Photos
                           </span>
                         </label>
                       </div>
                     </div>
+
+                    {/* Custom Quality Questionnaire */}
+
+                    <QualityQuestionEditor
+                      productId={product.id}
+                      productName={product.name}
+                    />
+
                   </div>
                 );
               })}
@@ -410,10 +419,10 @@ export const AdminAutoMatching: React.FC = () => {
       {activeTab === 'tasks' && (
         <div className="space-y-4">
           {deliveryTasks.length === 0 ? (
-            <div className="bg-white rounded-3xl p-12 text-center border border-slate-200">
+            <div className="bg-[#181D14] rounded-3xl p-12 text-center border border-white/10">
               <Truck className="w-12 h-12 text-slate-300 mx-auto mb-2" />
-              <h3 className="font-bold text-slate-800 text-base">No Delivery Tasks Yet</h3>
-              <p className="text-xs text-slate-500">
+              <h3 className="font-bold text-[#E8EDE2] text-base">No Delivery Tasks Yet</h3>
+              <p className="text-xs text-[#A6B09F]">
                 When auto-matching triggers or requests are accepted, pickup & drop tasks assigned to campus heroes appear here.
               </p>
             </div>
@@ -422,10 +431,10 @@ export const AdminAutoMatching: React.FC = () => {
               {deliveryTasks.map((task) => (
                 <div
                   key={task.id}
-                  className="bg-white rounded-2xl p-5 border border-slate-200 shadow-subtle flex flex-col md:flex-row md:items-center justify-between gap-4"
+                  className="bg-[#181D14] rounded-2xl p-5 border border-white/10 shadow-subtle flex flex-col md:flex-row md:items-center justify-between gap-4"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-[#C6DE41]/10 text-[#C6DE41] flex items-center justify-center shrink-0">
                       <Truck className="w-6 h-6" />
                     </div>
                     <div>
@@ -433,32 +442,32 @@ export const AdminAutoMatching: React.FC = () => {
                         <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 text-indigo-800 uppercase tracking-wider">
                           {task.task_type.replace('_', ' ')}
                         </span>
-                        <h4 className="font-bold text-slate-900 text-sm">
+                        <h4 className="font-bold text-[#F5F7F0] text-sm">
                           {task.product?.name || 'Recommerce Item'}
                         </h4>
-                        <span className="text-xs text-slate-400 font-bold">
+                        <span className="text-xs text-[#8F9A89] font-bold">
                           📍 {task.college?.code || 'Campus'}
                         </span>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mt-1.5">
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-[#A6B09F] mt-1.5">
                         <span>
                           Campus Hero:{' '}
-                          <strong className="text-slate-800">
+                          <strong className="text-[#E8EDE2]">
                             {task.campus_hero?.name || 'Assigned Hero'}
                           </strong>
                         </span>
                         <span>•</span>
                         <span>
                           Status:{' '}
-                          <strong className="text-indigo-600 font-bold">
+                          <strong className="text-[#C6DE41] font-bold">
                             {task.status}
                           </strong>
                         </span>
                         {task.quality_verified && (
                           <>
                             <span>•</span>
-                            <span className="inline-flex items-center gap-0.5 text-emerald-600 font-bold">
+                            <span className="inline-flex items-center gap-0.5 text-[#C6DE41] font-bold">
                               <ShieldCheck className="w-3.5 h-3.5" /> Quality Verified
                             </span>
                           </>
@@ -466,22 +475,22 @@ export const AdminAutoMatching: React.FC = () => {
                       </div>
 
                       {/* Seller & Buyer details */}
-                      <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                      <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-[#B7C1B0] bg-[#12160F] p-2.5 rounded-xl border border-white/10">
                         {task.seller && (
                           <div>
-                            <span className="text-slate-400 block text-[10px] font-bold uppercase">Seller</span>
+                            <span className="text-[#8F9A89] block text-[10px] font-bold uppercase">Seller</span>
                             <span className="font-bold">{task.seller.name}</span> ({task.seller.phone})
                           </div>
                         )}
                         {task.buyer && (
                           <div>
-                            <span className="text-slate-400 block text-[10px] font-bold uppercase">Buyer</span>
+                            <span className="text-[#8F9A89] block text-[10px] font-bold uppercase">Buyer</span>
                             <span className="font-bold">{task.buyer.name}</span> ({task.buyer.phone})
                           </div>
                         )}
                         <div>
-                          <span className="text-slate-400 block text-[10px] font-bold uppercase">In-Website Chat</span>
-                          <span className="font-bold text-indigo-600 flex items-center gap-1">
+                          <span className="text-[#8F9A89] block text-[10px] font-bold uppercase">In-Website Chat</span>
+                          <span className="font-bold text-[#C6DE41] flex items-center gap-1">
                             <MessageSquare className="w-3 h-3" />
                             {task.messages?.length || 0} messages sent as Operations Team
                           </span>
@@ -494,7 +503,7 @@ export const AdminAutoMatching: React.FC = () => {
                     <Link
                       to="/hero-dashboard"
                       target="_blank"
-                      className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1"
+                      className="px-3.5 py-2 rounded-xl bg-[#242C20] hover:bg-[#343C30] text-[#E8EDE2] text-xs font-bold flex items-center gap-1"
                     >
                       <span>Hero Dashboard</span>
                       <ExternalLink className="w-3 h-3" />

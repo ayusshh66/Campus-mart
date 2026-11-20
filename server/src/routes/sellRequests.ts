@@ -2,13 +2,15 @@ import { Router, Response } from 'express';
 import prisma from '../db';
 import { authenticateToken, requireAuth, AuthRequest } from '../middleware/auth';
 import { processAutoMatchForSellRequest } from '../services/autoMatch';
+import { getDefaultQualityQuestions } from './products';
+
 
 const router = Router();
 
 // POST /api/sell-requests - Submit a request to sell an approved catalog item
 router.post('/', authenticateToken, requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const { product_id, condition, description, images, quality_answers, estimated_price } = req.body;
+    const { product_id, condition, description, images, quality_answers } = req.body;
 
     if (!product_id || !condition) {
       return res.status(400).json({
@@ -46,27 +48,171 @@ router.post('/', authenticateToken, requireAuth, async (req: AuthRequest, res: R
     }
 
     // Format images
-    let imagesJson = '[]';
-    if (images) {
-      if (typeof images === 'string') {
-        imagesJson = images.startsWith('[') ? images : JSON.stringify([images]);
-      } else if (Array.isArray(images)) {
-        imagesJson = JSON.stringify(images);
+   let parsedImages: unknown = images;
+
+if (typeof images === 'string') {
+  try {
+    parsedImages = JSON.parse(images);
+  } catch {
+    parsedImages = [images];
+  }
+}
+
+if (
+  !Array.isArray(parsedImages) ||
+  parsedImages.length === 0 ||
+  parsedImages.length > 5 ||
+  !parsedImages.every(
+    (image) =>
+      typeof image === 'string' &&
+      image.trim().length > 0
+  )
+) {
+  return res.status(400).json({
+    success: false,
+    message:
+      'Please upload between 1 and 5 photos of your item.',
+  });
+}
+
+const imagesJson = JSON.stringify(
+  parsedImages.map((image: string) => image.trim())
+);
+
+    
+    // Parse quality answers safely
+    let parsedQualityAnswers: Record<string, unknown>;
+
+    try {
+      const parsed =
+        typeof quality_answers === 'string'
+          ? JSON.parse(quality_answers)
+          : quality_answers;
+
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Valid quality answers are required.',
+        });
       }
+
+      parsedQualityAnswers = parsed;
+    } catch {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid quality answers format.',
+      });
     }
 
-    let qualityAnswersJson = '{}';
-    if (quality_answers) {
-      if (typeof quality_answers === 'string') {
-        qualityAnswersJson = quality_answers;
-      } else {
-        qualityAnswersJson = JSON.stringify(quality_answers);
+    // Load admin-configured quality questions
+    let productQuestions: Array<{
+      id: string;
+      options: Array<{ label: string; deduction: number }>;
+    }>;
+
+    try {
+      const storedQuestions = JSON.parse(product.quality_questions || '[]');
+
+      if (!Array.isArray(storedQuestions)) {
+        throw new Error('Invalid quality questions');
       }
+
+      productQuestions = storedQuestions.length > 0
+        ? storedQuestions
+        : getDefaultQualityQuestions(
+            product.name,
+            product.category,
+            product.buy_price,
+            product.upto_buy_price
+          );
+    } catch {
+      return res.status(500).json({
+        success: false,
+        message: 'Invalid product quality configuration.',
+      });
     }
 
-    const finalEstimatedPrice = estimated_price !== undefined
-      ? parseFloat(estimated_price)
-      : product.buy_price;
+    // Validate answers and calculate deductions
+    let totalDeductions = 0;
+
+    for (const question of productQuestions) {
+      if (
+        typeof question?.id !== 'string' ||
+        !Array.isArray(question.options) ||
+        question.options.length === 0
+      ) {
+        return res.status(500).json({
+          success: false,
+          message: 'Invalid product quality configuration.',
+        });
+      }
+
+      const answer = parsedQualityAnswers[question.id];
+
+      // Support both string answers and { label: "..." }
+      const answerLabel =
+        typeof answer === 'string'
+          ? answer
+          : answer && typeof answer === 'object' &&
+            'label' in answer &&
+            typeof answer.label === 'string'
+          ? answer.label
+          : null;
+
+      if (!answerLabel?.trim()) {
+        return res.status(400).json({
+          success: false,
+          message: `Answer required for ${question.id}`,
+        });
+      }
+
+      const matchedOption = question.options.find(
+        (option) =>
+          typeof option?.label === 'string' &&
+          option.label.trim().toLowerCase() ===
+            answerLabel.trim().toLowerCase()
+      );
+
+      if (!matchedOption) {
+        return res.status(400).json({
+          success: false,
+          message: `Invalid answer for ${question.id}`,
+        });
+      }
+
+      if (
+        typeof matchedOption.deduction !== 'number' ||
+        !Number.isFinite(matchedOption.deduction) ||
+        matchedOption.deduction < 0
+      ) {
+        return res.status(500).json({
+          success: false,
+          message: 'Invalid deduction configuration.',
+        });
+      }
+
+      totalDeductions += matchedOption.deduction;
+    }
+
+    // Calculate payout using admin prices
+    const maxPrice =
+      product.upto_buy_price ??
+      Math.round(product.buy_price * 1.25);
+
+    if (!Number.isFinite(maxPrice) || maxPrice <= 0) {
+      return res.status(500).json({
+        success: false,
+        message: 'Invalid product pricing configuration.',
+      });
+    }
+
+    const serverDerivedEstimatedPrice = Math.min(
+      maxPrice,
+      Math.max(50, Math.round(maxPrice - totalDeductions))
+    );
+
+    const qualityAnswersJson = JSON.stringify(parsedQualityAnswers);
+
 
     // STRICT SECURITY RULE: college_id is locked to the authenticated user's registered college!
     const sellRequest = await prisma.sellRequest.create({
@@ -78,8 +224,8 @@ router.post('/', authenticateToken, requireAuth, async (req: AuthRequest, res: R
         description: description?.trim() || null,
         images: imagesJson,
         quality_answers: qualityAnswersJson,
-        estimated_price: finalEstimatedPrice,
-        admin_buy_price: finalEstimatedPrice, // snapshot estimated price
+        estimated_price: serverDerivedEstimatedPrice,
+        admin_buy_price: serverDerivedEstimatedPrice, // initial server-derived valuation snapshot
         status: 'PENDING',
       },
       include: {
@@ -106,7 +252,7 @@ router.post('/', authenticateToken, requireAuth, async (req: AuthRequest, res: R
         product_name: sellRequest.product.name,
         condition: sellRequest.condition,
         college_name: sellRequest.college.name,
-        estimated_payout: finalEstimatedPrice,
+        estimated_payout: serverDerivedEstimatedPrice,
         status: finalStatus,
         auto_matched: Boolean(autoMatchResult?.auto_approved),
         created_at: sellRequest.created_at,
@@ -167,7 +313,7 @@ router.get('/my', authenticateToken, requireAuth, async (req: AuthRequest, res: 
 // POST /api/sell-requests/custom - Submit any custom item not in the catalog
 router.post('/custom', authenticateToken, requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const { name, category, condition, description, expected_price, images } = req.body;
+    const { name, category, condition, description, images } = req.body;
 
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({
@@ -198,14 +344,6 @@ router.post('/custom', authenticateToken, requireAuth, async (req: AuthRequest, 
       });
     }
 
-    const parsedPrice = parseFloat(expected_price);
-    if (isNaN(parsedPrice) || parsedPrice <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Expected price must be a valid positive amount.',
-      });
-    }
-
     // Format images safely as JSON
     let imagesJson = '[]';
     if (images) {
@@ -219,6 +357,8 @@ router.post('/custom', authenticateToken, requireAuth, async (req: AuthRequest, 
     // SECURITY: College is strictly locked to authenticated user's registered college
     const collegeId = req.user!.college_id;
 
+    // ADMIN-ONLY PRICING: Seller does not set price.
+    // Price will be determined by CampusMart admins after review.
     const submission = await prisma.customItemSubmission.create({
       data: {
         user_id: req.user!.id,
@@ -227,7 +367,7 @@ router.post('/custom', authenticateToken, requireAuth, async (req: AuthRequest, 
         category: category.trim(),
         condition,
         description: description.trim(),
-        expected_price: parsedPrice,
+        expected_price: null, // User pricing removed; admin assigns valuation
         images: imagesJson,
         status: 'PENDING',
       },
@@ -238,13 +378,14 @@ router.post('/custom', authenticateToken, requireAuth, async (req: AuthRequest, 
 
     return res.status(201).json({
       success: true,
-      message: 'Your custom item has been submitted for review! Once approved by admin, it will be listed as available on your campus.',
+      message: 'Your custom item has been submitted for review! Price will be determined by CampusMart after review.',
       data: {
         id: submission.id,
         name: submission.name,
         category: submission.category,
         condition: submission.condition,
-        expected_price: submission.expected_price,
+        expected_price: null,
+        price_status: 'Price will be determined by CampusMart after review.',
         college_id: submission.college_id,
         college_code: submission.college.code,
         college_name: submission.college.name,

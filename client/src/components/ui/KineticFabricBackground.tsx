@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef } from "react";
+import { useTheme } from "../../context/ThemeContext";
 
 // Based on the provided Kinetic Particle Fabric component.
-// Original mesh physics and visuals; demonstration text/buttons removed.
+// Theme-aware mesh physics and visuals with instant theme reactivity.
 
 interface Vector3 {
     x: number;
@@ -27,6 +28,12 @@ interface StructuralConstraint {
 export function KineticFabricBackground() {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const { isDark } = useTheme();
+    const isDarkRef = useRef(isDark);
+
+    useEffect(() => {
+        isDarkRef.current = isDark;
+    }, [isDark]);
 
     const pointerRef = useRef({
         x: -2000,
@@ -151,6 +158,7 @@ export function KineticFabricBackground() {
             const nodes = nodesRef.current;
             const links = linksRef.current;
             const pointer = pointerRef.current;
+            const isDark = isDarkRef.current;
 
             pointer.vx = (pointer.x - pointer.prevX) * 0.4;
             pointer.vy = (pointer.y - pointer.prevY) * 0.4;
@@ -167,8 +175,9 @@ export function KineticFabricBackground() {
             const cosY = Math.cos(pointer.angleY);
             const sinY = Math.sin(pointer.angleY);
 
-            const bgColor = "#09090b";
-            const strokeColor = "255, 255, 255";
+            // Theme-aware canvas colors
+            const bgColor = isDark ? "#09090b" : "#F7F8F2";
+            const strokeColor = isDark ? "255, 255, 255" : "23, 27, 19";
 
             ctx.fillStyle = bgColor;
             ctx.fillRect(0, 0, width, height);
@@ -299,10 +308,12 @@ export function KineticFabricBackground() {
 
                 if (isExcited) {
                     const glow = Math.max(na.excitation, nb.excitation);
-                    ctx.strokeStyle = `rgba(198, 222, 65, ${Math.min(1, 0.4 + glow * 0.6)})`;
+                    ctx.strokeStyle = isDark
+                        ? `rgba(198, 222, 65, ${Math.min(1, 0.4 + glow * 0.6)})`
+                        : `rgba(126, 158, 10, ${Math.min(1, 0.45 + glow * 0.55)})`;
                     ctx.lineWidth = (0.8 + glow * 1.2) * avgScale;
                 } else {
-                    ctx.strokeStyle = `rgba(${strokeColor}, ${0.12 * avgAlpha})`;
+                    ctx.strokeStyle = `rgba(${strokeColor}, ${(isDark ? 0.12 : 0.14) * avgAlpha})`;
                     ctx.lineWidth = 0.75 * avgScale;
                 }
 
@@ -316,7 +327,7 @@ export function KineticFabricBackground() {
                 const n = nodes[i];
                 if (n.excitation > 0.25) {
                     const r = Math.min(2.6, 1.2 + n.excitation * 2) * n.proj.scale;
-                    ctx.fillStyle = "#C6DE41";
+                    ctx.fillStyle = isDark ? "#C6DE41" : "#7E9E0A";
                     ctx.beginPath();
                     ctx.arc(n.proj.x, n.proj.y, r, 0, Math.PI * 2);
                     ctx.fill();
@@ -326,8 +337,17 @@ export function KineticFabricBackground() {
             animId = requestAnimationFrame(loop);
         };
 
+        const handleThemeChange = (e: Event) => {
+            const customEvent = e as CustomEvent<{ theme: 'dark' | 'light' }>;
+            isDarkRef.current = customEvent.detail?.theme === 'dark';
+        };
+        window.addEventListener('campusmart-theme-change', handleThemeChange);
+
         animId = requestAnimationFrame(loop);
-        return () => cancelAnimationFrame(animId);
+        return () => {
+            window.removeEventListener('campusmart-theme-change', handleThemeChange);
+            cancelAnimationFrame(animId);
+        };
     }, []);
 
     // Window events reach the canvas even when the page's buttons and
@@ -388,7 +408,8 @@ export function KineticFabricBackground() {
         <div
             ref={containerRef}
             aria-hidden="true"
-            className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-[#09090b]"
+            className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-[#09090b] dark:bg-[#09090b] light:bg-[#F7F8F2] transition-colors duration-300"
+            style={{ backgroundColor: isDark ? "#09090b" : "#F7F8F2" }}
         >
             <canvas
                 ref={canvasRef}

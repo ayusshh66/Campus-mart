@@ -57,47 +57,100 @@ router.get('/my', authenticateToken, requireAuth, async (req: AuthRequest, res: 
 });
 
 // POST /api/messages/reply - Student replies back to the Operations Team
+
 router.post('/reply', authenticateToken, requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const { task_id, content } = req.body;
 
-    if (!task_id || !content || !content.trim()) {
+    // 1. Validate inputs
+    if (
+      typeof task_id !== 'string' ||
+      !task_id.trim() ||
+      typeof content !== 'string' ||
+      !content.trim()
+    ) {
       return res.status(400).json({
         success: false,
-        message: 'Task ID and message content are required.',
+        message: 'Valid task ID and message content are required.',
       });
     }
 
+    if (content.trim().length > 2000) {
+      return res.status(400).json({
+        success: false,
+        message: 'Message cannot exceed 2000 characters.',
+      });
+    }
+
+    // 2. Fetch task with related buyer and seller
     const task = await prisma.deliveryTask.findUnique({
       where: { id: task_id },
       include: {
-        assigned_hero: true,
+        sell_request: {
+          select: { user_id: true },
+        },
+        buy_request: {
+          select: { user_id: true },
+        },
       },
     });
 
     if (!task) {
-      return res.status(404).json({ success: false, message: 'Task conversation not found' });
-    }
-
-    // Determine receiver: the assigned campus hero
-    let receiverId = task.assigned_hero_id;
-    if (!receiverId) {
-      // Find campus hero for this college
-      const heroApp = await prisma.campusHeroApplication.findFirst({
-        where: { college_id: task.college_id, status: 'APPROVED' },
+      return res.status(404).json({
+        success: false,
+        message: 'Task conversation not found.',
       });
-      receiverId = heroApp?.user_id || null;
     }
+
+    // 3. SECURITY: Verify student belongs to the task
+    const userId = req.user!.id;
+
+    const isSeller = task.sell_request?.user_id === userId;
+    const isBuyer = task.buy_request?.user_id === userId;
+
+    if (!isSeller && !isBuyer) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to message on this task.',
+      });
+    }
+
+    // 4. Find the assigned Campus Hero
+    let receiverId: string | null = task.assigned_hero_id;
 
     if (!receiverId) {
-      // Fallback: send to admin
-      const admin = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
-      receiverId = admin?.id || task.college_id;
+      const heroApp = await prisma.campusHeroApplication.findFirst({
+        where: {
+          college_id: task.college_id,
+          status: 'APPROVED',
+        },
+      });
+
+      receiverId = heroApp?.user_id ?? null;
     }
 
+    // 5. Fallback to admin if no Campus Hero exists
+    if (!receiverId) {
+      const admin = await prisma.user.findFirst({
+        where: { role: 'ADMIN' },
+        select: { id: true },
+      });
+
+      receiverId = admin?.id ?? null;
+    }
+
+    // Never use a college ID as a message receiver
+    if (!receiverId) {
+      return res.status(503).json({
+        success: false,
+        message: 'No operations representative is available.',
+      });
+    }
+
+    // 6. Create the message
     const message = await prisma.message.create({
       data: {
-        sender_id: req.user!.id,
+        sender_id: userId,
         sender_display_name: req.user!.name,
         receiver_id: receiverId,
         task_id: task.id,
@@ -106,7 +159,9 @@ router.post('/reply', authenticateToken, requireAuth, async (req: AuthRequest, r
         content: content.trim(),
       },
       include: {
-        sender: { select: { id: true, name: true } },
+        sender: {
+          select: { id: true, name: true },
+        },
       },
     });
 
@@ -116,12 +171,14 @@ router.post('/reply', authenticateToken, requireAuth, async (req: AuthRequest, r
       data: message,
     });
   } catch (error: any) {
+    console.error('Message reply error:', error);
+
     return res.status(500).json({
       success: false,
-      message: 'Failed to send reply',
-      error: error.message,
+      message: 'Failed to send reply.',
     });
   }
 });
+
 
 export default router;

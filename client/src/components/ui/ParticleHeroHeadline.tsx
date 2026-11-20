@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import { useTheme } from "../../context/ThemeContext";
 
 type Point = { x: number; y: number };
 
@@ -19,7 +20,7 @@ interface ParticleHeroHeadlineProps {
 
 /**
  * CampusMart adaptation of the supplied 21st.dev particle-text effect.
- * Keeps the canvas transparent so the Unicorn Studio hero remains visible.
+ * Theme-aware colors ensure high contrast on both dark and ivory backgrounds.
  */
 export default function ParticleHeroHeadline({
   text,
@@ -27,6 +28,12 @@ export default function ParticleHeroHeadline({
 }: ParticleHeroHeadlineProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { isDark } = useTheme();
+  const isDarkRef = useRef(isDark);
+
+  useEffect(() => {
+    isDarkRef.current = isDark;
+  }, [isDark]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -49,7 +56,28 @@ export default function ParticleHeroHeadline({
     const initialLines = ["BECOME THE FACE OF", "CAMPUSMART AT YOUR COLLEGE."];
     const mobileLines = ["BECOME THE FACE OF", "CAMPUSMART AT", "YOUR COLLEGE."];
 
-    // Keep the original phrase accessible while the canvas supplies its visuals.
+    const getDotColor = (index: number, dark: boolean) => {
+      if (dark) {
+        return index % 7 === 0
+          ? "#EAFAB0"
+          : index % 4 === 0
+          ? "#D7EF59"
+          : index % 11 === 0
+          ? "#A8C22E"
+          : "#C6DE41";
+      }
+      // Light Mode: High contrast charcoal & olive-lime editorial palette
+      return index % 8 === 0
+        ? "#171B13"
+        : index % 5 === 0
+        ? "#2B3615"
+        : index % 3 === 0
+        ? "#55700F"
+        : index % 7 === 0
+        ? "#739711"
+        : "#8CAE16";
+    };
+
     const build = () => {
       const rect = wrapper.getBoundingClientRect();
       width = Math.max(1, Math.round(rect.width));
@@ -94,7 +122,7 @@ export default function ParticleHeroHeadline({
         }
       }
 
-      // Shuffle targets to make the particle assembly feel organic.
+      // Shuffle targets to make particle assembly organic
       for (let i = targets.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [targets[i], targets[j]] = [targets[j], targets[i]];
@@ -116,15 +144,7 @@ export default function ParticleHeroHeadline({
           vy: 0,
           target,
           size: width < 620 ? 1.65 : 2.2,
-          // Vibrant CampusMart theme: #C6DE41 neon green with electric lime highlights
-          color:
-            index % 7 === 0
-              ? "#EAFAB0"
-              : index % 4 === 0
-              ? "#D7EF59"
-              : index % 11 === 0
-              ? "#A8C22E"
-              : "#C6DE41",
+          color: getDotColor(index, isDarkRef.current),
         });
       });
       lastReset = performance.now();
@@ -133,13 +153,11 @@ export default function ParticleHeroHeadline({
 
     const draw = (now: number) => {
       ctx.clearRect(0, 0, width, height);
-      // Time-step normalization avoids jumping if browser FPS drops.
       const dt = Math.min(2, Math.max(0.3, (now - lastFrame) / 16.67));
       lastFrame = now;
 
       for (const dot of dots) {
         if (!reducedMotion) {
-          // Target-seeking motion inspired by the user's supplied Particle class.
           const dx = dot.target.x - dot.x;
           const dy = dot.target.y - dot.y;
           dot.vx = (dot.vx + dx * 0.017 * dt) * Math.pow(0.82, dt);
@@ -154,7 +172,6 @@ export default function ParticleHeroHeadline({
 
     const frame = (now: number) => {
       if (!isVisible) return;
-      // Replay the gathering effect occasionally without changing the words.
       if (now - lastReset > 12000 && !reducedMotion) {
         for (const dot of dots) {
           const angle = Math.random() * Math.PI * 2;
@@ -170,8 +187,19 @@ export default function ParticleHeroHeadline({
       raf = window.requestAnimationFrame(frame);
     };
 
+    const handleThemeChange = (e: Event) => {
+      const customEvent = e as CustomEvent<{ theme: 'dark' | 'light' }>;
+      const dark = customEvent.detail?.theme === 'dark';
+      isDarkRef.current = dark;
+      dots.forEach((dot, index) => {
+        dot.color = getDotColor(index, dark);
+      });
+      draw(performance.now());
+    };
+
     const observer = new ResizeObserver(() => build());
     observer.observe(wrapper);
+    window.addEventListener("campusmart-theme-change", handleThemeChange);
     build();
     if (!reducedMotion) raf = window.requestAnimationFrame(frame);
 
@@ -189,6 +217,7 @@ export default function ParticleHeroHeadline({
     return () => {
       window.cancelAnimationFrame(raf);
       observer.disconnect();
+      window.removeEventListener("campusmart-theme-change", handleThemeChange);
       document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, [text]);

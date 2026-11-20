@@ -1,155 +1,212 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
 
-import React from "react";
-import { Link } from "react-router-dom";
 import {
-  Shield,
+  Github,
+  Instagram,
+  Linkedin,
+  Globe2,
   MapPin,
-  CheckCircle2,
-  ArrowUpRight,
-  Users,
-  Truck,
-} from "lucide-react";
+} from 'lucide-react';
+
+import {
+  FooterBackgroundGradient,
+  TextHoverEffect,
+} from './ui/hover-footer';
+
+const footerSections = [
+  {
+    title: 'Explore Market',
+    links: [
+      { label: 'Browse Gear Catalog', to: '/buy' },
+      { label: 'Instant Sell Valuation', to: '/sell' },
+      { label: 'Campus Hero Program', to: '/campus-heroes' },
+      { label: 'Campus Recommerce', to: '/' },
+    ],
+  },
+  {
+    title: 'Helpful Links',
+    links: [
+      { label: 'View Profile', to: '/profile' },
+      { label: 'Account Settings', to: '/settings' },
+      { label: 'Student Sign In', to: '/login' },
+      { label: 'Hero Operations', to: '/hero-dashboard' },
+    ],
+  },
+];
+
+const campuses = [
+  'BPIT Campus',
+  'MAIT Campus',
+  'MSIT Campus',
+  'USAR Campus',
+];
 
 export const Footer: React.FC = () => {
-  return (
-    <footer className="relative z-10 w-full border-t border-[#C6DE41]/20 bg-[#090B09] pt-16 pb-24 text-white md:pb-12">
-      <div className="mx-auto max-w-[1200px] px-4 sm:px-6">
-        {/* Top Trust Ribbon */}
-        <div className="mb-12 grid grid-cols-2 gap-4 border-b border-[#C6DE41]/15 pb-12 text-[12px] sm:grid-cols-4">
-          {[
-            {
-              icon: Shield,
-              title: "Verified Quality",
-              description: "Diagnostic peer checks",
-            },
-            {
-              icon: CheckCircle2,
-              title: "Zero Haggling",
-              description: "Fair fixed valuations",
-            },
-            {
-              icon: Truck,
-              title: "Campus Handover",
-              description: "Library / gate dropoffs",
-            },
-            {
-              icon: Users,
-              title: "Student Only",
-              description: "Zero stranger risk",
-            },
-          ].map(({ icon: Icon, title, description }) => (
-            <div key={title} className="flex items-center gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#C6DE41]/20 bg-[#12160F]">
-                <Icon className="h-4 w-4 text-[#C6DE41]" />
-              </div>
-              <div>
-                <p className="text-[13px] font-semibold tracking-tight text-white">
-                  {title}
-                </p>
-                <p className="text-[11px] text-zinc-400">
-                  {description}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+  const currentYear = new Date().getFullYear();
 
-        {/* Main Footer Links */}
-        <div className="mb-12 grid grid-cols-1 gap-8 md:grid-cols-4">
-          <div className="space-y-3 md:col-span-2">
-            <div className="flex items-center gap-1.5">
-              <span className="text-2xl font-bold tracking-tight text-white">
+  return (
+    <footer
+      className="
+        relative z-10 mx-4 mb-24 mt-10
+        overflow-hidden rounded-[28px]
+        border border-white/10 bg-[#0B0D0B]
+        text-zinc-300 sm:mx-6 lg:m-8 md:mb-8
+      "
+    >
+      <FooterBackgroundGradient />
+
+      {/* MAIN FOOTER CONTENT */}
+      <div
+        className="
+          relative z-10 mx-auto max-w-7xl
+          px-6 pt-10 sm:px-10 sm:pt-12 lg:px-14
+        "
+      >
+        {/* FOUR COLUMNS */}
+        <div
+          className="
+            grid grid-cols-1 gap-10
+            md:grid-cols-2 md:gap-8
+            lg:grid-cols-4 lg:gap-14
+          "
+        >
+          {/* BRAND */}
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="text-[25px] font-extrabold tracking-tight text-white">
                 CampusMart
               </span>
-              <span className="h-2 w-2 rounded-full bg-[#C6DE41] shadow-[0_0_8px_#C6DE41]" />
+
+              <span
+                className="
+                  h-2.5 w-2.5 rounded-full
+                  bg-[#C6DE41]
+                  shadow-[0_0_10px_#C6DE41]
+                "
+              />
             </div>
 
-            <p className="max-w-sm text-[13px] leading-relaxed tracking-tight text-zinc-400">
-              India's verified campus recommerce network. Trade
-              pre-loved lab kits, engineering tools, calculators,
-              and books seamlessly with verified student peers.
+            <p className="max-w-[250px] text-[13px] leading-6 text-zinc-400">
+              India's verified student-to-student campus
+              recommerce network for academic gear,
+              books, electronics and essentials.
             </p>
+          </div>
 
-            <div className="pt-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#C6DE41]/20 bg-[#12160F] px-3 py-1 text-[11px] text-white">
-                <MapPin className="h-3 w-3 text-[#C6DE41]" />
-                Active at BPIT, MAIT, MSIT, USAR & expanding
-              </span>
+          {/* FOOTER LINKS */}
+          {footerSections.map((section) => (
+            <div key={section.title}>
+              <h4 className="mb-6 text-[17px] font-semibold text-white">
+                {section.title}
+              </h4>
+
+              <ul className="space-y-3 text-[13px] text-zinc-400">
+                {section.links.map((link) => (
+                  <li key={link.to}>
+                    <Link
+                      to={link.to}
+                      className="
+                        transition-colors duration-200
+                        hover:text-[#C6DE41]
+                      "
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
+          ))}
 
+          {/* CAMPUS NETWORK */}
           <div>
-            <h4 className="mb-3 text-[12px] font-semibold tracking-tight text-white">
-              Explore Market
+            <h4 className="mb-6 text-[17px] font-semibold text-white">
+              Campus Network
             </h4>
 
-            <ul className="space-y-2.5 text-[13px] text-zinc-400">
-              {[
-                { label: "Browse Gear Catalog", to: "/buy" },
-                { label: "Instant Sell Valuation", to: "/sell" },
-                { label: "Hackathon Teammates", to: "/find-teammates" },
-                { label: "Campus Hero Program", to: "/campus-heroes" },
-              ].map(({ label, to }) => (
-                <li key={to}>
-                  <Link
-                    to={to}
-                    className="flex items-center gap-1 transition-colors hover:text-[#C6DE41]"
-                  >
-                    <span>{label}</span>
-                    <ArrowUpRight className="h-3 w-3 opacity-60" />
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="mb-3 text-[12px] font-semibold tracking-tight text-white">
-              Student Support
-            </h4>
-
-            <ul className="space-y-2.5 text-[13px] text-zinc-400">
-              {[
-                {
-                  label: "My Orders & Sell Requests",
-                  to: "/profile",
-                },
-                {
-                  label: "My Hackathon Teams",
-                  to: "/my-teams",
-                },
-                {
-                  label: "Student Sign In",
-                  to: "/login",
-                },
-                {
-                  label: "Hero Operations Portal",
-                  to: "/hero-dashboard",
-                },
-              ].map(({ label, to }) => (
-                <li key={to}>
-                  <Link
-                    to={to}
-                    className="transition-colors hover:text-[#C6DE41]"
-                  >
-                    {label}
-                  </Link>
+            <ul className="space-y-4 text-[13px] text-zinc-400">
+              {campuses.map((campus) => (
+                <li
+                  key={campus}
+                  className="flex items-center gap-3"
+                >
+                  <MapPin className="h-[17px] w-[17px] shrink-0 text-[#C6DE41]" />
+                  <span>{campus}</span>
                 </li>
               ))}
             </ul>
           </div>
         </div>
 
-        {/* Bottom Copyright */}
-        <div className="flex flex-col items-center justify-between gap-4 border-t border-[#C6DE41]/15 pt-8 text-[12px] text-zinc-500 sm:flex-row">
-          <p>
-            © {new Date().getFullYear()} CampusMart.
-            All rights reserved.
-          </p>
+        {/* DIVIDER ABOVE ANIMATION */}
+        <div className="mt-12 border-t border-white/15" />
 
-          <div className="flex items-center gap-6">
-            <span>Campus Recommerce Protocol</span>
-            <span>Privacy & College Guidelines</span>
+        {/* ===========================================
+            GIANT CAMPUSMART HOVER ANIMATION
+            NO NEGATIVE MARGINS
+        =========================================== */}
+       {/* GIANT CAMPUSMART HOVER ANIMATION — FULL WIDTH */}
+<div
+  className="
+    relative
+    left-1/2
+    z-20
+    mt-4
+    w-[calc(100vw-2.5rem)]
+    max-w-[1880px]
+    -translate-x-1/2
+    sm:w-[calc(100vw-3rem)]
+    lg:w-[calc(100vw-5rem)]
+  "
+>
+  <TextHoverEffect
+    text="CampusMart"
+    className="block !h-auto w-full"
+  />
+</div>
+
+        {/* ===========================================
+            BELOW THE ANIMATION
+            COPYRIGHT + SOCIALS + SMALL BRAND
+        =========================================== */}
+        <div
+          className="
+            relative z-20
+            flex flex-col
+            items-center justify-between
+            gap-5
+            border-t border-white/15
+            py-7
+            sm:flex-row
+          "
+        >
+          {/* SOCIAL ICONS */}
+          <div className="flex items-center gap-6 text-zinc-500">
+            <Github className="h-[18px] w-[18px]" />
+
+            <Instagram className="h-[18px] w-[18px]" />
+
+            <Linkedin className="h-[18px] w-[18px]" />
+
+            <Globe2 className="h-[18px] w-[18px]" />
+          </div>
+
+          {/* COPYRIGHT AND SMALL BRAND */}
+          <div
+            className="
+              flex flex-col items-center
+              gap-2 text-[12px] text-zinc-500
+              sm:items-end
+            "
+          >
+            <p>
+              © {currentYear} CampusMart. All rights reserved.
+            </p>
+
+            <span className="font-semibold text-zinc-400">
+              CampusMart
+            </span>
           </div>
         </div>
       </div>

@@ -1,11 +1,23 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-dotenv.config();
+// Always load the .env file inside the server folder
+// Works from src/config and dist/config
+const envPath = path.resolve(__dirname, '../../.env');
+
+dotenv.config({ path: envPath });
+
+const jwtSecret = process.env.JWT_SECRET?.trim();
+
+if (!jwtSecret || jwtSecret.length < 32) {
+  throw new Error(
+    `JWT_SECRET is missing or too short. Check ${envPath}`
+  );
+}
 
 export const config = {
   port: process.env.PORT || 5000,
-  jwtSecret: process.env.JWT_SECRET || 'campusmart_jwt_secure_key_2026_xYz9',
+  jwtSecret,
   uploadDir: process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'),
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   maxUploadSizeBytes: parseInt(process.env.MAX_UPLOAD_SIZE_BYTES || '5242880', 10), // 5MB default

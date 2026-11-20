@@ -153,7 +153,7 @@ export const MyTeamsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#090B09] text-[#F5F7F0] py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#090B09] dark:bg-[#090B09] light:bg-[#F7F8F2] text-[#F5F7F0] dark:text-[#F5F7F0] light:text-[#171B13] py-8 sm:py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-200">
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">

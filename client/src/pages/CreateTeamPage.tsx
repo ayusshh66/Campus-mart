@@ -1,5 +1,6 @@
 import { SmoothInput } from '../components/motion/SmoothInput';
 import React, { useState } from 'react';
+import { toast } from 'sonner';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -75,20 +76,73 @@ export const CreateTeamPage: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [invalidField, setInvalidField] = useState<string | null>(null);
 
-  const toggleRole = (role: string) => {
-    if (selectedRoles.includes(role)) {
-      setSelectedRoles(selectedRoles.filter((r) => r !== role));
-    } else {
-      setSelectedRoles([...selectedRoles, role]);
+  // Show feedback at the submit button AND take users straight to the field.
+  const showValidationError = (fieldId: string, message: string) => {
+    setError(message);
+    setInvalidField(fieldId);
+    toast.error('Please check your team post', {
+      id: 'team-post-validation',
+      description: message,
+      duration: 5500,
+    });
+
+    requestAnimationFrame(() => {
+      const field = document.getElementById(fieldId);
+      if (field) {
+        field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        field.focus({ preventScroll: true });
+      }
+    });
+  };
+
+  const clearFieldError = (fieldId: string) => {
+    if (invalidField === fieldId) {
+      setInvalidField(null);
+      setError(null);
     }
   };
 
+  const fieldError = (fieldId: string) => invalidField === fieldId && error ? (
+    <p className="mt-1.5 text-xs font-medium text-rose-400" role="alert">
+      {error}
+    </p>
+  ) : null;
+
+  const toggleRole = (role: string) => {
+    setSelectedRoles((previous) =>
+      previous.includes(role)
+        ? previous.filter((item) => item !== role)
+        : [...previous, role]
+    );
+    clearFieldError('team-roles');
+  };
+
   const handleAddCustomRole = () => {
-    if (customRoleInput.trim() && !selectedRoles.includes(customRoleInput.trim())) {
-      setSelectedRoles([...selectedRoles, customRoleInput.trim()]);
+    const input = customRoleInput.trim();
+    if (!input) return;
+
+    // Match presets case-insensitively so they aren't added twice.
+    const preset = COMMON_ROLES.find((role) => role.toLowerCase() === input.toLowerCase());
+    const roleToAdd = preset ?? input;
+
+    const alreadySelected = selectedRoles.some(
+      (role) => role.toLowerCase() === roleToAdd.toLowerCase()
+    );
+    if (alreadySelected) {
+      toast.info('Role already selected', { description: roleToAdd, duration: 2500 });
       setCustomRoleInput('');
+      return;
     }
+
+    setSelectedRoles((previous) => [...previous, roleToAdd]);
+    setCustomRoleInput('');
+    clearFieldError('team-roles');
+    toast.success('Role added', {
+      description: `${roleToAdd} is included in your team post.`,
+      duration: 2500,
+    });
   };
 
   const addSkillChip = (skill: string) => {
@@ -101,31 +155,32 @@ export const CreateTeamPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setInvalidField(null);
 
     if (!hackathonName.trim()) {
-      setError('Please provide the Hackathon name.');
+      showValidationError('team-hackathon', 'Please provide the hackathon name.');
       return;
     }
     if (!teamTitle.trim()) {
-      setError('Please provide a team title.');
+      showValidationError('team-title', 'Please provide a team title.');
       return;
     }
-    if (!description.trim() || description.trim().length < 20) {
-      setError('Please provide a detailed team description (at least 20 characters).');
+    if (description.trim().length < 20) {
+      showValidationError('team-description', 'The project description must be at least 20 characters.');
       return;
     }
     if (selectedRoles.length === 0) {
-      setError('Please select or specify at least one role you need on your team.');
+      showValidationError('team-roles', 'Choose or add at least one required role.');
       return;
     }
-    if (maxTeamSize < 2 || maxTeamSize > 15) {
-      setError('Max team size must be between 2 and 15 members.');
+    if (!Number.isInteger(maxTeamSize) || maxTeamSize < 2 || maxTeamSize > 15) {
+      showValidationError('team-size', 'Team size must be a whole number from 2 to 15.');
       return;
     }
 
     const deadlineDate = new Date(deadline);
-    if (isNaN(deadlineDate.getTime()) || deadlineDate <= new Date()) {
-      setError('Application deadline must be a valid future date & time.');
+    if (!Number.isFinite(deadlineDate.getTime()) || deadlineDate <= new Date()) {
+      showValidationError('team-deadline', 'Choose a valid application deadline in the future.');
       return;
     }
 
@@ -148,9 +203,19 @@ export const CreateTeamPage: React.FC = () => {
         application_deadline: deadlineDate.toISOString(),
       });
 
+      toast.success('Recruitment post published!', {
+        description: 'Your team post is now available for students to discover.',
+        duration: 5000,
+      });
       navigate(`/teams/${res.data.id}`);
-    } catch (err: any) {
-      setError(err.message || 'Failed to create team recruitment post.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to create team recruitment post.';
+      setError(message);
+      toast.error('Could not publish team post', {
+        id: 'team-post-server-error',
+        description: message,
+        duration: 6000,
+      });
     } finally {
       setLoading(false);
     }
@@ -184,14 +249,7 @@ export const CreateTeamPage: React.FC = () => {
             </p>
           </div>
 
-          {error && (
-            <div className="mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-[12px] font-medium flex items-start gap-2.5">
-              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} noValidate className="space-y-6">
             {/* 1. Hackathon Name */}
             <div>
               <label className="block text-[11px] font-semibold text-stone-300 uppercase tracking-wider mb-1.5">
@@ -200,13 +258,16 @@ export const CreateTeamPage: React.FC = () => {
               <SmoothInput
                 type="text"
                 required
+                id="team-hackathon"
+                aria-invalid={invalidField === 'team-hackathon'}
                 value={hackathonName}
-                onChange={(e) => setHackathonName(e.target.value)}
+                onChange={(e) => { setHackathonName(e.target.value); clearFieldError('team-hackathon'); }}
                 placeholder="e.g. Smart India Hackathon (SIH 2026)"
-                className="w-full px-4 py-3 rounded-full bg-[#181D14] border border-white/15 focus:border-[#C6DE41] text-[13px] text-white outline-none transition-all font-medium placeholder:text-stone-500"
+                className="aria-[invalid=true]:border-rose-500 aria-[invalid=true]:focus:border-rose-500 w-full px-4 py-3 rounded-full bg-[#181D14] border border-white/15 focus:border-[#C6DE41] text-[13px] text-white outline-none transition-all font-medium placeholder:text-stone-500"
               />
+              {fieldError('team-hackathon')}
               {/* Preset buttons */}
-              <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+              <div className="aria-[invalid=true]:border-rose-500 aria-[invalid=true]:focus:border-rose-500 mt-2.5 flex flex-wrap items-center gap-1.5">
                 <span className="text-[11px] text-stone-400 font-medium">Suggestions:</span>
                 {COMMON_HACKATHONS.map((h) => (
                   <button
@@ -214,6 +275,7 @@ export const CreateTeamPage: React.FC = () => {
                     key={h}
                     onClick={() => {
                       setHackathonName(h);
+                      clearFieldError('team-hackathon');
                       if (h.includes('SIH')) {
                         setMaxTeamSize(6);
                         if (!eligibilityNotes) {
@@ -237,30 +299,36 @@ export const CreateTeamPage: React.FC = () => {
               <SmoothInput
                 type="text"
                 required
+                id="team-title"
+                aria-invalid={invalidField === 'team-title'}
                 value={teamTitle}
-                onChange={(e) => setTeamTitle(e.target.value)}
+                onChange={(e) => { setTeamTitle(e.target.value); clearFieldError('team-title'); }}
                 placeholder="e.g. FinSecure AI - Automated Campus Fraud Detection"
-                className="w-full px-4 py-3 rounded-full bg-[#181D14] border border-white/15 focus:border-[#C6DE41] text-[13px] text-white outline-none transition-all font-medium placeholder:text-stone-500"
+                className="aria-[invalid=true]:border-rose-500 aria-[invalid=true]:focus:border-rose-500 w-full px-4 py-3 rounded-full bg-[#181D14] border border-white/15 focus:border-[#C6DE41] text-[13px] text-white outline-none transition-all font-medium placeholder:text-stone-500"
               />
+              {fieldError('team-title')}
             </div>
 
             {/* 3. Description & Project Vision */}
             <div>
-              <label className="block text-[11px] font-semibold text-stone-300 uppercase tracking-wider mb-1.5">
+              <label className="aria-[invalid=true]:border-rose-500 aria-[invalid=true]:focus:border-rose-500 block text-[11px] font-semibold text-stone-300 uppercase tracking-wider mb-1.5">
                 Problem Statement & Project Vision <span className="text-[#C6DE41]">*</span>
               </label>
               <textarea
                 required
                 rows={4}
+                id="team-description"
+                aria-invalid={invalidField === 'team-description'}
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => { setDescription(e.target.value); clearFieldError('team-description'); }}
                 placeholder="Describe your hackathon track or idea, what problems you aim to solve, and what kind of commitment you expect from teammates..."
-                className="w-full px-4 py-3 rounded-2xl bg-[#181D14] border border-white/15 focus:border-[#C6DE41] text-[13px] text-white outline-none transition-all leading-relaxed placeholder:text-stone-500"
+                className="aria-[invalid=true]:border-rose-500 aria-[invalid=true]:focus:border-rose-500 w-full px-4 py-3 rounded-2xl bg-[#181D14] border border-white/15 focus:border-[#C6DE41] text-[13px] text-white outline-none transition-all leading-relaxed placeholder:text-stone-500"
               />
+              {fieldError('team-description')}
             </div>
 
             {/* 4. Roles Needed (Checkbox tags + custom) */}
-            <div>
+            <div id="team-roles" tabIndex={-1} className="aria-[invalid=true]:border-rose-500 aria-[invalid=true]:focus:border-rose-500 scroll-mt-32 focus:outline-none">
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-[11px] font-semibold text-stone-300 uppercase tracking-wider">
                   Open Roles Needed <span className="text-[#C6DE41]">*</span>
@@ -313,6 +381,57 @@ export const CreateTeamPage: React.FC = () => {
                   Add Role
                 </button>
               </div>
+
+              {fieldError('team-roles')}
+              {/* Always-visible summary, including custom roles */}
+              <div className="mt-4 rounded-2xl border border-[#C6DE41]/25 bg-[#090B09]/50 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#C6DE41]">
+                    Selected Required Roles
+                  </p>
+                  <span className="text-[11px] text-stone-400">
+                    {selectedRoles.length} selected
+                  </span>
+                </div>
+
+                {selectedRoles.length === 0 ? (
+                  <p className="text-xs text-stone-400">
+                    No roles selected yet. Select a role above or add your own.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-2" aria-live="polite">
+                    {selectedRoles.map((role) => {
+                      const isCustom = !COMMON_ROLES.includes(role);
+                      return (
+                        <span
+                          key={role}
+                          className={`inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-2 text-xs font-medium ${
+                            isCustom
+                              ? 'border-[#C6DE41]/60 bg-[#C6DE41]/15 text-[#E6F6A2]'
+                              : 'border-white/15 bg-[#181D14] text-white'
+                          }`}
+                        >
+                          <span className="break-words">{role}</span>
+                          {isCustom && (
+                            <span className="text-[9px] font-semibold uppercase tracking-wide opacity-70">
+                              Custom
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => toggleRole(role)}
+                            aria-label={`Remove ${role} from required roles`}
+                            title={`Remove ${role}`}
+                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-base leading-none hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#C6DE41]"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* 5. Required Skills / Tech Stack */}
@@ -355,14 +474,17 @@ export const CreateTeamPage: React.FC = () => {
                     min={2}
                     max={15}
                     required
+                    id="team-size"
+                    aria-invalid={invalidField === 'team-size'}
                     value={maxTeamSize}
-                    onChange={(e) => setMaxTeamSize(Number(e.target.value))}
-                    className="w-full px-4 py-3 rounded-full bg-[#181D14] border border-white/15 focus:border-[#C6DE41] text-[13px] outline-none font-bold text-white transition-all"
+                    onChange={(e) => { setMaxTeamSize(Number(e.target.value)); clearFieldError('team-size'); }}
+                    className="aria-[invalid=true]:border-rose-500 aria-[invalid=true]:focus:border-rose-500 w-full px-4 py-3 rounded-full bg-[#181D14] border border-white/15 focus:border-[#C6DE41] text-[13px] outline-none font-bold text-white transition-all"
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[11px] text-stone-400 font-medium">
+                  <span className="aria-[invalid=true]:border-rose-500 aria-[invalid=true]:focus:border-rose-500 absolute right-4 top-1/2 -translate-y-1/2 text-[11px] text-stone-400 font-medium">
                     Members (incl. you)
                   </span>
                 </div>
+                {fieldError('team-size')}
                 <p className="text-[11px] text-stone-400 mt-1">
                   SIH requires 6 members. Most hackathons allow 2 to 6.
                 </p>
@@ -376,11 +498,14 @@ export const CreateTeamPage: React.FC = () => {
                 <SmoothInput
                   type="datetime-local"
                   required
+                  id="team-deadline"
+                  aria-invalid={invalidField === 'team-deadline'}
                   value={deadline}
-                  onChange={(e) => setDeadline(e.target.value)}
-                  className="w-full px-4 py-3 rounded-full bg-[#181D14] border border-white/15 focus:border-[#C6DE41] text-[13px] outline-none font-medium text-white transition-all"
+                  onChange={(e) => { setDeadline(e.target.value); clearFieldError('team-deadline'); }}
+                  className="aria-[invalid=true]:border-rose-500 aria-[invalid=true]:focus:border-rose-500 w-full px-4 py-3 rounded-full bg-[#181D14] border border-white/15 focus:border-[#C6DE41] text-[13px] outline-none font-medium text-white transition-all"
                 />
-                <p className="text-[11px] text-stone-400 mt-1">
+                {fieldError('team-deadline')}
+                <p className="aria-[invalid=true]:border-rose-500 aria-[invalid=true]:focus:border-rose-500 text-[11px] text-stone-400 mt-1">
                   Applications will close automatically after this date.
                 </p>
               </div>
@@ -462,7 +587,14 @@ export const CreateTeamPage: React.FC = () => {
             </div>
 
             {/* Submission Actions */}
-            <div className="pt-6 border-t border-white/10 flex items-center justify-end gap-3">
+            <div className="pt-6 border-t border-white/10 space-y-4">
+              {error && (
+                <div role="alert" className="flex items-start gap-2.5 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs font-medium text-rose-300">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+                  <span>{error}</span>
+                </div>
+              )}
+              <div className="flex items-center justify-end gap-3">
               <Link
                 to="/find-teammates"
                 className="px-5 py-2.5 rounded-full border border-white/15 text-stone-300 hover:text-white text-[12px] font-medium hover:bg-white/5 transition-colors"
@@ -476,6 +608,7 @@ export const CreateTeamPage: React.FC = () => {
               >
                 {loading ? 'Publishing Post...' : 'Publish Recruitment Post'}
               </button>
+              </div>
             </div>
           </form>
         </div>

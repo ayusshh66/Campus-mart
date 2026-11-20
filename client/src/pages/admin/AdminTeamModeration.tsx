@@ -74,24 +74,24 @@ export const AdminTeamModeration: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Top Filter Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+      <div className="bg-[#181D14] p-4 rounded-2xl border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
         <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-[#8F9A89] absolute left-3 top-1/2 -translate-y-1/2" />
           <SmoothInput
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search team, hackathon, or student lead..."
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-campus-primary/20 outline-none"
+            className="w-full pl-9 pr-4 py-2 rounded-xl border border-white/10 text-xs focus:ring-2 focus:ring-campus-primary/20 outline-none"
           />
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <span className="text-xs text-slate-500 font-semibold">Status:</span>
+          <span className="text-xs text-[#A6B09F] font-semibold">Status:</span>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold bg-white text-slate-700 outline-none"
+            className="px-3 py-1.5 rounded-xl border border-white/10 text-xs font-semibold bg-[#181D14] text-[#D3DACD] outline-none"
           >
             <option value="ALL">All Posts ({posts.length})</option>
             <option value="OPEN">Recruiting (OPEN)</option>
@@ -103,24 +103,24 @@ export const AdminTeamModeration: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="py-16 text-center text-xs text-slate-400">
+        <div className="py-16 text-center text-xs text-[#8F9A89]">
           Loading hackathon team posts across all campuses...
         </div>
       ) : error ? (
-        <div className="p-6 rounded-2xl bg-rose-50 border border-rose-200 text-center text-xs text-rose-700">
+        <div className="p-6 rounded-2xl bg-rose-500/10 border border-rose-200 text-center text-xs text-rose-700">
           {error}
         </div>
       ) : filteredPosts.length === 0 ? (
-        <div className="bg-white p-12 rounded-3xl border border-slate-200 text-center">
+        <div className="bg-[#181D14] p-12 rounded-3xl border border-white/10 text-center">
           <Users className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-          <h3 className="text-sm font-bold text-slate-700">No team posts match your filter</h3>
+          <h3 className="text-sm font-bold text-[#D3DACD]">No team posts match your filter</h3>
         </div>
       ) : (
-        <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+        <div className="bg-[#181D14] rounded-3xl border border-white/10 overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                <tr className="bg-[#12160F] border-b border-white/10 text-[#A6B09F] font-bold uppercase tracking-wider text-[11px]">
                   <th className="py-3 px-4">Hackathon & Team</th>
                   <th className="py-3 px-4">Institution</th>
                   <th className="py-3 px-4">Team Lead</th>
@@ -129,7 +129,7 @@ export const AdminTeamModeration: React.FC = () => {
                   <th className="py-3 px-4 text-right">Moderation Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-white/10">
                 {filteredPosts.map((post) => {
                   const isActionLoading = actionLoadingId === post.id;
                   const isRemoved = post.status === 'REMOVED';
@@ -137,43 +137,43 @@ export const AdminTeamModeration: React.FC = () => {
                   return (
                     <tr
                       key={post.id}
-                      className={`hover:bg-slate-50/60 transition-colors ${
-                        isRemoved ? 'bg-rose-50/30 opacity-70' : ''
+                      className={`hover:bg-[#283225]/60 transition-colors ${
+                        isRemoved ? 'bg-rose-500/10/30 opacity-70' : ''
                       }`}
                     >
                       {/* Hackathon & Team Title */}
                       <td className="py-3.5 px-4 max-w-xs">
-                        <div className="font-extrabold text-slate-900 line-clamp-1">
+                        <div className="font-extrabold text-[#F5F7F0] line-clamp-1">
                           {post.team_title}
                         </div>
                         <div className="text-[11px] text-campus-primary font-semibold truncate">
                           {post.hackathon_name}
                         </div>
-                        <div className="text-[10px] text-slate-400">
+                        <div className="text-[10px] text-[#8F9A89]">
                           Scope: {post.eligibility_rules === 'OPEN_TO_ALL' ? '🌍 Inter-College' : `🔒 ${post.college.code} Only`}
                         </div>
                       </td>
 
                       {/* College */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className="font-bold text-slate-800">📍 {post.college.code}</span>
-                        <div className="text-[10px] text-slate-400 truncate max-w-[120px]">
+                        <span className="font-bold text-[#E8EDE2]">📍 {post.college.code}</span>
+                        <div className="text-[10px] text-[#8F9A89] truncate max-w-[120px]">
                           {post.college.name.split('-')[0].trim()}
                         </div>
                       </td>
 
                       {/* Creator */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <div className="font-semibold text-slate-800">{post.creator.name}</div>
-                        <div className="text-[10px] text-slate-400">{post.creator.email}</div>
+                        <div className="font-semibold text-[#E8EDE2]">{post.creator.name}</div>
+                        <div className="text-[10px] text-[#8F9A89]">{post.creator.email}</div>
                       </td>
 
                       {/* Capacity */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <div className="font-bold text-slate-700">
+                        <div className="font-bold text-[#D3DACD]">
                           Max: {post.max_team_size} members
                         </div>
-                        <div className="text-[10px] text-slate-500">
+                        <div className="text-[10px] text-[#A6B09F]">
                           Applications: {(post as any)._count?.applications ?? (post.applications?.length || 0)}
                         </div>
                       </td>
@@ -183,12 +183,12 @@ export const AdminTeamModeration: React.FC = () => {
                         <span
                           className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
                             post.status === 'OPEN'
-                              ? 'bg-emerald-100 text-emerald-800'
+                              ? 'bg-[#C6DE41]/15 text-[#D9EBA8]'
                               : post.status === 'FULL'
                               ? 'bg-[#C6DE41]/20 text-[#181D14] border border-[#C6DE41]/40'
                               : post.status === 'REMOVED'
                               ? 'bg-rose-100 text-rose-800'
-                              : 'bg-slate-100 text-slate-700'
+                              : 'bg-[#242C20] text-[#D3DACD]'
                           }`}
                         >
                           {post.status}
@@ -201,7 +201,7 @@ export const AdminTeamModeration: React.FC = () => {
                           <Link
                             to={`/teams/${post.id}`}
                             target="_blank"
-                            className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+                            className="p-1.5 text-[#A6B09F] hover:text-[#E8EDE2] hover:bg-[#30392A] rounded-lg transition-colors"
                             title="View public team post"
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
@@ -211,7 +211,7 @@ export const AdminTeamModeration: React.FC = () => {
                             <button
                               onClick={() => handleStatusChange(post.id, 'REMOVED')}
                               disabled={isActionLoading}
-                              className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] transition-colors border border-rose-200"
+                              className="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-100 text-rose-700 font-bold text-[11px] transition-colors border border-rose-200"
                               title="Remove post for violation or spam"
                             >
                               Remove
@@ -220,7 +220,7 @@ export const AdminTeamModeration: React.FC = () => {
                             <button
                               onClick={() => handleStatusChange(post.id, 'OPEN')}
                               disabled={isActionLoading}
-                              className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-[11px] transition-colors border border-emerald-200"
+                              className="px-2.5 py-1 rounded-lg bg-[#C6DE41]/10 hover:bg-[#C6DE41]/15 text-[#C6DE41] font-bold text-[11px] transition-colors border border-[#C6DE41]/20"
                               title="Restore post to OPEN"
                             >
                               Restore
@@ -231,7 +231,7 @@ export const AdminTeamModeration: React.FC = () => {
                             <button
                               onClick={() => handleStatusChange(post.id, 'CLOSED')}
                               disabled={isActionLoading}
-                              className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[11px] transition-colors"
+                              className="px-2.5 py-1 rounded-lg bg-[#242C20] hover:bg-[#343C30] text-[#D3DACD] font-semibold text-[11px] transition-colors"
                             >
                               Close
                             </button>
@@ -239,7 +239,7 @@ export const AdminTeamModeration: React.FC = () => {
                             <button
                               onClick={() => handleStatusChange(post.id, 'OPEN')}
                               disabled={isActionLoading}
-                              className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-[11px] transition-colors"
+                              className="px-2.5 py-1 rounded-lg bg-[#242C20] hover:bg-[#343C30] text-[#D3DACD] font-semibold text-[11px] transition-colors"
                             >
                               Reopen
                             </button>

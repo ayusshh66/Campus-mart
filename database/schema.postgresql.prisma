@@ -49,6 +49,7 @@ model User {
   college_id               String
   college                  College                 @relation(fields: [college_id], references: [id])
   role                     Role                    @default(USER)
+  marketplace_mode         String                  @default("BUYER")
   created_at               DateTime                @default(now())
   updated_at               DateTime                @updatedAt
   sell_requests            SellRequest[]
@@ -61,6 +62,7 @@ model User {
   hackathon_profile        HackathonProfile?
   created_teams            TeamPost[]              @relation("CreatedTeams")
   team_applications        TeamApplication[]       @relation("ApplicantApplications")
+  address String?
 
   @@map("users")
 }
@@ -133,7 +135,7 @@ model BuyRequest {
   status                  RequestStatus  @default(PENDING)
   notes                   String?
   auto_matched            Boolean        @default(false)
-  matched_sell_request_id String?
+ matched_sell_request_id String? @unique
   created_at              DateTime       @default(now())
   updated_at              DateTime       @updatedAt
   delivery_tasks          DeliveryTask[]
@@ -215,7 +217,7 @@ model CustomItemSubmission {
   category                String
   condition               String
   description             String
-  expected_price          Float
+  expected_price          Float?
   images                  String       @default("[]")
   status                  RequestStatus @default(PENDING)
   rejection_reason        String?

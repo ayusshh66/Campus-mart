@@ -1,0 +1,27 @@
+// APPEND THIS MODEL TO BOTH EXISTING PRISMA SCHEMAS; DO NOT REPLACE THE SCHEMAS
+model SoloPost {
+  id                String   @id @default(uuid())
+  user_id           String
+  user              User     @relation("SoloPosts", fields: [user_id], references: [id], onDelete: Cascade)
+  college_id        String
+  college           College  @relation(fields: [college_id], references: [id], onDelete: Cascade)
+  hackathon_name    String
+  headline          String
+  description       String
+  skills            String   @default("[]")
+  preferred_roles   String   @default("[]")
+  eligibility_rules String   @default("OPEN_TO_ALL")
+  status            String   @default("OPEN")
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  @@unique([user_id, hackathon_name])
+  @@index([college_id, status])
+  @@map("solo_posts")
+}
+
+// ADD this field inside model User in BOTH schemas:
+// solo_posts SoloPost[] @relation("SoloPosts")
+
+// ADD this field inside model College in BOTH schemas:
+// solo_posts SoloPost[]

@@ -1,0 +1,79 @@
+/* CampusMart admin theme for the legacy operational modules.
+ * All selectors are scoped to .cm-admin so student-facing pages are unchanged.
+ * The dashboard shell and Product Catalog already use the native dark palette.
+ */
+.cm-admin {
+  --admin-bg: #090B09;
+  --admin-panel: #12160F;
+  --admin-panel-elevated: #181D14;
+  --admin-border: rgba(245,247,240,.10);
+  --admin-ink: #F5F7F0;
+  --admin-muted: #ADB7A6;
+  --admin-accent: #C6DE41;
+  color-scheme: dark;
+}
+.cm-admin .cm-admin-module { min-width: 0; }
+.cm-admin .cm-admin-module :is(.bg-white,.bg-slate-50,.bg-slate-100,.bg-gray-50,.bg-gray-100,.bg-\[\#F8FAF9\]) {
+  background-color: var(--admin-panel-elevated);
+}
+.cm-admin .cm-admin-module :is(.bg-emerald-50,.bg-emerald-100,.bg-green-50,.bg-green-100,.bg-blue-50,.bg-blue-100,.bg-teal-50,.bg-teal-100,.bg-indigo-50,.bg-indigo-100) {
+  background-color: rgba(198,222,65,.10);
+}
+.cm-admin .cm-admin-module :is(.bg-rose-50,.bg-red-50,.bg-red-100) { background-color: rgba(244,63,94,.09); }
+.cm-admin .cm-admin-module :is(.bg-amber-50,.bg-amber-100,.bg-yellow-50) { background-color: rgba(245,158,11,.10); }
+.cm-admin .cm-admin-module :is(.border-slate-100,.border-slate-200,.border-slate-300,.border-gray-200,.border-blue-200,.border-emerald-200) {
+  border-color: var(--admin-border);
+}
+.cm-admin .cm-admin-module :is(.divide-slate-100,.divide-slate-200) > :not([hidden]) ~ :not([hidden]) { border-color: var(--admin-border); }
+.cm-admin .cm-admin-module :is(.text-slate-900,.text-slate-800,.text-slate-700,.text-gray-900,.text-gray-800,.text-campus-dark) {
+  color: var(--admin-ink);
+}
+.cm-admin .cm-admin-module :is(.text-slate-600,.text-slate-500,.text-slate-400,.text-gray-500,.text-zinc-500,.text-gray-400) {
+  color: var(--admin-muted);
+}
+.cm-admin .cm-admin-module :is(.text-blue-800,.text-blue-700,.text-blue-600,.text-emerald-800,.text-emerald-700,.text-emerald-600,.text-green-700,.text-teal-700,.text-indigo-700,.text-campus-primary) {
+  color: var(--admin-accent);
+}
+.cm-admin .cm-admin-module :is(.text-rose-800,.text-rose-700,.text-red-700) { color: #FDA4AF; }
+.cm-admin .cm-admin-module :is(.text-amber-800,.text-amber-700,.text-amber-600) { color: #FCD34D; }
+.cm-admin .cm-admin-module :is(input,textarea,select) {
+  background: #0C100B;
+  color: var(--admin-ink);
+  border-color: rgba(245,247,240,.18);
+  accent-color: var(--admin-accent);
+}
+.cm-admin .cm-admin-module :is(input,textarea)::placeholder { color: #8B9586; }
+.cm-admin .cm-admin-module :is(input,textarea,select):focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 1px;
+}
+.cm-admin .cm-admin-module :is(input,textarea,select):disabled { opacity:.6; cursor:not-allowed; }
+.cm-admin .cm-admin-module table { color: var(--admin-ink); }
+.cm-admin .cm-admin-module thead { background: #1D2519; }
+.cm-admin .cm-admin-module tbody tr { border-bottom: 1px solid var(--admin-border); }
+.cm-admin .cm-admin-module tbody tr:hover { background: #242C20; }
+.cm-admin .cm-admin-module :is(.hover\:bg-slate-50:hover,.hover\:bg-slate-100:hover,.hover\:bg-white:hover) {
+  background-color: #2A3325;
+}
+.cm-admin .cm-admin-module .bg-campus-primary { color: #090B09; background-color: var(--admin-accent); }
+.cm-admin .cm-admin-module :is(.bg-emerald-600,.bg-emerald-700,.bg-blue-600,.bg-indigo-600) { background-color: var(--admin-accent); color: #090B09; }
+.cm-admin .cm-admin-module :is(.from-emerald-600,.from-teal-700,.from-indigo-600) { --tw-gradient-from: #1C2917; }
+.cm-admin .cm-admin-module :is(.to-teal-700,.to-indigo-700) { --tw-gradient-to: #293A21; }
+.cm-admin .cm-admin-module :is(.ring-slate-200,.ring-slate-300) { --tw-ring-color: rgba(198,222,65,.3); }
+.cm-admin .cm-admin-module :is(.shadow-sm,.shadow-md,.shadow-lg,.shadow-card,.shadow-subtle) { box-shadow: 0 8px 26px rgba(0,0,0,.24); }
+.cm-admin .cm-admin-module :is(h1,h2,h3,h4) { color: var(--admin-ink); }
+.cm-admin .cm-admin-module button { transition: background-color .18s ease,border-color .18s ease,color .18s ease; }
+.cm-admin .cm-admin-module :is(button,a):focus-visible { outline:2px solid var(--admin-accent);outline-offset:2px; }
+.cm-admin .cm-admin-module :is(.fixed.inset-0,.fixed.inset-x-0) > :is(.bg-white,.bg-slate-50) { background: #181D14; }
+.cm-admin .cm-admin-module :is(.bg-gradient-to-br,.bg-gradient-to-r) { color: var(--admin-ink); }
+.cm-admin .cm-admin-module select option { background: #12160F; color: #F5F7F0; }
+@media (max-width: 767px) {
+  .cm-admin .cm-admin-module table { min-width: 700px; }
+  .cm-admin .cm-admin-module :is(input,select,textarea) { font-size:16px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .cm-admin .cm-admin-module *, .cm-admin .cm-admin-module *::before, .cm-admin .cm-admin-module *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}

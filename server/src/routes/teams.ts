@@ -4,6 +4,31 @@ import { authenticateToken, requireAuth, requireAdmin, AuthRequest } from '../mi
 
 const router = Router();
 
+// Route-level errors are thrown inside transactions to ensure all writes roll back.
+class TeamRouteError extends Error {
+  constructor(public readonly statusCode: number, message: string) {
+    super(message);
+    this.name = 'TeamRouteError';
+  }
+}
+
+function sendTeamError(error: unknown, res: Response, fallback: string) {
+  if (error instanceof TeamRouteError) {
+    return res.status(error.statusCode).json({ success: false, message: error.message });
+  }
+
+  // Prisma reports write conflicts/deadlocks as P2034. A client may retry safely.
+  if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2034') {
+    return res.status(409).json({
+      success: false,
+      message: 'Another update happened at the same time. Please retry.',
+    });
+  }
+
+  console.error(fallback, error);
+  return res.status(500).json({ success: false, message: fallback });
+}
+
 // Helper to safely parse JSON strings or arrays
 function parseJsonArray(val: any): string[] {
   if (Array.isArray(val)) return val;
@@ -694,51 +719,117 @@ router.get('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
 // PUT /api/teams/:id - Update team recruitment post (Owner or Admin only)
 router.put('/:id', authenticateToken, requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const post = await prisma.teamPost.findUnique({
-      where: { id: req.params.id },
-    });
+    const updated = await prisma.$transaction(async (tx) => {
+      const existing = await tx.teamPost.findUnique({
+        where: { id: req.params.id },
+      });
 
-    if (!post) {
-      return res.status(404).json({ success: false, message: 'Team recruitment post not found.' });
-    }
+      if (!existing) {
+        throw new TeamRouteError(404, 'Team recruitment post not found.');
+      }
+      if (existing.creator_id !== req.user!.id && req.user!.role !== 'ADMIN') {
+        throw new TeamRouteError(403, 'Unauthorized. Only team owner or admin can edit this post.');
+      }
 
-    if (post.creator_id !== req.user!.id && req.user!.role !== 'ADMIN') {
-      return res.status(403).json({ success: false, message: 'Unauthorized. Only team owner or admin can edit this post.' });
-    }
+      // Lock this team row *before* checking members; other approval/edit
+      // transactions touching this team wait for our transaction to finish.
+      // PostgreSQL holds the UPDATE row lock until commit; SQLite serializes writes.
+      await tx.teamPost.update({
+        where: { id: existing.id },
+        data: { updated_at: new Date() },
+      });
 
-    const {
-      hackathon_name,
-      team_title,
-      description,
-      skills_needed,
-      required_roles,
-      max_team_size,
-      eligibility_rules,
-      eligibility_notes,
-      application_deadline,
-      status,
-    } = req.body;
+      // Re-read after the lock to avoid using stale capacity/status values.
+      const post = await tx.teamPost.findUniqueOrThrow({
+        where: { id: existing.id },
+      });
 
-    const updateData: any = {};
-    if (hackathon_name !== undefined) updateData.hackathon_name = hackathon_name.trim();
-    if (team_title !== undefined) updateData.team_title = team_title.trim();
-    if (description !== undefined) updateData.description = description.trim();
-    if (skills_needed !== undefined) updateData.skills_needed = JSON.stringify(parseJsonArray(skills_needed));
-    if (required_roles !== undefined) updateData.required_roles = JSON.stringify(parseJsonArray(required_roles));
-    if (max_team_size !== undefined) {
-      const size = Number(max_team_size);
-      if (size >= 2 && size <= 15) updateData.max_team_size = size;
-    }
-    if (eligibility_rules !== undefined) updateData.eligibility_rules = eligibility_rules;
-    if (eligibility_notes !== undefined) updateData.eligibility_notes = eligibility_notes ? eligibility_notes.trim() : null;
-    if (application_deadline !== undefined) updateData.application_deadline = new Date(application_deadline);
-    if (status !== undefined && ['OPEN', 'FULL', 'CLOSED', 'REMOVED'].includes(status)) {
-      updateData.status = status;
-    }
+      const {
+        hackathon_name, team_title, description, skills_needed,
+        required_roles, max_team_size, eligibility_rules,
+        eligibility_notes, application_deadline, status,
+      } = req.body ?? {};
 
-    const updated = await prisma.teamPost.update({
-      where: { id: post.id },
-      data: updateData,
+      const updateData: any = {};
+
+      for (const [key, value] of Object.entries({ hackathon_name, team_title, description })) {
+        if (value !== undefined) {
+          if (typeof value !== 'string' || !value.trim()) {
+            throw new TeamRouteError(400, `${key} must be non-empty text.`);
+          }
+          updateData[key] = value.trim();
+        }
+      }
+
+      if (skills_needed !== undefined) updateData.skills_needed = JSON.stringify(parseJsonArray(skills_needed));
+      if (required_roles !== undefined) updateData.required_roles = JSON.stringify(parseJsonArray(required_roles));
+
+      if (max_team_size !== undefined) {
+        const size = Number(max_team_size);
+        if (!Number.isInteger(size) || size < 2 || size > 15) {
+          throw new TeamRouteError(400, 'Max team size must be a whole number between 2 and 15.');
+        }
+        updateData.max_team_size = size;
+      }
+
+      if (eligibility_rules !== undefined) {
+        if (!['OPEN_TO_ALL', 'SAME_COLLEGE_ONLY'].includes(eligibility_rules)) {
+          throw new TeamRouteError(400, 'Invalid eligibility rule.');
+        }
+        updateData.eligibility_rules = eligibility_rules;
+      }
+
+      if (eligibility_notes !== undefined) {
+        if (eligibility_notes !== null && typeof eligibility_notes !== 'string') {
+          throw new TeamRouteError(400, 'Eligibility notes must be text.');
+        }
+        updateData.eligibility_notes = eligibility_notes?.trim() || null;
+      }
+
+      if (application_deadline !== undefined) {
+        const deadline = new Date(application_deadline);
+        if (Number.isNaN(deadline.getTime())) {
+          throw new TeamRouteError(400, 'Invalid application deadline.');
+        }
+        updateData.application_deadline = deadline;
+      }
+
+      if (status !== undefined) {
+        if (!['OPEN', 'FULL', 'CLOSED', 'REMOVED'].includes(status)) {
+          throw new TeamRouteError(400, 'Invalid team status.');
+        }
+        updateData.status = status;
+      }
+
+      // Re-check capacity after locking the team, so editing team size
+      // cannot race against approving an applicant.
+      const acceptedCount = await tx.teamApplication.count({
+        where: { team_post_id: existing.id, status: 'ACCEPTED' },
+      });
+      const currentMembers = 1 + acceptedCount; // Include team creator
+      const nextMaxSize = updateData.max_team_size ?? post.max_team_size;
+
+      if (nextMaxSize < currentMembers) {
+        throw new TeamRouteError(
+          400,
+          `Team already has ${currentMembers} members. Maximum size cannot be lower than this.`,
+        );
+      }
+
+      if (updateData.status === 'OPEN' && currentMembers >= nextMaxSize) {
+        throw new TeamRouteError(400, 'A full team cannot be marked OPEN.');
+      }
+
+      // If only capacity changes, automatically sync FULL/OPEN display state.
+      if (updateData.status === undefined && updateData.max_team_size !== undefined &&
+          ['OPEN', 'FULL'].includes(post.status)) {
+        updateData.status = currentMembers >= nextMaxSize ? 'FULL' : 'OPEN';
+      }
+
+      return tx.teamPost.update({
+        where: { id: existing.id },
+        data: updateData,
+      });
     });
 
     return res.json({
@@ -746,8 +837,8 @@ router.put('/:id', authenticateToken, requireAuth, async (req: AuthRequest, res:
       message: 'Team post updated successfully',
       data: updated,
     });
-  } catch (error: any) {
-    return res.status(500).json({ success: false, message: 'Failed to update team post', error: error.message });
+  } catch (error: unknown) {
+    return sendTeamError(error, res, 'Failed to update team post');
   }
 });
 
@@ -895,85 +986,96 @@ router.post('/:id/apply', authenticateToken, requireAuth, async (req: AuthReques
   }
 });
 
-// PATCH /api/teams/:id/applications/:appId - Accept or Reject application (Owner-only decision & capacity enforcement)
+// PATCH /api/teams/:id/applications/:appId - Accept or reject a team application
 router.patch('/:id/applications/:appId', authenticateToken, requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const { status, rejection_reason } = req.body;
-
-    if (!['ACCEPTED', 'REJECTED'].includes(status)) {
-      return res.status(400).json({ success: false, message: "Status must be either 'ACCEPTED' or 'REJECTED'." });
+    const { status, rejection_reason } = req.body ?? {};
+    if (status !== 'ACCEPTED' && status !== 'REJECTED') {
+      return res.status(400).json({
+        success: false,
+        message: "Status must be either 'ACCEPTED' or 'REJECTED'.",
+      });
+    }
+    if (rejection_reason !== undefined && rejection_reason !== null && typeof rejection_reason !== 'string') {
+      return res.status(400).json({ success: false, message: 'Rejection reason must be text.' });
     }
 
-    const post = await prisma.teamPost.findUnique({
-      where: { id: req.params.id },
-      include: {
-        applications: true,
-      },
-    });
+    const updatedApp = await prisma.$transaction(async (tx) => {
+      const original = await tx.teamPost.findUnique({
+        where: { id: req.params.id },
+      });
 
-    if (!post) {
-      return res.status(404).json({ success: false, message: 'Team post not found.' });
-    }
-
-    // Server-side permission check: Owner or Admin
-    if (post.creator_id !== req.user!.id && req.user!.role !== 'ADMIN') {
-      return res.status(403).json({ success: false, message: 'Unauthorized. Only the team owner or platform admin can decide on applications.' });
-    }
-
-    const application = post.applications.find((a) => a.id === req.params.appId);
-    if (!application) {
-      return res.status(404).json({ success: false, message: 'Application not found on this team.' });
-    }
-
-    if (application.status === status) {
-      return res.status(400).json({ success: false, message: `Application is already marked as ${status}.` });
-    }
-
-    // Capacity enforcement on acceptance
-    if (status === 'ACCEPTED') {
-      const currentAccepted = post.applications.filter((a) => a.status === 'ACCEPTED' && a.id !== application.id).length;
-      const totalMembers = 1 + currentAccepted; // 1 (creator) + others
-
-      if (totalMembers >= post.max_team_size) {
-        return res.status(400).json({
-          success: false,
-          message: `Cannot accept application. Team capacity of ${post.max_team_size} members has already been reached.`,
-        });
+      if (!original) {
+        throw new TeamRouteError(404, 'Team post not found.');
+      }
+      if (original.creator_id !== req.user!.id && req.user!.role !== 'ADMIN') {
+        throw new TeamRouteError(403, 'Only the team owner or an admin can decide on applications.');
       }
 
-      // If this acceptance fills the team, mark status = FULL
-      if (totalMembers + 1 >= post.max_team_size) {
-        await prisma.teamPost.update({
-          where: { id: post.id },
-          data: { status: 'FULL' },
-        });
-      }
-    } else if (status === 'REJECTED') {
-      // If rejecting a previously accepted member and post was FULL, reopen to OPEN
-      if (application.status === 'ACCEPTED' && post.status === 'FULL') {
-        await prisma.teamPost.update({
-          where: { id: post.id },
-          data: { status: 'OPEN' },
-        });
-      }
-    }
+      // Acquire a write lock on the same team row used by the edit endpoint.
+      // This serializes decisions for this team before reading the member count.
+      await tx.teamPost.update({
+        where: { id: original.id },
+        data: { updated_at: new Date() },
+      });
 
-    const updatedApp = await prisma.teamApplication.update({
-      where: { id: application.id },
-      data: {
-        status,
-        rejection_reason: status === 'REJECTED' ? (rejection_reason || null) : null,
-      },
-      include: {
-        applicant: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            college: true,
+      // Refresh values after taking the lock. This is important under
+      // PostgreSQL READ COMMITTED when another approval just committed.
+      const post = await tx.teamPost.findUniqueOrThrow({
+        where: { id: original.id },
+      });
+      const application = await tx.teamApplication.findFirst({
+        where: { id: req.params.appId, team_post_id: post.id },
+      });
+
+      if (!application) {
+        throw new TeamRouteError(404, 'Application not found on this team.');
+      }
+      if (application.status === status) {
+        throw new TeamRouteError(400, `Application is already marked as ${status}.`);
+      }
+      if (status === 'ACCEPTED' && (post.status === 'CLOSED' || post.status === 'REMOVED')) {
+        throw new TeamRouteError(400, 'Cannot accept applicants for a closed or removed team.');
+      }
+
+      // Only accepted applications count as members, plus the creator.
+      const acceptedCount = await tx.teamApplication.count({
+        where: { team_post_id: post.id, status: 'ACCEPTED' },
+      });
+      if (status === 'ACCEPTED' && 1 + acceptedCount >= post.max_team_size) {
+        throw new TeamRouteError(
+          400,
+          `Cannot accept application. Team capacity of ${post.max_team_size} is full.`,
+        );
+      }
+
+      const updated = await tx.teamApplication.update({
+        where: { id: application.id },
+        data: {
+          status,
+          rejection_reason: status === 'REJECTED' ? rejection_reason?.trim() || null : null,
+        },
+        include: {
+          applicant: {
+            select: { id: true, name: true, email: true, college: true },
           },
         },
-      },
+      });
+
+      const newAcceptedCount = acceptedCount +
+        (status === 'ACCEPTED' ? 1 : application.status === 'ACCEPTED' ? -1 : 0);
+
+      // Keep team capacity status in sync; preserve manual CLOSED/REMOVED.
+      if (post.status === 'OPEN' || post.status === 'FULL') {
+        const nextStatus = 1 + newAcceptedCount >= post.max_team_size ? 'FULL' : 'OPEN';
+        if (nextStatus !== post.status) {
+          await tx.teamPost.update({
+            where: { id: post.id },
+            data: { status: nextStatus },
+          });
+        }
+      }
+      return updated;
     });
 
     return res.json({
@@ -981,8 +1083,8 @@ router.patch('/:id/applications/:appId', authenticateToken, requireAuth, async (
       message: `Application ${status.toLowerCase()} successfully!`,
       data: updatedApp,
     });
-  } catch (error: any) {
-    return res.status(500).json({ success: false, message: 'Failed to update application decision', error: error.message });
+  } catch (error: unknown) {
+    return sendTeamError(error, res, 'Failed to update application decision');
   }
 });
 

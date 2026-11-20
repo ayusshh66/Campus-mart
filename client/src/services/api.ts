@@ -22,13 +22,23 @@ export interface User {
   name: string;
   email: string;
   phone: string;
-  role: 'USER' | 'ADMIN' | 'CAMPUS_HERO';
+
+  role:
+    | 'USER'
+    | 'ADMIN'
+    | 'CAMPUS_HERO';
+
+  marketplace_mode:
+    | 'BUYER'
+    | 'SELLER';
+
   college: {
     id: string;
     code: string;
     name: string;
   };
 }
+
 
 export interface Product {
   id: string;
@@ -128,7 +138,7 @@ export interface CustomItemSubmissionItem {
   category: string;
   condition: string;
   description: string;
-  expected_price: number;
+  expected_price?: number | null;
   images: string[];
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   rejection_reason?: string | null;
@@ -496,6 +506,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 export const api = {
+  
   // Colleges
   getColleges: async () => {
     const res = await request<{ success: boolean; data: College[] }>('/colleges');
@@ -503,7 +514,7 @@ export const api = {
   },
 
   // Auth
-  register: async (payload: { name: string; email: string; phone: string; password: string; college_id: string }) => {
+  register: async (payload: { name: string; email: string; phone: string; password: string; college_id: string; marketplace_mode?: 'BUYER' | 'SELLER' }) => {
     return request<{ success: boolean; message: string; data: { token: string; user: User } }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify(payload),
@@ -515,12 +526,34 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     });
+    
   },
 
   getMe: async () => {
     const res = await request<{ success: boolean; data: User }>('/auth/me');
     return res.data;
   },
+
+  updateMarketplaceMode: async (
+  mode: 'BUYER' | 'SELLER'
+) => {
+  return request<{
+    success: boolean;
+    message: string;
+
+    data: {
+      marketplace_mode:
+        | 'BUYER'
+        | 'SELLER';
+    };
+  }>('/auth/marketplace-mode', {
+    method: 'PATCH',
+
+    body: JSON.stringify({
+      marketplace_mode: mode,
+    }),
+  });
+},
 
   // Products
   getProducts: async (college_id?: string) => {
@@ -560,7 +593,7 @@ export const api = {
     category: string;
     condition: string;
     description: string;
-    expected_price: number;
+    expected_price?: number;
     images?: string[];
   }) => {
     return request<{ success: boolean; message: string; data: any }>('/sell-requests/custom', {
@@ -642,6 +675,7 @@ export const api = {
     }
     return data.data as Array<{ url: string; filename: string }>;
   },
+  
 
   // Admin APIs
   admin: {

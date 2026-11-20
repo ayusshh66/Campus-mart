@@ -3,6 +3,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api, Product } from '../services/api';
+import { toast } from 'sonner';
 import { ImageUploader } from '../components/ImageUploader';
 import { 
   Tag, 
@@ -70,7 +71,6 @@ export const SellPage: React.FC = () => {
   const [customName, setCustomName] = useState<string>('');
   const [customCategory, setCustomCategory] = useState<string>('Books & Academic');
   const [customCondition, setCustomCondition] = useState<string>('Good');
-  const [customExpectedPrice, setCustomExpectedPrice] = useState<string>('');
   const [customDescription, setCustomDescription] = useState<string>('');
   const [customImages, setCustomImages] = useState<string[]>([]);
   const [customSubmitting, setCustomSubmitting] = useState<boolean>(false);
@@ -205,12 +205,32 @@ export const SellPage: React.FC = () => {
   const finalReviewStepIndex = totalQuestionSteps + 1;
   const totalStepsCount = totalQuestionSteps + 2;
 
-  const handleNextStep = () => {
-    if (currentStep < finalReviewStepIndex) {
-      setCurrentStep((prev) => prev + 1);
-      window.scrollTo({ top: 120, behavior: 'smooth' });
-    }
-  };
+ const handleNextStep = () => {
+  // Require at least one photo before valuation
+  if (
+    currentStep === imageStepIndex &&
+    imageUrls.length === 0
+  ) {
+    toast.error('Photo required', {
+      description:
+        'Please upload at least one photo of your item before proceeding.',
+      duration: 5000,
+      closeButton: true,
+      className: 'campus-admin-error-toast',
+    });
+
+    return;
+  }
+
+  if (currentStep < finalReviewStepIndex) {
+    setCurrentStep((prev) => prev + 1);
+
+    window.scrollTo({
+      top: 120,
+      behavior: 'smooth',
+    });
+  }
+};
 
   const handlePreviousStep = () => {
     if (currentStep === 0) {
@@ -222,15 +242,26 @@ export const SellPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!selectedProduct) return;
+  if (!selectedProduct) return;
+
+  if (imageUrls.length === 0) {
+    toast.error('Photo required', {
+      description:
+        'Upload at least one photo before submitting your sell request.',
+      duration: 5000,
+      closeButton: true,
+      className: 'campus-admin-error-toast',
+    });
+
+    setCurrentStep(imageStepIndex);
+    return;
+  }
 
     setSubmitting(true);
     setError(null);
 
     try {
-      const finalImages = imageUrls.length > 0 
-        ? imageUrls 
-        : (selectedProduct.images && selectedProduct.images.length > 0 ? selectedProduct.images : [selectedProduct.image_url]);
+     const finalImages = imageUrls;
 
       const formattedQualityAnswers: Record<string, string> = {};
       Object.entries(qualityAnswers).forEach(([qid, opt]) => {
@@ -268,19 +299,25 @@ export const SellPage: React.FC = () => {
       setCustomError('Please enter the item name.');
       return;
     }
-    const price = parseFloat(customExpectedPrice);
-    if (isNaN(price) || price <= 0) {
-      setCustomError('Please enter a valid expected cash price (greater than ₹0).');
-      return;
-    }
     if (customDescription.trim().length < 5) {
       setCustomError('Please provide a brief description (at least 5 characters).');
       return;
     }
     if (customImages.length === 0) {
-      setCustomError('Please upload at least 1 photo of your item (1 to 5 photos supported).');
-      return;
-    }
+  const message =
+    'Please upload at least one photo of your item.';
+
+  setCustomError(message);
+
+  toast.error('Photo required', {
+    description: message,
+    duration: 5000,
+    closeButton: true,
+    className: 'campus-admin-error-toast',
+  });
+
+  return;
+}
 
     setCustomSubmitting(true);
     try {
@@ -289,7 +326,6 @@ export const SellPage: React.FC = () => {
         category: customCategory,
         condition: customCondition,
         description: customDescription.trim(),
-        expected_price: price,
         images: customImages,
       });
 
@@ -297,7 +333,7 @@ export const SellPage: React.FC = () => {
         name: customName.trim(),
         category: customCategory,
         condition: customCondition,
-        expectedPrice: price,
+        priceStatus: 'Price will be determined by CampusMart after review.',
         collegeCode: user?.college.code,
         imageCount: customImages.length,
       });
@@ -388,8 +424,8 @@ export const SellPage: React.FC = () => {
               <strong className="text-white">{customSubmittedData?.condition}</strong>
             </div>
             <div className="flex items-center justify-between w-full text-[12px] text-stone-400 border-b border-white/10 pb-2">
-              <span>Asking Price:</span>
-              <strong className="text-[#C6DE41] text-[15px] font-bold">₹{customSubmittedData?.expectedPrice.toLocaleString('en-IN')}</strong>
+              <span>Payout Valuation:</span>
+              <strong className="text-[#C6DE41] text-[12px] font-bold">Price will be determined by CampusMart after review.</strong>
             </div>
             <div className="flex items-center justify-between w-full text-[12px] text-stone-400 pt-1">
               <span>Campus Handover:</span>
@@ -408,7 +444,6 @@ export const SellPage: React.FC = () => {
               onClick={() => {
                 setCustomSubmittedSuccess(false);
                 setCustomName('');
-                setCustomExpectedPrice('');
                 setCustomDescription('');
                 setCustomImages([]);
                 setCustomError(null);
@@ -536,22 +571,20 @@ export const SellPage: React.FC = () => {
                     </select>
                   </div>
 
-                  <div>
-                    <label className="block text-[12px] font-semibold text-stone-200 mb-1.5 tracking-tight">
-                      Expected Payout Price (₹) <span className="text-[#C6DE41]">*</span>
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 font-bold text-sm">₹</span>
-                      <SmoothInput
-                        type="number"
-                        min="1"
-                        step="1"
-                        required
-                        value={customExpectedPrice}
-                        onChange={(e) => setCustomExpectedPrice(e.target.value)}
-                        placeholder="e.g. 450"
-                        className="w-full pl-8 pr-4 py-2.5 text-[13px] rounded-full border border-white/15 bg-[#181D14] focus:outline-none focus:border-[#C6DE41] font-bold text-white placeholder:text-stone-500"
-                      />
+                  <div className="rounded-2xl border border-[#C6DE41]/30 bg-[#181D14] p-3.5 flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-[#C6DE41]/15 text-[#C6DE41] border border-[#C6DE41]/30 flex items-center justify-center shrink-0 mt-0.5">
+                      <Banknote className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="block text-[11px] font-bold uppercase tracking-wider text-[#C6DE41]">
+                        Admin-Determined Valuation
+                      </span>
+                      <p className="text-[12px] font-semibold text-white mt-0.5">
+                        Price will be determined by CampusMart after review.
+                      </p>
+                      <p className="text-[11px] text-stone-400 mt-0.5 leading-snug">
+                        Our operations team reviews your photos, category, and condition to assign a fair guaranteed cash payout and campus listing price.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -657,27 +690,6 @@ export const SellPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Custom Item Promo Strip */}
-              <div className="bg-[#12160F] rounded-[28px] p-5 border border-white/10 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#C6DE41]/10 text-[#C6DE41] border border-[#C6DE41]/20 flex items-center justify-center shrink-0">
-                    <Sparkles className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <span className="text-[13px] font-semibold text-white block tracking-tight">Selling something not listed here?</span>
-                    <span className="text-[12px] text-stone-400 tracking-tight">Submit any second-hand book, tool, or electronics kit as a custom listing!</span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSellMode('custom')}
-                  className="px-4 py-2 rounded-full bg-[#181D14] hover:bg-white/10 border border-white/15 text-white text-[12px] font-semibold transition-all shrink-0 flex items-center gap-1.5"
-                >
-                  <span>Sell Custom Item</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-[#C6DE41]" />
-                </button>
-              </div>
-
               {/* Search & Category Filter Strip */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
                 {/* Search Bar */}
@@ -730,7 +742,7 @@ export const SellPage: React.FC = () => {
                   <Package className="w-12 h-12 text-stone-500 mx-auto mb-3" />
                   <h3 className="font-semibold text-white text-base tracking-tight">No catalog items found</h3>
                   <p className="text-[12px] text-stone-400 mt-1">
-                    Try searching for another keyword or submit it as a custom listing above.
+                    Try searching for another keyword or submit it as a custom listing below.
                   </p>
                 </div>
               ) : (
@@ -817,6 +829,27 @@ export const SellPage: React.FC = () => {
                   })}
                 </div>
               )}
+
+              {/* Custom Item Promo Strip */}
+              <div className="bg-[#12160F] rounded-[28px] p-5 border border-white/10 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#C6DE41]/10 text-[#C6DE41] border border-[#C6DE41]/20 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[13px] font-semibold text-white block tracking-tight">Selling something not listed here?</span>
+                    <span className="text-[12px] text-stone-400 tracking-tight">Submit any second-hand book, tool, or electronics kit as a custom listing!</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSellMode('custom')}
+                  className="px-4 py-2 rounded-full bg-[#181D14] hover:bg-white/10 border border-white/15 text-white text-[12px] font-semibold transition-all shrink-0 flex items-center gap-1.5"
+                >
+                  <span>Sell Custom Item</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-[#C6DE41]" />
+                </button>
+              </div>
             </div>
           )}
         </div>
