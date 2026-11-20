@@ -1,4 +1,5 @@
 import { SmoothInput } from '../../components/motion/SmoothInput';
+import { QualityQuestionEditor } from './QualityQuestionEditor';
 import React, { useEffect, useState } from 'react';
 import { api, AutoMatchRule } from '../../services/api';
 import { 
@@ -393,11 +394,19 @@ export const AdminAutoMatching: React.FC = () => {
                             className="w-4 h-4 text-[#C6DE41] rounded focus:ring-indigo-500"
                           />
                           <span className="text-xs font-bold text-[#D3DACD]">
-                            Require Uploaded Photos
+                                                        Require Uploaded Photos
                           </span>
                         </label>
                       </div>
                     </div>
+
+                    {/* Custom Quality Questionnaire */}
+
+                    <QualityQuestionEditor
+                      productId={product.id}
+                      productName={product.name}
+                    />
+
                   </div>
                 );
               })}

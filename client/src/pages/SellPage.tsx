@@ -3,6 +3,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api, Product } from '../services/api';
+import { toast } from 'sonner';
 import { ImageUploader } from '../components/ImageUploader';
 import { 
   Tag, 
@@ -204,12 +205,32 @@ export const SellPage: React.FC = () => {
   const finalReviewStepIndex = totalQuestionSteps + 1;
   const totalStepsCount = totalQuestionSteps + 2;
 
-  const handleNextStep = () => {
-    if (currentStep < finalReviewStepIndex) {
-      setCurrentStep((prev) => prev + 1);
-      window.scrollTo({ top: 120, behavior: 'smooth' });
-    }
-  };
+ const handleNextStep = () => {
+  // Require at least one photo before valuation
+  if (
+    currentStep === imageStepIndex &&
+    imageUrls.length === 0
+  ) {
+    toast.error('Photo required', {
+      description:
+        'Please upload at least one photo of your item before proceeding.',
+      duration: 5000,
+      closeButton: true,
+      className: 'campus-admin-error-toast',
+    });
+
+    return;
+  }
+
+  if (currentStep < finalReviewStepIndex) {
+    setCurrentStep((prev) => prev + 1);
+
+    window.scrollTo({
+      top: 120,
+      behavior: 'smooth',
+    });
+  }
+};
 
   const handlePreviousStep = () => {
     if (currentStep === 0) {
