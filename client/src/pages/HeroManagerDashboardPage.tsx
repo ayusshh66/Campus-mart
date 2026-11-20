@@ -1,107 +1,2251 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { Activity, AlertTriangle, BarChart3, Bell, CalendarClock, CheckCheck, ClipboardCheck, FileCheck2, FileWarning,
-  History, Home, Megaphone, MessageSquare, Package, Send, Users, UserRound, Wallet, X, ArrowRight,
-  Download, Settings2 } from 'lucide-react';
-import type { HeroTask, ManagerOverview, OpsMe, OpsIssue, OpsProof, OpsMessage, OpsEvent } from '../services/heroOps';
-import { heroOps } from '../services/heroOps';
-import { Busy, EmptyState, ErrorBar, Field, HeroShell, NavItem, palette, PersonCircle, Section, shortDate, StatTile,
-  StatusPill, StepTrack, TaskTile, Timeline } from '../components/hero-ops/HeroOpsUi';
+import React, {
+  useEffect,
+  useState,
+} from 'react';
 
-const nav: NavItem[] = [
-  {id:'overview',label:'Operations Dashboard',icon:Home,group:'OVERVIEW'},
-  {id:'heroes',label:'Campus Heroes',icon:Users,group:'HERO MANAGEMENT'},
-  {id:'assignments',label:'Task Assignments',icon:ClipboardCheck},
-  {id:'activity',label:'Hero Activity',icon:Activity},
-  {id:'tasks',label:'All Campus Tasks',icon:Package,group:'OPERATIONS'},
-  {id:'issues',label:'Issues & Escalations',icon:FileWarning},
-  {id:'verification',label:'Verification Queue',icon:FileCheck2},
-  {id:'messages',label:'Messages',icon:MessageSquare},
-  {id:'announcements',label:'Announcements',icon:Megaphone},
-  {id:'analytics',label:'Performance Analytics',icon:BarChart3,group:'REPORTS'},
-  {id:'reports',label:'Weekly Reports',icon:History},
-  {id:'rewards',label:'Rewards Review',icon:Wallet},
-  {id:'profile',label:'Manager Profile',icon:UserRound,group:'ACCOUNT'},
-  {id:'notifications',label:'Notifications',icon:Bell},
-  {id:'access',label:'Manager Access (Admin)',icon:Settings2},
+import {
+  Link,
+  useSearchParams,
+} from 'react-router-dom';
+
+import {
+  LayoutDashboard,
+  Users,
+  ClipboardCheck,
+  Activity,
+  Package,
+  AlertTriangle,
+  ShieldCheck,
+  MessageSquare,
+  Megaphone,
+  BarChart3,
+  Settings,
+  UserRound,
+  RefreshCw,
+  ArrowLeft,
+  ArrowRight,
+  Search,
+  CheckCircle2,
+  Clock,
+  X,
+  Menu,
+  Download,
+  Send,
+  Loader2,
+  Bell,
+} from 'lucide-react';
+
+import { toast } from 'sonner';
+
+import {
+  heroManagerApi,
+} from '../services/heroManagerApi';
+
+import type {
+  ManagerAccess,
+  ManagerOverview,
+  ManagerTask,
+  ManagerEvent,
+  ManagerProof,
+  ManagerMessage,
+  ManagerAssignment,
+} from '../services/heroManagerApi';
+
+const ACTIVE = [
+  'ASSIGNED',
+  'PICKED_UP',
+  'DELIVERED',
 ];
-const ACTIVE=['ASSIGNED','PICKED_UP','DELIVERED'];
-const getWeekStart=(d:Date)=>{const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x;};
-const csvCell=(v:unknown)=>`"${String(v??'').replace(/"/g,'""')}"`;
-function downloadCSV(filename:string,rows:unknown[][]){const blob=new Blob([rows.map(r=>r.map(csvCell).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);}
 
-export const HeroManagerDashboardPage:React.FC=()=>{
-  const [params,setParams]=useSearchParams();const tab=params.get('tab')||'overview';
-  const [me,setMe]=useState<OpsMe|null>(null);const [data,setData]=useState<ManagerOverview|null>(null);
-  const [collegeId,setCollegeId]=useState('');const [loading,setLoading]=useState(true);
-  const [error,setError]=useState('');const [notice,setNotice]=useState('');const [working,setWorking]=useState(false);
-  const [search,setSearch]=useState('');const [filter,setFilter]=useState('ALL');
-  const [eventSearch,setEventSearch]=useState('');const [eventAction,setEventAction]=useState('ALL');const [eventRange,setEventRange]=useState('ALL');
-  const [selectedId,setSelectedId]=useState<string|null>(null);const [heroId,setHeroId]=useState('');const [reason,setReason]=useState('');
-  const [thread,setThread]=useState<OpsMessage[]>([]);const [history,setHistory]=useState<{proofs:OpsProof[];events:OpsEvent[]}|null>(null);
-  const [recipient,setRecipient]=useState('');const [message,setMessage]=useState('');
-  const [issueNote,setIssueNote]=useState<Record<string,string>>({});const [reviewNotes,setReviewNotes]=useState<Record<string,string>>({});
-  const [annTitle,setAnnTitle]=useState('');const [annContent,setAnnContent]=useState('');const [annPriority,setAnnPriority]=useState('NORMAL');
-  const [managerUserId,setManagerUserId]=useState('');const [managerCollegeId,setManagerCollegeId]=useState('');
-  const [managerRows,setManagerRows]=useState<any[]>([]);
+const panel =
+  'rounded-2xl border border-white/10 bg-[#12160F] p-5';
 
-  const refresh=useCallback(async (first=false,desiredCollege?:string)=>{
-    try{if(first)setLoading(true);const access=await heroOps.me();setMe(access);
-      if(!access.canManage){setError('You do not have an active Campus Hero Manager college assignment. An admin must grant access.');setData(null);return;}
-      const target=desiredCollege||collegeId||access.managerColleges[0]?.id;
-      if(target&&!collegeId)setCollegeId(target);
-      const result=await heroOps.managerOverview(target);setData(result);setError('');
-    }catch(e:any){setError(e.message||'Could not load manager dashboard');}finally{setLoading(false)}
-  },[collegeId]);
-  useEffect(()=>{void refresh(true);const tick=window.setInterval(()=>void refresh(),30000);return()=>window.clearInterval(tick)},[refresh]);
-  const selected=useMemo(()=>data?.tasks.find(x=>x.id===selectedId)||null,[data,selectedId]);
-  const openTask=(t:HeroTask)=>{setSelectedId(t.id);setHeroId(t.assigned_hero_id||'');setReason('');setRecipient(t.assigned_hero_id||t.seller?.id||t.buyer?.id||'');setHistory(null);setThread([])};
-  useEffect(()=>{if(!selectedId)return;void Promise.all([heroOps.taskHistory(selectedId),heroOps.taskMessages(selectedId)]).then(([h,m])=>{setHistory(h);setThread(m)}).catch(()=>{});},[selectedId]);
-  const act=async (fn:()=>Promise<any>,success:string)=>{setWorking(true);setError('');try{await fn();setNotice(success);await refresh();if(selectedId){const [h,m]=await Promise.all([heroOps.taskHistory(selectedId),heroOps.taskMessages(selectedId)]);setHistory(h);setThread(m)}}catch(e:any){setError(e.message||'Action failed');}finally{setWorking(false)}};
-  const tasks=(data?.tasks||[]).filter(t=>(`${t.product.name} ${t.id} ${t.assigned_hero?.name||''}`).toLowerCase().includes(search.toLowerCase()) &&(filter==='ALL'||(filter==='UNASSIGNED'?!t.assigned_hero_id:filter==='AGING'?(ACTIVE.includes(t.status)&&Date.now()-new Date(t.created_at).getTime()>48*3600000):t.status===filter)));
-  const taskList=(list:HeroTask[])=>list.length?<div className="space-y-3">{list.map(t=><TaskTile key={t.id} task={t} onView={()=>openTask(t)}/>)}</div>:<EmptyState title="No matching tasks" detail="Adjust filters or refresh to see the latest operations."/>;
-  const issueAction=(issue:OpsIssue,status:string)=>void act(()=>heroOps.resolveIssue(issue.id,status,issueNote[issue.id]||''),`Issue marked ${status.toLowerCase().replace('_',' ')}.`);
-  const allEvents=data?.events??[];
-  const visibleEvents=allEvents.filter(e=>(`${e.actor.name} ${e.action} ${e.task_id} ${e.details||''}`).toLowerCase().includes(eventSearch.toLowerCase())
-    &&(eventAction==='ALL'||e.action===eventAction)
-    &&(eventRange==='ALL'||Date.now()-new Date(e.created_at).getTime()<Number(eventRange)*86400000));
-  const weekStart=getWeekStart(new Date());
-  const weekly=data?.tasks.filter(t=>new Date(t.updated_at)>=weekStart)??[];
-  const daily=Array.from({length:7},(_,n)=>{const d=new Date(weekStart);d.setDate(d.getDate()+n);const date=d.toDateString();return{day:d.toLocaleDateString('en-IN',{weekday:'short'}),completed:weekly.filter(t=>t.status==='COMPLETED'&&new Date(t.updated_at).toDateString()===date).length,created:weekly.filter(t=>new Date(t.created_at).toDateString()===date).length}});
-  const summary=data?.stats;
-  const changedCollege=async (id:string)=>{setCollegeId(id);await refresh(false,id)};
-  const exportTasks=()=>downloadCSV('campusmart-hero-tasks.csv',[
-    ['Task ID','Product','College','Status','Hero','Created','Updated'],...(data?.tasks??[]).map(t=>[t.id,t.product.name,t.college.code,t.status,t.assigned_hero?.name||'Unassigned',t.created_at,t.updated_at])]);
-  const exportWeekly=()=>downloadCSV('campusmart-weekly-operations.csv',[
-    ['Day','Created','Completed'],...daily.map(x=>[x.day,x.created,x.completed]),[],['Task','Status','Hero','Last updated'],...weekly.map(t=>[t.id,t.status,t.assigned_hero?.name||'',t.updated_at])]);
-  if(loading&&!data)return <Busy/>;
-  if(!me)return <div className="min-h-screen bg-[#090B09] p-8"><ErrorBar message={error||'Please log in'} onRetry={()=>void refresh(true)}/><Link to="/login" className="mt-5 inline-block text-[#C6DE41]">Log in</Link></div>;
-  return <HeroShell title={nav.find(n=>n.id===tab)?.label||'Campus Operations Center'} subtitle="Monitor handovers, assign approved Heroes, resolve issues and review evidence." name={me.user.name} college={data?.college.code||me.managerColleges[0]?.code||'Campus'} manager nav={nav.filter(n=>n.id!=='access'||me.user.role==='ADMIN')} current={tab} onChange={id=>setParams({tab:id})} onRefresh={()=>void refresh()} accessory={me.managerColleges.length>1&&<select aria-label="Authorized campus" value={collegeId} onChange={e=>void changedCollege(e.target.value)} className="max-w-36 rounded-lg border border-white/15 bg-[#1A1D18] px-2 py-2 text-xs text-white">{me.managerColleges.map(c=><option key={c.id} value={c.id}>{c.code}</option>)}</select>}>
-    {error&&<ErrorBar message={error} onRetry={()=>void refresh()}/>}
-    {notice&&<div className="flex justify-between gap-3 rounded-xl border border-[#C6DE41]/30 bg-[#C6DE41]/10 p-3 text-sm text-[#C6DE41]">{notice}<button onClick={()=>setNotice('')}><X size={16}/></button></div>}
-    {data&&<>
-      {tab==='overview'&&<>
-        <Section title={`Campus Operations Center · ${data.college.code}`}><p className="text-sm text-stone-400">Only approved Heroes and tasks from your authorized campus are shown. Activity is based on recorded task events, not GPS or continuous employee tracking.</p></Section>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3"><StatTile label="Approved Heroes" value={summary!.heroes} icon={Users}/><StatTile label="Active Tasks" value={summary!.active} icon={ClipboardCheck}/><StatTile label="Unassigned Tasks" value={summary!.unassigned} icon={Package} alert={summary!.unassigned>0}/><StatTile label="Completed" value={summary!.completed} icon={CheckCheck}/><StatTile label="Aging 48h+" value={summary!.aging} icon={CalendarClock} alert={summary!.aging>0}/><StatTile label="Open Issues" value={summary!.open_issues} icon={AlertTriangle} alert={summary!.open_issues>0}/></div>
-        <div className="grid gap-5 xl:grid-cols-[1.5fr_1fr]"><Section title="Attention required" side={<button className="text-xs text-[#C6DE41]" onClick={()=>setParams({tab:'assignments'})}>Assignment queue →</button>}>{taskList(data.tasks.filter(t=>ACTIVE.includes(t.status)&&!t.assigned_hero_id).slice(0,5))}</Section><Section title="Recent activity"><Timeline items={allEvents.slice(0,10).map(e=>({id:e.id,title:`${e.actor.name}: ${e.action.replace(/_/g,' ')}`,details:e.details,at:e.created_at}))}/></Section></div>
-        <Section title="Open issues">{data.issues.filter(i=>i.status!=='RESOLVED').slice(0,4).map(i=><button onClick={()=>setParams({tab:'issues'})} key={i.id} className="mb-2 flex w-full items-center justify-between gap-3 rounded-xl border border-white/10 p-3 text-left text-sm hover:border-[#C6DE41]/30"><span>{i.category} · {i.reporter}</span><StatusPill value={i.severity}/></button>)}{!data.issues.some(i=>i.status!=='RESOLVED')&&<EmptyState title="No open issues"/>}</Section>
-      </>}
-      {(tab==='assignments'||tab==='tasks')&&<>{<div className="flex flex-wrap items-center gap-2"><input className={`${palette.field} max-w-[340px]`} value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search product, task or Hero"/><select className={`${palette.field} max-w-[205px]`} value={filter} onChange={e=>setFilter(e.target.value)}>{['ALL','UNASSIGNED','AGING','ASSIGNED','PICKED_UP','DELIVERED','COMPLETED','CANCELLED'].map(s=><option key={s} value={s}>{s.replace('_',' ')}</option>)}</select><button className={palette.secondary} onClick={exportTasks}><Download size={15}/> Export CSV</button></div>}{taskList(tab==='assignments'?tasks.filter(t=>ACTIVE.includes(t.status)):tasks)}</>}
-      {tab==='heroes'&&<Section title="Approved Heroes" side={<span className="text-xs text-stone-500">{data.heroes.length} eligible</span>}><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{data.heroes.map(h=><div key={h.id} className="rounded-xl border border-white/10 bg-[#111511] p-4"><div className="flex items-center gap-3"><PersonCircle name={h.name}/><div className="min-w-0"><b className="block truncate text-sm">{h.name}</b><p className="truncate text-xs text-stone-500">{h.email}</p></div></div><div className="mt-3 flex flex-wrap items-center gap-3"><StatusPill value={h.availability}/><span className="text-xs text-stone-400">Active {h.active_tasks} · Completed {h.completed_tasks}</span></div><button className="mt-3 text-xs font-bold text-[#C6DE41]" onClick={()=>{setSearch(h.name);setParams({tab:'tasks'})}}>View assigned tasks →</button></div>)}</div>{!data.heroes.length&&<EmptyState title="No approved Heroes in this college"/>}</Section>}
-      {tab==='activity'&&<Section title="Event-based Hero activity"><div className="mb-4 flex flex-wrap gap-2"><input className={`${palette.field} max-w-[300px]`} value={eventSearch} onChange={e=>setEventSearch(e.target.value)} placeholder="Search Hero, task or event"/><select className={`${palette.field} max-w-[210px]`} value={eventAction} onChange={e=>setEventAction(e.target.value)}><option value="ALL">All actions</option>{Array.from(new Set(allEvents.map(e=>e.action))).map(a=><option key={a} value={a}>{a.replace(/_/g,' ')}</option>)}</select><select className={`${palette.field} max-w-[160px]`} value={eventRange} onChange={e=>setEventRange(e.target.value)}><option value="ALL">All dates</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option></select><button className={palette.secondary} onClick={()=>downloadCSV('campusmart-hero-activity.csv',[['Actor','Action','Task','When','Details'],...visibleEvents.map(e=>[e.actor.name,e.action,e.task_id,e.created_at,e.details])])}><Download size={14}/> Export filtered CSV</button></div><Timeline items={visibleEvents.map(e=>({id:e.id,title:`${e.actor.name} · ${e.action.replace(/_/g,' ')}`,details:`Task ${e.task_id.slice(0,8)} ${e.details||''}`,at:e.created_at}))}/></Section>}
-      {tab==='issues'&&<Section title="Resolve operational issues"><div className="space-y-3">{data.issues.map(i=><div key={i.id} className="rounded-xl border border-white/10 p-4"><div className="flex flex-wrap items-center justify-between gap-2"><b>{i.category}</b><div className="flex gap-2"><StatusPill value={i.severity}/><StatusPill value={i.status}/></div></div><p className="mt-2 text-sm text-stone-400">{i.description}</p><p className="mt-1 text-xs text-stone-500">Reported by {i.reporter} · {shortDate(i.created_at)} · Task {i.task_id.slice(0,8)}</p>{i.resolution_notes&&<p className="mt-2 text-sm text-[#C6DE41]">Notes: {i.resolution_notes}</p>}{i.status!=='RESOLVED'&&<div className="mt-4 space-y-2"><Field label="Resolution / escalation note"><textarea rows={2} className={palette.field} value={issueNote[i.id]||''} onChange={e=>setIssueNote(p=>({...p,[i.id]:e.target.value}))} placeholder="Record what you did..."/></Field><div className="flex flex-wrap gap-2">{['UNDER_REVIEW','ESCALATED','RESOLVED'].filter(s=>s!==i.status).map(s=><button key={s} disabled={working||(s==='RESOLVED'&&(issueNote[i.id]||'').trim().length<10)} onClick={()=>issueAction(i,s)} className={s==='RESOLVED'?palette.button:palette.secondary}>{s.replace('_',' ')}</button>)}</div></div>}</div>)}{!data.issues.length&&<EmptyState title="No issues reported"/>}</div></Section>}
-      {tab==='verification'&&<Section title="Pickup and handover evidence"><p className="mb-4 text-sm text-stone-400">Review uploaded proof. Approval confirms an operational record only; it never marks financial settlement complete.</p><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{data.proofs.map(p=><div key={p.id} className="rounded-xl border border-white/10 bg-[#111511] p-3"><a href={p.image_url} target="_blank" rel="noreferrer"><img src={p.image_url} alt={`${p.kind} evidence`} className="h-40 w-full rounded-xl object-cover"/></a><div className="mt-3 flex flex-wrap gap-2"><StatusPill value={p.kind}/><StatusPill value={p.review_status}/></div><p className="mt-2 text-xs text-stone-400">{p.uploader?.name||'Hero'} · {shortDate(p.created_at)} · {p.task_id.slice(0,8)}</p><textarea rows={2} value={reviewNotes[p.id]||''} onChange={e=>setReviewNotes(v=>({...v,[p.id]:e.target.value}))} placeholder="Review note if needed..." className={`${palette.field} mt-3`}/><div className="mt-2 flex flex-wrap gap-1">{['APPROVED','NEEDS_MORE_EVIDENCE','FLAGGED'].map(s=><button key={s} disabled={working||(s!=='APPROVED'&&(reviewNotes[p.id]||'').trim().length<8)} className={`${s==='APPROVED'?palette.button:palette.secondary} !px-2 !py-2 !text-[10px]`} onClick={()=>void act(()=>heroOps.reviewProof(p.id,s,reviewNotes[p.id]||''),'Evidence review saved.')}>{s.replace(/_/g,' ')}</button>)}</div></div>)}{!data.proofs.length&&<EmptyState title="No uploaded evidence"/>}</div></Section>}
-      {tab==='messages'&&<Section title="Authorized task conversations"><p className="mb-4 text-sm text-stone-400">Select an active task to view the conversation and message its assigned Hero or transaction participants.</p>{taskList(data.tasks.filter(t=>ACTIVE.includes(t.status)).slice(0,80))}</Section>}
-      {tab==='announcements'&&<div className="grid gap-5 lg:grid-cols-2"><Section title="Publish campus announcement"><div className="space-y-3"><Field label="Title"><input className={palette.field} value={annTitle} onChange={e=>setAnnTitle(e.target.value)} placeholder="Campus pickup hours updated"/></Field><Field label="Message"><textarea className={palette.field} rows={5} value={annContent} onChange={e=>setAnnContent(e.target.value)} placeholder="Write operational instructions..."/></Field><Field label="Priority"><select className={palette.field} value={annPriority} onChange={e=>setAnnPriority(e.target.value)}><option>NORMAL</option><option>URGENT</option></select></Field><button className={palette.button} disabled={working||annTitle.trim().length<3||annContent.trim().length<10} onClick={()=>void act(async()=>{await heroOps.announce(data.college.id,annTitle,annContent,annPriority);setAnnTitle('');setAnnContent('')},'Campus announcement published.')}><Megaphone size={15}/> Publish</button></div></Section><Section title="Published announcements">{data.announcements.map(a=><div key={a.id} className="mb-3 rounded-xl border border-white/10 p-3"><div className="flex justify-between gap-2"><b>{a.title}</b><StatusPill value={a.priority}/></div><p className="mt-2 text-sm text-stone-400">{a.content}</p><p className="mt-1 text-xs text-stone-500">{shortDate(a.created_at)}</p></div>)}{!data.announcements.length&&<EmptyState title="No announcements"/>}</Section></div>}
-      {tab==='analytics'&&<><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><StatTile label="Tasks completed" value={summary!.completed} icon={CheckCheck}/><StatTile label="Active Heroes" value={summary!.heroes} icon={Users}/><StatTile label="Open issues" value={summary!.open_issues} icon={AlertTriangle}/><StatTile label="Task completion" value={`${data.tasks.length?Math.round(summary!.completed/data.tasks.length*100):0}%`} icon={BarChart3}/></div><Section title="This week's task volume"><div className="grid h-48 grid-cols-7 items-end gap-2">{daily.map(d=><div key={d.day} className="flex h-full flex-col justify-end gap-1"><div className="flex items-end justify-center gap-1" style={{height:'85%'}}><div title={`${d.created} created`} className="w-1/3 rounded-t bg-white/20" style={{height:`${Math.max(3,d.created/Math.max(1,...daily.map(x=>x.created))*100)}%`}}/><div title={`${d.completed} completed`} className="w-1/3 rounded-t bg-[#C6DE41]" style={{height:`${Math.max(3,d.completed/Math.max(1,...daily.map(x=>x.completed))*100)}%`}}/></div><span className="text-center text-[10px] text-stone-400">{d.day}</span></div>)}</div><p className="mt-3 text-xs text-stone-500">Gray: created · Lime: completed. Based on available records, not a payment ledger.</p></Section><Section title="Hero workload distribution">{data.heroes.map(h=><div key={h.id} className="mb-3"><div className="mb-1 flex justify-between text-xs"><span>{h.name}</span><span className="text-stone-400">{h.active_tasks} active</span></div><div className="h-2 rounded-full bg-white/10"><div className="h-2 rounded-full bg-[#C6DE41]" style={{width:`${Math.max(0,h.active_tasks/Math.max(1,...data.heroes.map(x=>x.active_tasks))*100)}%`}}/></div></div>)}</Section></>}
-      {tab==='reports'&&<Section title="Weekly Operations Report"><p className="mb-3 text-sm text-stone-400">Week starting {weekStart.toLocaleDateString('en-IN')}; scoped to {data.college.name}.</p><div className="mb-4 flex flex-wrap gap-3"><button className={palette.button} onClick={exportWeekly}><Download size={14}/> Export CSV</button><button className={palette.secondary} onClick={()=>window.print()}>Print</button></div><div className="grid gap-2 sm:grid-cols-3">{[{a:'Created this week',v:weekly.filter(t=>new Date(t.created_at)>=weekStart).length},{a:'Completed (updated this week)',v:weekly.filter(t=>t.status==='COMPLETED').length},{a:'Open issues',v:summary!.open_issues}].map(m=><div key={m.a} className="rounded-xl border border-white/10 p-4"><p className="text-xs text-stone-400">{m.a}</p><p className="mt-2 text-3xl font-bold">{m.v}</p></div>)}</div></Section>}
-      {tab==='rewards'&&<Section title="Rewards review"><EmptyState title="Rewards accounting isn't configured" detail="Operational task completion is recorded, but no payouts or manager financial approval are claimed without a separate ledger and payment workflow."/></Section>}
-      {tab==='profile'&&<Section title="Manager Profile"><div className="flex flex-wrap items-center gap-4"><PersonCircle name={me.user.name}/><div><b>{me.user.name}</b><p className="text-sm text-stone-400">{me.user.email} · {me.user.phone}</p><p className="text-xs text-[#C6DE41]">Authorized campuses: {me.managerColleges.map(c=>c.code).join(', ')}</p></div></div><Link to="/settings" className={`${palette.secondary} mt-4`}>Open account settings <ArrowRight size={15}/></Link></Section>}
-      {tab==='notifications'&&<Section title="Operational alerts"><div className="space-y-3">{data.issues.filter(i=>i.status!=='RESOLVED').map(i=><div key={i.id} className="rounded-xl border border-rose-400/20 p-3 text-sm"><AlertTriangle size={15} className="mr-2 inline text-rose-300"/>{i.category} · {i.reporter} · {shortDate(i.created_at)}</div>)}{data.announcements.map(a=><div key={a.id} className="rounded-xl border border-[#C6DE41]/20 p-3 text-sm"><Megaphone size={15} className="mr-2 inline text-[#C6DE41]"/>{a.title} · {shortDate(a.created_at)}</div>)}</div><p className="mt-4 text-xs text-stone-500">This list is derived from operational records; read receipts are not tracked yet.</p></Section>}
-      {tab==='access'&&me.user.role==='ADMIN'&&<Section title="Manager assignments (Admin only)"><p className="mb-4 text-sm text-stone-400">Assign a manager to a specific college. Obtain the exact user ID from Admin → Users. No global administrator role is granted.</p><div className="grid gap-3 md:grid-cols-3"><Field label="User ID"><input value={managerUserId} onChange={e=>setManagerUserId(e.target.value)} className={palette.field} placeholder="User UUID"/></Field><Field label="College"><select className={palette.field} value={managerCollegeId} onChange={e=>setManagerCollegeId(e.target.value)}><option value="">Select college</option>{me.managerColleges.map(c=><option key={c.id} value={c.id}>{c.code} — {c.name}</option>)}</select></Field><button className={`${palette.button} self-end`} disabled={!managerUserId||!managerCollegeId||working} onClick={()=>void act(()=>heroOps.addManager(managerUserId,managerCollegeId),'Manager assignment saved.')}>Grant manager access</button></div><button className={`${palette.secondary} mt-5`} onClick={()=>void heroOps.listManagers().then(setManagerRows).catch(e=>setError(e.message))}>Load current assignments</button>{managerRows.map(row=><div key={row.id} className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 p-3 text-sm"><span>{row.user?.name} · {row.user?.email} · {row.college?.code}</span><div className="flex items-center gap-2"><StatusPill value={row.is_active?'ACTIVE':'INACTIVE'}/>{row.is_active&&<button disabled={working} className={palette.secondary} onClick={()=>void act(async()=>{await heroOps.removeManager(row.id);setManagerRows(await heroOps.listManagers())},'Manager assignment revoked.')}>Revoke</button>}</div></div>)}</Section>}
-    </>}
-    {selected&&<div className="fixed inset-0 z-[100] flex justify-end bg-black/75" role="dialog" aria-modal="true" aria-label="Manager task details" onMouseDown={e=>{if(e.target===e.currentTarget)setSelectedId(null)}}><div className="h-full w-full max-w-[790px] overflow-y-auto border-l border-white/15 bg-[#111511] p-4 shadow-2xl sm:p-6"><div className="mb-5 flex items-center justify-between"><div><p className="text-xs font-bold text-[#C6DE41]">TASK #{selected.id.slice(0,8)}</p><h2 className="mt-1 text-2xl font-bold">{selected.product.name}</h2></div><button className={palette.secondary} onClick={()=>setSelectedId(null)}><X size={19}/></button></div><StepTrack status={selected.status}/><div className="mt-5 grid gap-4 md:grid-cols-2"><div className="space-y-4"><Section title="Task and participants"><StatusPill value={selected.status}/><p className="mt-3 text-sm text-stone-400">Created {shortDate(selected.created_at)}</p><p className="mt-2 text-xs">College: {selected.college.code}</p><p className="mt-2 text-xs">Seller: {selected.seller?.name||'—'} · {selected.seller?.phone||'No phone'}</p><p className="mt-2 text-xs">Buyer: {selected.buyer?.name||'—'} · {selected.buyer?.phone||'No phone'}</p><p className="mt-3 text-xs text-stone-400">Pickup: {selected.pickup_notes||'No pickup notes'}</p><p className="mt-2 text-xs text-stone-400">Delivery: {selected.delivery_notes||'No delivery notes'}</p></Section><Section title="Task events"><Timeline items={history?.events.map(e=>({id:e.id,title:`${e.actor.name} · ${e.action.replace(/_/g,' ')}`,details:e.details,at:e.created_at}))||[]}/></Section><Section title="Photo evidence">{history?.proofs.map(p=><div key={p.id} className="mb-3"><a href={p.image_url} target="_blank" rel="noreferrer"><img src={p.image_url} alt={p.kind} className="h-32 w-full rounded-lg object-cover"/></a><StatusPill value={p.review_status}/></div>)}{!history?.proofs.length&&<p className="text-sm text-stone-500">No proofs uploaded yet.</p>}</Section></div><div className="space-y-4"><Section title="Assign / Reassign Hero"><Field label="Approved Hero at this college"><select className={palette.field} value={heroId} onChange={e=>setHeroId(e.target.value)}><option value="">Unassigned</option>{data?.heroes.map(h=><option key={h.id} value={h.id} disabled={h.availability==='OFF_DUTY'}>{h.name} · {h.availability} · {h.active_tasks} active</option>)}</select></Field><Field label="Reassignment reason (required if changing assigned Hero)"><textarea value={reason} onChange={e=>setReason(e.target.value)} className={palette.field} rows={3} placeholder="Why is reassignment needed?"/></Field><button className={`${palette.button} mt-3`} disabled={working||!ACTIVE.includes(selected.status)||heroId===(selected.assigned_hero_id||'')||Boolean(selected.assigned_hero_id&&reason.trim().length<8)} onClick={()=>void act(()=>heroOps.assign(selected.id,heroId||null,reason),'Task assignment saved.')}>Save assignment</button></Section><Section title="Task conversation"><div className="max-h-64 space-y-2 overflow-y-auto">{thread.map(m=><div key={m.id} className="rounded-lg bg-white/5 p-3 text-xs"><p className="font-bold text-[#C6DE41]">{m.sender_name}</p><p>{m.content}</p><p className="text-[10px] text-stone-500">{shortDate(m.created_at)}</p></div>)}</div><div className="mt-3 space-y-3"><Field label="Recipient"><select className={palette.field} value={recipient} onChange={e=>setRecipient(e.target.value)}><option value="">Choose recipient</option>{selected.assigned_hero&&<option value={selected.assigned_hero.id}>Hero: {selected.assigned_hero.name}</option>}{selected.seller&&<option value={selected.seller.id}>Seller: {selected.seller.name}</option>}{selected.buyer&&<option value={selected.buyer.id}>Buyer: {selected.buyer.name}</option>}</select></Field><Field label="Message"><textarea className={palette.field} rows={3} value={message} onChange={e=>setMessage(e.target.value)} placeholder="Send task-specific instructions"/></Field><button className={palette.button} disabled={working||!recipient||!message.trim()} onClick={()=>void act(async()=>{await heroOps.sendMessage(selected.id,recipient,message);setMessage('')},'Message sent.')}><Send size={15}/> Send message</button></div></Section></div></div></div></div>}
-  </HeroShell>;
+const field =
+  'w-full min-w-0 rounded-xl border border-white/10 ' +
+  'bg-[#090B09] px-4 py-3 text-sm text-[#F5F7F0] ' +
+  'outline-none placeholder:text-stone-500 ' +
+  'focus:border-[#C6DE41]/60';
+
+const primary =
+  'inline-flex items-center justify-center gap-2 ' +
+  'rounded-xl bg-[#C6DE41] px-4 py-2.5 text-xs ' +
+  'font-bold text-[#090B09] transition-colors ' +
+  'hover:bg-[#D7EF59] disabled:opacity-40 ' +
+  'disabled:cursor-not-allowed';
+
+const secondary =
+  'inline-flex items-center justify-center gap-2 ' +
+  'rounded-xl border border-white/10 px-4 py-2.5 ' +
+  'text-xs font-semibold text-stone-300 ' +
+  'hover:bg-white/5 disabled:opacity-40';
+
+const navigation = [
+  {
+    label: 'OVERVIEW',
+    items: [
+      {
+        id: 'overview',
+        title: 'Operations Dashboard',
+        icon: LayoutDashboard,
+      },
+      {
+        id: 'heroes',
+        title: 'Campus Heroes',
+        icon: Users,
+      },
+      {
+        id: 'assignments',
+        title: 'Task Assignments',
+        icon: ClipboardCheck,
+      },
+      {
+        id: 'activity',
+        title: 'Hero Activity',
+        icon: Activity,
+      },
+    ],
+  },
+  {
+    label: 'OPERATIONS',
+    items: [
+      {
+        id: 'tasks',
+        title: 'All Campus Tasks',
+        icon: Package,
+      },
+      {
+        id: 'issues',
+        title: 'Issues & Escalations',
+        icon: AlertTriangle,
+      },
+      {
+        id: 'verification',
+        title: 'Verification Queue',
+        icon: ShieldCheck,
+      },
+      {
+        id: 'messages',
+        title: 'Messages',
+        icon: MessageSquare,
+      },
+      {
+        id: 'announcements',
+        title: 'Announcements',
+        icon: Megaphone,
+      },
+    ],
+  },
+  {
+    label: 'REPORTS',
+    items: [
+      {
+        id: 'analytics',
+        title: 'Performance Analytics',
+        icon: BarChart3,
+      },
+    ],
+  },
+  {
+    label: 'ACCOUNT',
+    items: [
+      {
+        id: 'notifications',
+        title: 'Notifications',
+        icon: Bell,
+      },
+      {
+        id: 'profile',
+        title: 'Manager Profile',
+        icon: UserRound,
+      },
+    ],
+  },
+];
+
+const formatStatus = (status: string) =>
+  status.replace(/_/g, ' ');
+
+const formatDate = (value?: string | null) =>
+  value
+    ? new Date(value).toLocaleString('en-IN')
+    : 'Not scheduled';
+
+const errorMessage = (error: unknown) =>
+  error instanceof Error
+    ? error.message
+    : 'Something went wrong. Please try again.';
+
+function Status({ value }: { value: string }) {
+  const positive = [
+    'APPROVED',
+    'COMPLETED',
+    'AVAILABLE',
+    'RESOLVED',
+  ].includes(value);
+
+  const negative = [
+    'CANCELLED',
+    'FLAGGED',
+    'HIGH',
+    'ESCALATED',
+    'OFF_DUTY',
+  ].includes(value);
+
+  return (
+    <span
+      className={`inline-flex w-fit rounded-full border px-2.5 py-1 text-[10px] font-bold ${positive
+          ? 'border-[#C6DE41]/25 bg-[#C6DE41]/10 text-[#C6DE41]'
+          : negative
+            ? 'border-red-400/20 bg-red-400/10 text-red-300'
+            : 'border-amber-400/20 bg-amber-400/10 text-amber-300'
+        }`}
+    >
+      {formatStatus(value)}
+    </span>
+  );
+}
+
+function Empty({ title }: { title: string }) {
+  return (
+    <div className="rounded-xl border border-dashed border-white/10 p-10 text-center">
+      <Package className="mx-auto mb-3 h-8 w-8 text-stone-600" />
+      <p className="text-sm text-stone-400">
+        {title}
+      </p>
+    </div>
+  );
+}
+
+function Avatar({ name }: { name: string }) {
+  return (
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#C6DE41]/10 text-sm font-bold text-[#C6DE41]">
+      {name.charAt(0).toUpperCase()}
+    </div>
+  );
+}
+
+function EventList({
+  events,
+}: {
+  events: ManagerEvent[];
+}) {
+  if (!events.length) {
+    return <Empty title="No activity recorded yet." />;
+  }
+
+  return (
+    <div className="space-y-4">
+      {events.map((event) => (
+        <div
+          key={event.id}
+          className="flex gap-3 border-b border-white/5 pb-4 last:border-0"
+        >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#C6DE41]/10">
+            <Activity
+              size={15}
+              className="text-[#C6DE41]"
+            />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">
+              {event.actor.name}
+            </p>
+
+            <p className="mt-1 break-words text-xs text-stone-300">
+              {formatStatus(event.action)}
+            </p>
+
+            {event.details && (
+              <p className="mt-1 break-words text-xs text-stone-500">
+                {event.details}
+              </p>
+            )}
+
+            {event.from_status && event.to_status && (
+              <p className="mt-1 text-xs text-stone-400">
+                {formatStatus(event.from_status)}
+                {' → '}
+                {formatStatus(event.to_status)}
+              </p>
+            )}
+
+            <p className="mt-2 text-[10px] text-stone-500">
+              {formatDate(event.created_at)}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function exportCSV(tasks: ManagerTask[]) {
+  const escapeCell = (value: unknown) => {
+    let text = String(value ?? '');
+
+    // Prevent spreadsheet formula injection.
+    if (/^[\s]*[=+\-@]/.test(text)) {
+      text = `'${text}`;
+    }
+
+    return `"${text.replace(/"/g, '""')}"`;
+  };
+
+  const rows = [
+    [
+      'Task ID',
+      'Product',
+      'College',
+      'Hero',
+      'Status',
+      'Created At',
+      'Updated At',
+    ],
+    ...tasks.map((task) => [
+      task.id,
+      task.product.name,
+      task.college.code,
+      task.assigned_hero?.name || 'Unassigned',
+      task.status,
+      task.created_at,
+      task.updated_at,
+    ]),
+  ];
+
+  const csv = rows
+    .map((row) => row.map(escapeCell).join(','))
+    .join('\r\n');
+
+  const url = URL.createObjectURL(
+    new Blob([csv], {
+      type: 'text/csv;charset=utf-8;',
+    })
+  );
+
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download = 'campusmart-operations.csv';
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export const HeroManagerDashboardPage: React.FC = () => {
+  const [params, setParams] = useSearchParams();
+
+  const tab = params.get('tab') || 'overview';
+
+  const [access, setAccess] =
+    useState<ManagerAccess | null>(null);
+
+  const [data, setData] =
+    useState<ManagerOverview | null>(null);
+
+  const [collegeId, setCollegeId] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [working, setWorking] = useState(false);
+
+  const [error, setError] = useState('');
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('ALL');
+
+  const [selectedId, setSelectedId] =
+    useState<string | null>(null);
+
+  const [assignedHero, setAssignedHero] = useState('');
+  const [assignmentReason, setAssignmentReason] =
+    useState('');
+
+  const [taskEvents, setTaskEvents] =
+    useState<ManagerEvent[]>([]);
+
+  const [taskProofs, setTaskProofs] =
+    useState<ManagerProof[]>([]);
+
+  const [messages, setMessages] =
+    useState<ManagerMessage[]>([]);
+
+  const [recipient, setRecipient] = useState('');
+  const [message, setMessage] = useState('');
+
+  const [detailError, setDetailError] = useState('');
+  const [detailLoading, setDetailLoading] =
+    useState(false);
+
+  const [notes, setNotes] =
+    useState<Record<string, string>>({});
+
+  const [announcementTitle, setAnnouncementTitle] =
+    useState('');
+
+  const [announcementContent, setAnnouncementContent] =
+    useState('');
+
+  const [priority, setPriority] = useState('NORMAL');
+
+  const [managerId, setManagerId] = useState('');
+  const [managerCampus, setManagerCampus] = useState('');
+
+  const [managers, setManagers] =
+    useState<ManagerAssignment[]>([]);
+
+  const refresh = () =>
+    setRefreshKey((previous) => previous + 1);
+
+  const navigateTab = (nextTab: string) => {
+    setParams({ tab: nextTab });
+    setSearch('');
+    setFilter('ALL');
+    setMobileOpen(false);
+    setSelectedId(null);
+  };
+
+  // Load current access and authorized colleges.
+
+  useEffect(() => {
+    let cancelled = false;
+
+    heroManagerApi
+      .getAccess()
+      .then((result) => {
+        if (cancelled) return;
+
+        setAccess(result);
+
+        if (!result.canManage) {
+          setError(
+            'An administrator must grant you Campus Hero Manager access.'
+          );
+          return;
+        }
+
+        setCollegeId(
+          result.managerColleges[0]?.id || ''
+        );
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(errorMessage(err));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Fetch current campus operations.
+  // Automatically refresh every 30 seconds.
+
+  useEffect(() => {
+    if (!collegeId || !access?.canManage) return;
+
+    let cancelled = false;
+    let fetching = false;
+
+    const load = async () => {
+      if (fetching) return;
+
+      fetching = true;
+
+      try {
+        const result =
+          await heroManagerApi.getOverview(collegeId);
+
+        if (!cancelled) {
+          if (result.college?.id !== collegeId) {
+            throw new Error(
+              'You no longer have access to this campus.'
+            );
+          }
+
+          setData(result);
+          setError('');
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setData(null);
+          setSelectedId(null);
+          setError(errorMessage(err));
+        }
+      } finally {
+        fetching = false;
+      }
+    };
+
+    void load();
+
+    const timer = window.setInterval(load, 30000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [collegeId, access, refreshKey]);
+
+  // Load selected task messages and history.
+
+  useEffect(() => {
+    if (!selectedId) return;
+
+    let cancelled = false;
+
+    setDetailLoading(true);
+    setDetailError('');
+
+    Promise.all([
+      heroManagerApi.getTaskHistory(selectedId),
+      heroManagerApi.getMessages(selectedId),
+    ])
+      .then(([history, conversation]) => {
+        if (cancelled) return;
+
+        setTaskEvents(history.events);
+        setTaskProofs(history.proofs);
+        setMessages(conversation);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setTaskEvents([]);
+          setTaskProofs([]);
+          setMessages([]);
+          setDetailError(errorMessage(err));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setDetailLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId, refreshKey]);
+
+  // Admin-only manager assignment list.
+
+  useEffect(() => {
+    if (
+      tab !== 'access' ||
+      access?.user?.role !== 'ADMIN'
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    heroManagerApi
+      .getManagers()
+      .then((result) => {
+        if (!cancelled) setManagers(result);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          toast.error(errorMessage(err));
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, access, refreshKey]);
+
+  const performAction = async (
+    action: () => Promise<unknown>,
+    success: string
+  ) => {
+    if (working) return;
+
+    setWorking(true);
+
+    try {
+      await action();
+
+      toast.success(success, {
+        duration: 4000,
+        className: 'campus-admin-success-toast',
+      });
+
+      refresh();
+    } catch (err) {
+      toast.error('Action unsuccessful', {
+        description: errorMessage(err),
+        duration: 6000,
+        className: 'campus-admin-error-toast',
+      });
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const openTask = (task: ManagerTask) => {
+    setSelectedId(task.id);
+    setAssignedHero(task.assigned_hero_id || '');
+    setAssignmentReason('');
+    setRecipient('');
+    setMessage('');
+    setTaskEvents([]);
+    setTaskProofs([]);
+    setMessages([]);
+    setDetailError('');
+  };
+
+  const selectedTask =
+    data?.tasks.find(
+      (task) => task.id === selectedId
+    ) || null;
+
+  const tasks = data?.tasks || [];
+  const heroes = data?.heroes || [];
+
+  const matchesSearch = (value: string) =>
+    value
+      .toLowerCase()
+      .includes(search.trim().toLowerCase());
+
+  const filteredTasks = tasks.filter((task) => {
+    const matches = matchesSearch(
+      `${task.product.name} ${task.id} ${task.assigned_hero?.name || ''
+      }`
+    );
+
+    const matchesFilter =
+      filter === 'ALL' ||
+      (filter === 'UNASSIGNED'
+        ? !task.assigned_hero_id &&
+        ACTIVE.includes(task.status)
+        : task.status === filter);
+
+    return matches && matchesFilter;
+  });
+
+  const renderTasks = (items: ManagerTask[]) => {
+    if (!items.length) {
+      return <Empty title="No matching tasks found." />;
+    }
+
+    return (
+      <div className="space-y-3">
+        {items.map((task) => (
+          <div
+            key={task.id}
+            className="flex flex-wrap items-center gap-4 rounded-xl border border-white/10 bg-[#181D14] p-4"
+          >
+            {task.product.image_url ? (
+              <img
+                src={task.product.image_url}
+                alt={task.product.name}
+                className="h-14 w-14 rounded-xl object-cover"
+              />
+            ) : (
+              <Package className="h-10 w-10 text-stone-500" />
+            )}
+
+            <div className="min-w-[150px] flex-1">
+              <h4 className="text-sm font-bold">
+                {task.product.name}
+              </h4>
+
+              <p className="mt-1 text-xs text-stone-400">
+                {formatStatus(task.task_type)}
+                {' · '}
+                {task.college.code}
+              </p>
+
+              <p className="mt-1 text-[11px] text-stone-500">
+                {task.assigned_hero?.name ||
+                  'Awaiting Hero assignment'}
+              </p>
+            </div>
+
+            <Status value={task.status} />
+
+            <button
+              className={secondary}
+              onClick={() => openTask(task)}
+            >
+              View Details
+              <ArrowRight size={14} />
+            </button>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const stats = data
+    ? [
+      {
+        name: 'Approved Heroes',
+        value: data.stats.heroes,
+        icon: Users,
+      },
+      {
+        name: 'Active Tasks',
+        value: data.stats.active,
+        icon: ClipboardCheck,
+      },
+      {
+        name: 'Unassigned Tasks',
+        value: data.stats.unassigned,
+        icon: Package,
+      },
+      {
+        name: 'Completed Tasks',
+        value: data.stats.completed,
+        icon: CheckCircle2,
+      },
+      {
+        name: 'Tasks Older Than 48h',
+        value: data.stats.aging,
+        icon: Clock,
+      },
+      {
+        name: 'Open Issues',
+        value: data.stats.open_issues,
+        icon: AlertTriangle,
+      },
+    ]
+    : [];
+
+  const isAdmin = access?.user?.role === 'ADMIN';
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#090B09] text-[#C6DE41]">
+        <Loader2 className="animate-spin" />
+      </div>
+    );
+  }
+
+  if (!access?.canManage) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#090B09] p-6 text-white">
+        <div className={panel}>
+          <ShieldCheck
+            size={36}
+            className="mb-4 text-[#C6DE41]"
+          />
+
+          <h2 className="text-xl font-bold">
+            Manager access required
+          </h2>
+
+          <p className="my-4 max-w-md text-sm text-stone-400">
+            {error ||
+              'You are not authorized to manage campus operations.'}
+          </p>
+
+          <Link to="/" className={secondary}>
+            Return to CampusMart
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#090B09] text-[#F5F7F0]">
+      {/* SIDEBAR */}
+
+      {mobileOpen && (
+        <button
+          aria-label="Close navigation"
+          onClick={() => setMobileOpen(false)}
+          className="fixed inset-0 z-40 bg-black/70 lg:hidden"
+        />
+      )}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-[255px] flex-col border-r border-white/10 bg-[#12160F] transition-transform lg:translate-x-0 ${mobileOpen
+            ? 'translate-x-0'
+            : '-translate-x-full'
+          }`}
+      >
+        <div className="border-b border-white/10 p-6">
+          <div className="flex items-center gap-2">
+            <ShieldCheck
+              size={24}
+              className="text-[#C6DE41]"
+            />
+
+            <span className="text-xl font-extrabold tracking-tight">
+              CampusMart
+            </span>
+          </div>
+
+          <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-[#C6DE41]">
+            Hero Manager
+          </p>
+        </div>
+
+        <nav className="flex-1 space-y-7 overflow-y-auto p-3">
+          {navigation.map((group) => (
+            <div key={group.label}>
+              <p className="mb-3 px-3 text-[10px] font-bold tracking-wider text-stone-500">
+                {group.label}
+              </p>
+
+              {group.items.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() =>
+                      navigateTab(item.id)
+                    }
+                    className={`mb-1 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-xs font-semibold transition-colors ${tab === item.id
+                        ? 'bg-[#C6DE41] text-[#090B09]'
+                        : 'text-stone-300 hover:bg-white/5'
+                      }`}
+                  >
+                    <Icon size={17} />
+                    {item.title}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+
+          {isAdmin && (
+            <button
+              onClick={() => navigateTab('access')}
+              className={`flex w-full items-center gap-3 rounded-xl p-3 text-xs font-semibold ${tab === 'access'
+                  ? 'bg-[#C6DE41] text-[#090B09]'
+                  : 'text-stone-300 hover:bg-white/5'
+                }`}
+            >
+              <Settings size={17} />
+              Manager Access
+            </button>
+          )}
+        </nav>
+
+        <div className="border-t border-white/10 p-4">
+          <div className="mb-4 flex items-center gap-3">
+            <Avatar name={access.user?.name || 'M'} />
+
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold">
+                {access.user?.name}
+              </p>
+
+              <p className="text-[11px] text-stone-500">
+                Operations Manager
+              </p>
+            </div>
+          </div>
+
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-xs text-stone-400 hover:text-[#C6DE41]"
+          >
+            <ArrowLeft size={14} />
+            Return to CampusMart
+          </Link>
+        </div>
+      </aside>
+
+      {/* MAIN WORKSPACE */}
+
+      <main className="min-w-0 lg:ml-[255px]">
+        <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-[#090B09]/95 px-5 py-4 backdrop-blur">
+          <div className="flex items-center gap-3">
+            <button
+              className="lg:hidden"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open navigation"
+            >
+              <Menu size={22} />
+            </button>
+
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[#C6DE41]">
+                Campus Operations
+              </p>
+
+              <p className="mt-1 text-sm font-semibold">
+                Manager Workspace
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={collegeId}
+              disabled={working}
+              onChange={(e) => {
+                setSelectedId(null);
+                setData(null);
+                setCollegeId(e.target.value);
+              }}
+              className={`${field} w-auto max-w-[220px] py-2`}
+            >
+              {!access.managerColleges.length && (
+                <option value="">
+                  No campus assigned
+                </option>
+              )}
+
+              {access.managerColleges.map((college) => (
+                <option
+                  key={college.id}
+                  value={college.id}
+                >
+                  {college.code} Campus
+                </option>
+              ))}
+            </select>
+
+            <button
+              onClick={refresh}
+              disabled={working}
+              className={secondary}
+              aria-label="Refresh dashboard"
+            >
+              <RefreshCw size={16} />
+            </button>
+          </div>
+        </header>
+
+        <div className="mx-auto max-w-[1600px] space-y-6 p-5 md:p-8">
+          {error && (
+            <div
+              role="alert"
+              className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-300"
+            >
+              {error}
+            </div>
+          )}
+
+          {!data && tab !== 'access' && !error && (
+            <Empty
+              title={
+                collegeId
+                  ? 'Loading campus operations...'
+                  : 'No authorized campus is available.'
+              }
+            />
+          )}
+
+          {/* OVERVIEW */}
+
+          {data && tab === 'overview' && (
+            <>
+              <div>
+                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-[#C6DE41]">
+                  Operations Overview
+                </p>
+
+                <h1 className="text-3xl font-extrabold tracking-tight md:text-4xl">
+                  Campus Operations Center
+                </h1>
+
+                <p className="mt-2 text-sm text-stone-400">
+                  Monitor Heroes, coordinate handovers
+                  and manage {data.college.code} operations.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
+                {stats.map((stat) => {
+                  const Icon = stat.icon;
+
+                  return (
+                    <div
+                      key={stat.name}
+                      className={panel}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs text-stone-400">
+                          {stat.name}
+                        </p>
+
+                        <Icon
+                          size={19}
+                          className="shrink-0 text-[#C6DE41]"
+                        />
+                      </div>
+
+                      <p className="mt-4 text-3xl font-black tracking-tight">
+                        {stat.value}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="grid gap-5 xl:grid-cols-2">
+                <section className={panel}>
+                  <h2 className="mb-5 font-bold">
+                    Unassigned Tasks
+                  </h2>
+
+                  {renderTasks(
+                    tasks
+                      .filter(
+                        (task) =>
+                          !task.assigned_hero_id &&
+                          ACTIVE.includes(task.status)
+                      )
+                      .slice(0, 5)
+                  )}
+
+                  <button
+                    onClick={() =>
+                      navigateTab('assignments')
+                    }
+                    className="mt-4 text-xs font-bold text-[#C6DE41]"
+                  >
+                    Open Assignment Center →
+                  </button>
+                </section>
+
+                <section className={panel}>
+                  <h2 className="mb-5 font-bold">
+                    Recent Hero Activity
+                  </h2>
+
+                  <EventList
+                    events={data.events.slice(0, 6)}
+                  />
+
+                  <button
+                    className="mt-4 text-xs font-bold text-[#C6DE41]"
+                    onClick={() =>
+                      navigateTab('activity')
+                    }
+                  >
+                    View All Activity →
+                  </button>
+                </section>
+              </div>
+            </>
+          )}
+
+          {/* CAMPUS HERO DIRECTORY */}
+
+          {data && tab === 'heroes' && (
+            <>
+              <h1 className="text-3xl font-extrabold">
+                Campus Heroes
+              </h1>
+
+              <input
+                className={`${field} max-w-md`}
+                placeholder="Search approved Heroes..."
+                value={search}
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
+              />
+
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {heroes
+                  .filter((hero) =>
+                    matchesSearch(
+                      `${hero.name} ${hero.email}`
+                    )
+                  )
+                  .map((hero) => (
+                    <div key={hero.id} className={panel}>
+                      <div className="flex items-center gap-3">
+                        <Avatar name={hero.name} />
+
+                        <div className="min-w-0">
+                          <p className="truncate font-bold">
+                            {hero.name}
+                          </p>
+
+                          <p className="truncate text-xs text-stone-400">
+                            {hero.email}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="my-4">
+                        <Status value={hero.availability} />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="rounded-xl bg-[#181D14] p-3">
+                          <p className="text-xs text-stone-400">
+                            Active Tasks
+                          </p>
+
+                          <p className="mt-2 text-xl font-bold">
+                            {hero.active_tasks}
+                          </p>
+                        </div>
+
+                        <div className="rounded-xl bg-[#181D14] p-3">
+                          <p className="text-xs text-stone-400">
+                            Completed
+                          </p>
+
+                          <p className="mt-2 text-xl font-bold text-[#C6DE41]">
+                            {hero.completed_tasks}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        className={`${secondary} mt-4 w-full`}
+                        onClick={() => {
+                          navigateTab('tasks');
+                          setSearch(hero.name);
+                        }}
+                      >
+                        View Hero Tasks
+                        <ArrowRight size={14} />
+                      </button>
+                    </div>
+                  ))}
+              </div>
+
+              {!heroes.filter((hero) =>
+                matchesSearch(
+                  `${hero.name} ${hero.email}`
+                )
+              ).length && (
+                  <Empty title="No matching approved Campus Heroes." />
+                )}
+            </>
+          )}
+
+          {/* TASKS AND ASSIGNMENTS */}
+
+          {data &&
+            ['assignments', 'tasks', 'messages'].includes(
+              tab
+            ) && (
+              <>
+                <h1 className="text-3xl font-extrabold">
+                  {tab === 'assignments'
+                    ? 'Task Assignment Center'
+                    : tab === 'messages'
+                      ? 'Task Communications'
+                      : 'All Campus Tasks'}
+                </h1>
+
+                <div className="flex flex-wrap gap-3">
+                  <div className="relative w-full max-w-md">
+                    <Search
+                      size={16}
+                      className="absolute left-3 top-4 text-stone-500"
+                    />
+
+                    <input
+                      value={search}
+                      onChange={(e) =>
+                        setSearch(e.target.value)
+                      }
+                      className={`${field} pl-10`}
+                      placeholder="Search product, task or Hero..."
+                    />
+                  </div>
+
+                  <select
+                    value={filter}
+                    onChange={(e) =>
+                      setFilter(e.target.value)
+                    }
+                    className={`${field} w-auto`}
+                  >
+                    {[
+                      'ALL',
+                      'UNASSIGNED',
+                      'ASSIGNED',
+                      'PICKED_UP',
+                      'DELIVERED',
+                      'COMPLETED',
+                      'CANCELLED',
+                    ].map((status) => (
+                      <option key={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <section className={panel}>
+                  {renderTasks(
+                    tab === 'assignments'
+                      ? filteredTasks.filter((task) =>
+                        ACTIVE.includes(task.status)
+                      )
+                      : filteredTasks
+                  )}
+                </section>
+              </>
+            )}
+
+          {/* HERO ACTIVITY */}
+
+          {data && tab === 'activity' && (
+            <>
+              <h1 className="text-3xl font-extrabold">
+                Hero Activity
+              </h1>
+
+              <input
+                className={`${field} max-w-md`}
+                placeholder="Search Hero, event or task ID..."
+                value={search}
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
+              />
+
+              <section className={panel}>
+                <EventList
+                  events={data.events.filter((event) =>
+                    matchesSearch(
+                      `${event.actor.name} ${event.action} ${event.task_id} ${event.details || ''
+                      }`
+                    )
+                  )}
+                />
+              </section>
+            </>
+          )}
+
+          {/* ISSUES AND ESCALATIONS */}
+
+          {data && tab === 'issues' && (
+            <>
+              <h1 className="text-3xl font-extrabold">
+                Issues & Escalations
+              </h1>
+
+              {!data.issues.length && (
+                <Empty title="No operational issues reported." />
+              )}
+
+              {data.issues.map((issue) => (
+                <section key={issue.id} className={panel}>
+                  <div className="flex flex-wrap justify-between gap-3">
+                    <div>
+                      <h3 className="font-bold">
+                        {issue.category}
+                      </h3>
+
+                      <p className="mt-1 text-xs text-stone-400">
+                        Reported by {issue.reporter}
+                        {' · '}
+                        {formatDate(issue.created_at)}
+                      </p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Status value={issue.severity} />
+                      <Status value={issue.status} />
+                    </div>
+                  </div>
+
+                  <p className="my-4 break-words text-sm text-stone-300">
+                    {issue.description}
+                  </p>
+
+                  {issue.resolution_notes && (
+                    <p className="mb-4 text-xs text-stone-400">
+                      Previous notes: {issue.resolution_notes}
+                    </p>
+                  )}
+
+                  {issue.status !== 'RESOLVED' && (
+                    <>
+                      <textarea
+                        rows={3}
+                        className={field}
+                        placeholder="Enter resolution or escalation notes..."
+                        value={notes[issue.id] || ''}
+                        onChange={(e) =>
+                          setNotes((previous) => ({
+                            ...previous,
+                            [issue.id]: e.target.value,
+                          }))
+                        }
+                      />
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {[
+                          'UNDER_REVIEW',
+                          'ESCALATED',
+                          'RESOLVED',
+                        ].map((status) => (
+                          <button
+                            key={status}
+                            disabled={working}
+                            className={
+                              status === 'RESOLVED'
+                                ? primary
+                                : secondary
+                            }
+                            onClick={() => {
+                              const note =
+                                notes[issue.id] || '';
+
+                              if (
+                                status === 'RESOLVED' &&
+                                note.trim().length < 10
+                              ) {
+                                toast.error(
+                                  'Enter resolution notes of at least 10 characters.'
+                                );
+                                return;
+                              }
+
+                              void performAction(
+                                () =>
+                                  heroManagerApi.resolveIssue(
+                                    issue.id,
+                                    status,
+                                    note
+                                  ),
+                                'Issue status updated.'
+                              );
+                            }}
+                          >
+                            {formatStatus(status)}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </section>
+              ))}
+            </>
+          )}
+
+          {/* VERIFICATION QUEUE */}
+
+          {data && tab === 'verification' && (
+            <>
+              <h1 className="text-3xl font-extrabold">
+                Verification Queue
+              </h1>
+
+              {!data.proofs.length && (
+                <Empty title="No pickup or handover evidence submitted." />
+              )}
+
+              <div className="grid gap-5 xl:grid-cols-2">
+                {data.proofs.map((proof) => (
+                  <section key={proof.id} className={panel}>
+                    <img
+                      src={proof.image_url}
+                      alt={`${proof.kind} evidence`}
+                      className="mb-4 h-56 w-full rounded-xl bg-[#090B09] object-contain"
+                    />
+
+                    <div className="flex justify-between gap-2">
+                      <h3 className="font-bold">
+                        {formatStatus(proof.kind)} Proof
+                      </h3>
+
+                      <Status
+                        value={proof.review_status}
+                      />
+                    </div>
+
+                    <p className="my-3 text-xs text-stone-400">
+                      Uploaded by{' '}
+                      {proof.uploader?.name || 'Hero'}
+                      {' · '}
+                      {formatDate(proof.created_at)}
+                    </p>
+
+                    {proof.review_note && (
+                      <p className="mb-3 text-xs text-stone-400">
+                        {proof.review_note}
+                      </p>
+                    )}
+
+                    <textarea
+                      rows={2}
+                      value={notes[proof.id] || ''}
+                      className={field}
+                      placeholder="Verification notes..."
+                      onChange={(e) =>
+                        setNotes((previous) => ({
+                          ...previous,
+                          [proof.id]: e.target.value,
+                        }))
+                      }
+                    />
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {[
+                        'APPROVED',
+                        'NEEDS_MORE_EVIDENCE',
+                        'FLAGGED',
+                      ].map((status) => (
+                        <button
+                          key={status}
+                          disabled={working}
+                          className={
+                            status === 'APPROVED'
+                              ? primary
+                              : secondary
+                          }
+                          onClick={() => {
+                            const note =
+                              notes[proof.id] || '';
+
+                            if (
+                              status !== 'APPROVED' &&
+                              note.trim().length < 8
+                            ) {
+                              toast.error(
+                                'Provide a review note of at least 8 characters.'
+                              );
+                              return;
+                            }
+
+                            void performAction(
+                              () =>
+                                heroManagerApi.reviewProof(
+                                  proof.id,
+                                  status,
+                                  note
+                                ),
+                              'Verification updated.'
+                            );
+                          }}
+                        >
+                          {formatStatus(status)}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* ANNOUNCEMENTS */}
+
+          {data && tab === 'announcements' && (
+            <>
+              <h1 className="text-3xl font-extrabold">
+                Campus Announcements
+              </h1>
+
+              <section className={panel}>
+                <h2 className="mb-5 font-bold">
+                  Publish Announcement
+                </h2>
+
+                <div className="space-y-4">
+                  <input
+                    className={field}
+                    placeholder="Announcement title"
+                    maxLength={120}
+                    value={announcementTitle}
+                    onChange={(e) =>
+                      setAnnouncementTitle(e.target.value)
+                    }
+                  />
+
+                  <textarea
+                    rows={5}
+                    className={field}
+                    maxLength={1200}
+                    placeholder="Write instructions for your Campus Heroes..."
+                    value={announcementContent}
+                    onChange={(e) =>
+                      setAnnouncementContent(
+                        e.target.value
+                      )
+                    }
+                  />
+
+                  <select
+                    value={priority}
+                    className={field}
+                    onChange={(e) =>
+                      setPriority(e.target.value)
+                    }
+                  >
+                    <option value="NORMAL">
+                      Normal Priority
+                    </option>
+                    <option value="URGENT">
+                      Urgent
+                    </option>
+                  </select>
+
+                  <button
+                    className={primary}
+                    disabled={working}
+                    onClick={() => {
+                      if (
+                        announcementTitle.trim().length < 3 ||
+                        announcementContent.trim().length < 10
+                      ) {
+                        toast.error(
+                          'Enter a title and a message of at least 10 characters.'
+                        );
+                        return;
+                      }
+
+                      void performAction(async () => {
+                        await heroManagerApi.publishAnnouncement(
+                          collegeId,
+                          announcementTitle,
+                          announcementContent,
+                          priority
+                        );
+
+                        setAnnouncementTitle('');
+                        setAnnouncementContent('');
+                      }, 'Announcement published.');
+                    }}
+                  >
+                    <Megaphone size={16} />
+                    Publish Announcement
+                  </button>
+                </div>
+              </section>
+
+              <section className={panel}>
+                <h2 className="mb-5 font-bold">
+                  Announcement History
+                </h2>
+
+                {!data.announcements.length && (
+                  <Empty title="No announcements published." />
+                )}
+
+                {data.announcements.map((item) => (
+                  <div
+                    key={item.id}
+                    className="mb-3 rounded-xl border border-white/10 p-4"
+                  >
+                    <div className="flex justify-between gap-3">
+                      <h3 className="font-bold">
+                        {item.title}
+                      </h3>
+
+                      <Status value={item.priority} />
+                    </div>
+
+                    <p className="my-3 whitespace-pre-wrap break-words text-sm text-stone-400">
+                      {item.content}
+                    </p>
+
+                    <p className="text-xs text-stone-500">
+                      {formatDate(item.created_at)}
+                    </p>
+                  </div>
+                ))}
+              </section>
+            </>
+          )}
+
+          {/* PERFORMANCE ANALYTICS */}
+
+          {data && tab === 'analytics' && (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h1 className="text-3xl font-extrabold">
+                  Performance Analytics
+                </h1>
+
+                <button
+                  className={primary}
+                  onClick={() => exportCSV(tasks)}
+                >
+                  <Download size={16} />
+                  Export Tasks CSV
+                </button>
+              </div>
+
+              <section className={panel}>
+                <h2 className="mb-6 font-bold">
+                  Hero Workload Distribution
+                </h2>
+
+                {heroes.map((hero) => {
+                  const max = Math.max(
+                    1,
+                    ...heroes.map(
+                      (item) => item.active_tasks
+                    )
+                  );
+
+                  return (
+                    <div
+                      key={hero.id}
+                      className="mb-6"
+                    >
+                      <div className="mb-2 flex justify-between text-sm">
+                        <span>{hero.name}</span>
+
+                        <span className="text-[#C6DE41]">
+                          {hero.active_tasks} active
+                        </span>
+                      </div>
+
+                      <div className="h-2 overflow-hidden rounded-full bg-white/5">
+                        <div
+                          className="h-full rounded-full bg-[#C6DE41] transition-all"
+                          style={{
+                            width: `${(hero.active_tasks / max) *
+                              100
+                              }%`,
+                          }}
+                        />
+                      </div>
+
+                      <p className="mt-2 text-xs text-stone-500">
+                        {hero.completed_tasks} completed
+                        tasks
+                      </p>
+                    </div>
+                  );
+                })}
+
+                {!heroes.length && (
+                  <Empty title="No Hero performance data." />
+                )}
+              </section>
+
+              <section className={panel}>
+                <h2 className="mb-4 font-bold">
+                  Task Status Breakdown
+                </h2>
+
+                {[
+                  'ASSIGNED',
+                  'PICKED_UP',
+                  'DELIVERED',
+                  'COMPLETED',
+                  'CANCELLED',
+                ].map((status) => (
+                  <div
+                    key={status}
+                    className="flex justify-between border-b border-white/5 py-3 text-sm"
+                  >
+                    <Status value={status} />
+
+                    <span>
+                      {
+                        tasks.filter(
+                          (task) =>
+                            task.status === status
+                        ).length
+                      }
+                    </span>
+                  </div>
+                ))}
+              </section>
+            </>
+          )}
+
+          {/* OPERATIONAL NOTIFICATIONS */}
+
+          {data && tab === 'notifications' && (
+            <>
+              <h1 className="text-3xl font-extrabold">
+                Operational Notifications
+              </h1>
+
+              <section className={panel}>
+                {data.issues
+                  .filter(
+                    (issue) =>
+                      issue.status !== 'RESOLVED'
+                  )
+                  .map((issue) => (
+                    <button
+                      key={issue.id}
+                      onClick={() =>
+                        navigateTab('issues')
+                      }
+                      className="mb-3 flex w-full items-center gap-3 rounded-xl border border-amber-400/20 p-4 text-left text-sm"
+                    >
+                      <AlertTriangle
+                        size={18}
+                        className="text-amber-300"
+                      />
+
+                      <span className="flex-1">
+                        {issue.category} — {issue.reporter}
+                      </span>
+
+                      <Status value={issue.severity} />
+                    </button>
+                  ))}
+
+                <EventList
+                  events={data.events.slice(0, 15)}
+                />
+              </section>
+            </>
+          )}
+
+          {/* MANAGER PROFILE */}
+
+          {data && tab === 'profile' && (
+            <section className={panel}>
+              <h1 className="mb-6 text-2xl font-bold">
+                Manager Profile
+              </h1>
+
+              <div className="flex items-center gap-4">
+                <Avatar
+                  name={access.user?.name || 'Manager'}
+                />
+
+                <div>
+                  <p className="font-bold">
+                    {access.user?.name}
+                  </p>
+
+                  <p className="text-sm text-stone-400">
+                    {access.user?.email}
+                  </p>
+                </div>
+              </div>
+
+              <div className="my-5 space-y-3 text-sm text-stone-400">
+                <p>Phone: {access.user?.phone}</p>
+
+                <p>
+                  Authorized campuses:{' '}
+                  {access.managerColleges
+                    .map((college) => college.code)
+                    .join(', ')}
+                </p>
+              </div>
+
+              <Link
+                to="/settings"
+                className={secondary}
+              >
+                <Settings size={16} />
+                Account Settings
+              </Link>
+            </section>
+          )}
+
+          {/* ADMIN-ONLY MANAGER ACCESS */}
+
+          {tab === 'access' && isAdmin && (
+            <>
+              <h1 className="text-3xl font-extrabold">
+                Manager Access Management
+              </h1>
+
+              <section className={panel}>
+                <h2 className="mb-2 font-bold">
+                  Assign a Campus Manager
+                </h2>
+
+                <p className="mb-5 text-xs text-stone-400">
+                  Grant an existing CampusMart user
+                  management permissions for a specific
+                  college without making them an Admin.
+                </p>
+
+                <div className="space-y-4">
+                  <input
+                    className={field}
+                    value={managerId}
+                    onChange={(e) =>
+                      setManagerId(e.target.value)
+                    }
+                    placeholder="CampusMart User ID"
+                  />
+
+                  <select
+                    className={field}
+                    value={managerCampus}
+                    onChange={(e) =>
+                      setManagerCampus(e.target.value)
+                    }
+                  >
+                    <option value="">
+                      Select a college
+                    </option>
+
+                    {access.managerColleges.map(
+                      (college) => (
+                        <option
+                          key={college.id}
+                          value={college.id}
+                        >
+                          {college.code} — {college.name}
+                        </option>
+                      )
+                    )}
+                  </select>
+
+                  <button
+                    className={primary}
+                    disabled={working}
+                    onClick={() => {
+                      if (
+                        !managerId.trim() ||
+                        !managerCampus
+                      ) {
+                        toast.error(
+                          'Select a user and college.'
+                        );
+                        return;
+                      }
+
+                      void performAction(async () => {
+                        await heroManagerApi.grantManagerAccess(
+                          managerId.trim(),
+                          managerCampus
+                        );
+
+                        setManagerId('');
+                      }, 'Manager access granted.');
+                    }}
+                  >
+                    <ShieldCheck size={16} />
+                    Grant Manager Access
+                  </button>
+                </div>
+              </section>
+
+              <section className={panel}>
+                <h2 className="mb-5 font-bold">
+                  Current Manager Assignments
+                </h2>
+
+                {!managers.length && (
+                  <Empty title="No manager assignments found." />
+                )}
+
+                {managers.map((manager) => (
+                  <div
+                    key={manager.id}
+                    className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 p-4"
+                  >
+                    <div>
+                      <p className="text-sm font-bold">
+                        {manager.user.name}
+                      </p>
+
+                      <p className="mt-1 text-xs text-stone-400">
+                        {manager.user.email}
+                        {' · '}
+                        {manager.college.code}
+                      </p>
+                    </div>
+
+                    <Status
+                      value={
+                        manager.is_active
+                          ? 'AVAILABLE'
+                          : 'OFF_DUTY'
+                      }
+                    />
+
+                    {manager.is_active && (
+                      <button
+                        disabled={working}
+                        className="rounded-lg border border-red-400/20 px-3 py-2 text-xs text-red-300"
+                        onClick={() => {
+                          if (
+                            !window.confirm(
+                              'Revoke manager access for this college?'
+                            )
+                          ) {
+                            return;
+                          }
+
+                          void performAction(
+                            () =>
+                              heroManagerApi.revokeManagerAccess(
+                                manager.id
+                              ),
+                            'Manager access revoked.'
+                          );
+                        }}
+                      >
+                        Revoke Access
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </section>
+            </>
+          )}
+
+          {data && (
+            <p className="text-[11px] text-stone-500">
+              Statistics reflect the records returned by
+              the current campus operations API.
+              Operational completion does not confirm
+              payment settlement.
+            </p>
+          )}
+        </div>
+      </main>
+
+      {/* TASK DETAIL AND ASSIGNMENT DRAWER */}
+
+      {selectedTask && (
+        <div className="fixed inset-0 z-[100] flex justify-end bg-black/70">
+          <button
+            aria-label="Close task details"
+            className="absolute inset-0"
+            onClick={() => {
+              if (!working) setSelectedId(null);
+            }}
+          />
+
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-label="Task details"
+            className="relative flex h-full w-full max-w-[850px] flex-col border-l border-white/10 bg-[#12160F] shadow-2xl"
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-white/10 p-6">
+              <div>
+                <p className="text-xs font-bold uppercase text-[#C6DE41]">
+                  Task Details
+                </p>
+
+                <h2 className="mt-2 text-xl font-bold">
+                  {selectedTask.product.name}
+                </h2>
+              </div>
+
+              <button
+                disabled={working}
+                onClick={() => setSelectedId(null)}
+                aria-label="Close task details"
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            <div className="flex-1 space-y-5 overflow-y-auto p-5 md:p-6">
+              {detailError && (
+                <p className="rounded-xl bg-red-400/10 p-3 text-xs text-red-300">
+                  {detailError}
+                </p>
+              )}
+
+              <div className={panel}>
+                <div className="flex justify-between">
+                  <h3 className="font-bold">
+                    Task Information
+                  </h3>
+
+                  <Status value={selectedTask.status} />
+                </div>
+
+                <div className="mt-4 space-y-3 text-sm text-stone-400">
+                  <p>Task ID: {selectedTask.id}</p>
+
+                  <p>
+                    Hero:{' '}
+                    {selectedTask.assigned_hero?.name ||
+                      'Unassigned'}
+                  </p>
+
+                  <p>
+                    Seller:{' '}
+                    {selectedTask.seller?.name ||
+                      'Not applicable'}
+                  </p>
+
+                  <p>
+                    Buyer:{' '}
+                    {selectedTask.buyer?.name ||
+                      'Not applicable'}
+                  </p>
+
+                  <p>
+                    Condition:{' '}
+                    {selectedTask.condition || 'Unknown'}
+                  </p>
+
+                  <p>
+                    Pickup notes:{' '}
+                    {selectedTask.pickup_notes ||
+                      'No notes'}
+                  </p>
+
+                  <p>
+                    Delivery notes:{' '}
+                    {selectedTask.delivery_notes ||
+                      'No notes'}
+                  </p>
+
+                  <p>
+                    Due:{' '}
+                    {formatDate(selectedTask.due_at)}
+                  </p>
+                </div>
+
+                <div className="mt-4 grid grid-cols-3 gap-2">
+                  {selectedTask.photos.map(
+                    (photo, index) => (
+                      <img
+                        key={index}
+                        src={photo}
+                        alt={`Seller item ${index + 1}`}
+                        className="h-24 w-full rounded-lg object-cover"
+                      />
+                    )
+                  )}
+                </div>
+              </div>
+
+              {/* ASSIGN HERO */}
+
+              {selectedTask.status === 'ASSIGNED' && (
+                <div className={panel}>
+                  <h3 className="mb-4 font-bold">
+                    Assign / Reassign Hero
+                  </h3>
+
+                  <select
+                    className={field}
+                    value={assignedHero}
+                    onChange={(e) =>
+                      setAssignedHero(e.target.value)
+                    }
+                  >
+                    <option value="">
+                      Unassigned
+                    </option>
+
+                    {heroes.map((hero) => (
+                      <option
+                        key={hero.id}
+                        value={hero.id}
+                        disabled={
+                          hero.availability === 'OFF_DUTY'
+                        }
+                      >
+                        {hero.name} — {hero.active_tasks}{' '}
+                        active tasks — {hero.availability}
+                      </option>
+                    ))}
+                  </select>
+
+                  <textarea
+                    rows={3}
+                    className={`${field} mt-3`}
+                    placeholder="Reason for reassignment..."
+                    value={assignmentReason}
+                    onChange={(e) =>
+                      setAssignmentReason(e.target.value)
+                    }
+                  />
+
+                  <button
+                    disabled={
+                      working ||
+                      (selectedTask.assigned_hero_id || '') ===
+                      assignedHero
+                    }
+                    className={`${primary} mt-3`}
+                    onClick={() => {
+                      if (
+                        selectedTask.assigned_hero_id &&
+                        assignmentReason.trim().length < 8
+                      ) {
+                        toast.error(
+                          'Provide a reassignment reason of at least 8 characters.'
+                        );
+                        return;
+                      }
+
+                      void performAction(
+                        () =>
+                          heroManagerApi.assignTask(
+                            selectedTask.id,
+                            assignedHero || null,
+                            assignmentReason
+                          ),
+                        'Task assignment updated.'
+                      );
+                    }}
+                  >
+                    <ClipboardCheck size={16} />
+                    Confirm Assignment
+                  </button>
+                </div>
+              )}
+
+              {/* TASK TIMELINE */}
+
+              <div className={panel}>
+                <h3 className="mb-5 font-bold">
+                  Activity Timeline
+                </h3>
+
+                {detailLoading ? (
+                  <p className="text-xs text-stone-400">
+                    Loading task history...
+                  </p>
+                ) : (
+                  <EventList events={taskEvents} />
+                )}
+              </div>
+
+              {/* EVIDENCE */}
+
+              <div className={panel}>
+                <h3 className="mb-4 font-bold">
+                  Submitted Evidence
+                </h3>
+
+                {!taskProofs.length && (
+                  <p className="text-xs text-stone-500">
+                    No evidence uploaded yet.
+                  </p>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                  {taskProofs.map((proof) => (
+                    <div key={proof.id}>
+                      <img
+                        src={proof.image_url}
+                        alt="Handover proof"
+                        className="mb-2 h-32 w-full rounded-lg object-cover"
+                      />
+
+                      <Status
+                        value={proof.review_status}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* TASK MESSAGING */}
+
+              <div className={panel}>
+                <h3 className="mb-4 font-bold">
+                  Task Conversation
+                </h3>
+
+                <div className="mb-4 max-h-[300px] space-y-3 overflow-y-auto">
+                  {messages.map((item) => (
+                    <div
+                      key={item.id}
+                      className={`rounded-xl p-3 ${item.is_mine
+                          ? 'bg-[#C6DE41]/10'
+                          : 'bg-white/5'
+                        }`}
+                    >
+                      <p className="text-xs font-bold text-[#C6DE41]">
+                        {item.sender_name}
+                      </p>
+
+                      <p className="my-2 whitespace-pre-wrap break-words text-sm">
+                        {item.content}
+                      </p>
+
+                      <p className="text-[10px] text-stone-500">
+                        {formatDate(item.created_at)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <select
+                  className={field}
+                  value={recipient}
+                  onChange={(e) =>
+                    setRecipient(e.target.value)
+                  }
+                >
+                  <option value="">
+                    Choose recipient
+                  </option>
+
+                  {selectedTask.assigned_hero && (
+                    <option
+                      value={
+                        selectedTask.assigned_hero.id
+                      }
+                    >
+                      Hero:{' '}
+                      {selectedTask.assigned_hero.name}
+                    </option>
+                  )}
+
+                  {selectedTask.seller && (
+                    <option
+                      value={selectedTask.seller.id}
+                    >
+                      Seller: {selectedTask.seller.name}
+                    </option>
+                  )}
+
+                  {selectedTask.buyer && (
+                    <option
+                      value={selectedTask.buyer.id}
+                    >
+                      Buyer: {selectedTask.buyer.name}
+                    </option>
+                  )}
+                </select>
+
+                <textarea
+                  rows={3}
+                  className={`${field} mt-3`}
+                  value={message}
+                  maxLength={2000}
+                  onChange={(e) =>
+                    setMessage(e.target.value)
+                  }
+                  placeholder="Write a task-specific message..."
+                />
+
+                <button
+                  disabled={
+                    working ||
+                    !recipient ||
+                    !message.trim()
+                  }
+                  className={`${primary} mt-3`}
+                  onClick={() =>
+                    void performAction(async () => {
+                      await heroManagerApi.sendMessage(
+                        selectedTask.id,
+                        recipient,
+                        message
+                      );
+
+                      setMessage('');
+                    }, 'Message sent.')
+                  }
+                >
+                  <Send size={16} />
+                  Send Message
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
+    </div>
+  );
 };
+
 export default HeroManagerDashboardPage;

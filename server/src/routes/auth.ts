@@ -108,8 +108,9 @@ router.post('/register', async (req: Request, res: Response) => {
 });
 
 // POST /api/auth/login
-router.post('/login', async (req: Request, res: Response) => {
-  try {
+router.post(
+  ['/login', '/manager-login'],
+  async (req: Request, res: Response) => {  try {
     const { email, password } = req.body;
 
     if (!email || !password) {

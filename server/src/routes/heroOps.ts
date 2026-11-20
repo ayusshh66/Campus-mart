@@ -367,6 +367,13 @@ router.patch('/manager/tasks/:id/assign', requireManager, async (req: OpsRequest
         if (!t) return bad(res, 404, 'Task not found');
         if (!(req.ops!.admin || req.ops!.managerCollegeIds.includes(t.college_id))) return bad(res, 403, 'Outside assigned college');
         if (!ACTIVE.includes(t.status)) return bad(res, 409, 'Cannot reassign completed or cancelled tasks.');
+        if (t.status !== 'ASSIGNED') {
+  return bad(
+    res,
+    409,
+    'A task cannot be reassigned after the pickup has started.'
+  );
+}
         if (t.assigned_hero_id && t.assigned_hero_id !== heroId && reason.length < 8)
             return bad(res, 400, 'Provide an 8+ character reassignment reason.');
         if (heroId) {

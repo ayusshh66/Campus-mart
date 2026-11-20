@@ -2,6 +2,9 @@
 import React from 'react';
 import { Toaster } from 'sonner';
 import { SettingsPage } from './pages/SettingsPage';
+import {
+  HeroManagerDashboardPage,
+} from './pages/HeroManagerDashboardPage';
 import './styles/admin-notifications.css';
 import {
   BrowserRouter,
@@ -117,6 +120,9 @@ const HeroRoute: React.FC<{
 // Main application routes
 const AppRoutes: React.FC = () => {
   const location = useLocation();
+  const isHeroManagerPage =
+    location.pathname === '/hero-manager' ||
+    location.pathname.startsWith('/hero-manager/');
 
   // Temporarily disable all hackathon-related pages.
   const isHackathonRoute =
@@ -130,8 +136,7 @@ const AppRoutes: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#090B09] dark:bg-[#090B09] light:bg-[#F7F8F2] text-[#F5F7F0] dark:text-[#F5F7F0] light:text-[#171B13] selection:bg-[#C6DE41] selection:text-[#090B09] transition-colors duration-200">
-
-      <Navbar />
+{!isHeroManagerPage && <Navbar />}
 
       <main className="flex-grow pb-20 md:pb-0">
         <Routes>
@@ -193,6 +198,15 @@ const AppRoutes: React.FC = () => {
               <HeroRoute>
                 <CampusHeroDashboardPage />
               </HeroRoute>
+            }
+          />
+
+          <Route
+            path="/hero-manager"
+            element={
+              <ProtectedRoute>
+                <HeroManagerDashboardPage />
+              </ProtectedRoute>
             }
           />
 
@@ -277,19 +291,19 @@ const AppRoutes: React.FC = () => {
             element={<Navigate to="/" replace />}
           />
           <Route
-  path="/settings"
-  element={
-    <ProtectedRoute>
-      <SettingsPage />
-    </ProtectedRoute>
-  }
-/>
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
 
         </Routes>
-      
+
       </main>
 
-      <Footer />
+{!isHeroManagerPage && <Footer />}
     </div>
   );
 };

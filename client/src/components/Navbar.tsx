@@ -60,24 +60,24 @@ const MenuItem: React.FC<MenuItemProps> = ({
   }
 
   // Show a disabled Teammates label
-  
-if (!TEAMS_ENABLED && label === 'Teammates') {
-  return (
-    <div
-      aria-label="Teammates — Coming Soon"
-      title="Hackathon matching is launching soon"
-      className="flex cursor-not-allowed select-none flex-col items-center justify-center gap-0.5 px-2.5 py-1.5"
-    >
-      <span className="whitespace-nowrap text-[12px] font-medium leading-4 text-zinc-400 light:text-[#62695E] lg:text-[13px]">
-        Teammates
-      </span>
 
-      <span className="whitespace-nowrap text-[9px] font-medium leading-3 tracking-wide text-[#C6DE41] light:text-[#526800]">
-        Coming Soon
-      </span>
-    </div>
-  );
-}
+  if (!TEAMS_ENABLED && label === 'Teammates') {
+    return (
+      <div
+        aria-label="Teammates — Coming Soon"
+        title="Hackathon matching is launching soon"
+        className="flex cursor-not-allowed select-none flex-col items-center justify-center gap-0.5 px-2.5 py-1.5"
+      >
+        <span className="whitespace-nowrap text-[12px] font-medium leading-4 text-zinc-400 light:text-[#62695E] lg:text-[13px]">
+          Teammates
+        </span>
+
+        <span className="whitespace-nowrap text-[9px] font-medium leading-3 tracking-wide text-[#C6DE41] light:text-[#526800]">
+          Coming Soon
+        </span>
+      </div>
+    );
+  }
 
 
   // Original dropdown behavior for other menus
@@ -92,11 +92,10 @@ if (!TEAMS_ENABLED && label === 'Teammates') {
           to={to}
           aria-current={current ? 'page' : undefined}
           aria-expanded={active === label}
-          className={`block whitespace-nowrap rounded-full px-2.5 py-2 text-[12px] font-medium transition-colors lg:text-[13px] ${
-            current
+          className={`block whitespace-nowrap rounded-full px-2.5 py-2 text-[12px] font-medium transition-colors lg:text-[13px] ${current
               ? 'text-[#C6DE41] font-semibold'
               : 'text-white dark:text-white light:text-[#171B13] hover:text-[#C6DE41] light:hover:text-[#7E9E0A]'
-          }`}
+            }`}
         >
           {label}
         </Link>
@@ -154,14 +153,14 @@ export const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-const [colleges, setColleges] = useState<College[]>([]);
-const [activeMenu, setActiveMenu] = useState<string | null>(null);
-const [showCollegeModal, setShowCollegeModal] = useState(false);
-const [collegeSearch, setCollegeSearch] = useState('');
+  const [colleges, setColleges] = useState<College[]>([]);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [showCollegeModal, setShowCollegeModal] = useState(false);
+  const [collegeSearch, setCollegeSearch] = useState('');
 
-const [showAccountMenu, setShowAccountMenu] = useState(false);
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
 
-  const modalRef = useRef<HTMLDivElement>(null);  
+  const modalRef = useRef<HTMLDivElement>(null);
   const accountMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -198,27 +197,27 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
   }, [showCollegeModal]);
 
   useEffect(() => {
-  const handleAccountClickOutside = (e: MouseEvent) => {
-    if (
-      accountMenuRef.current &&
-      !accountMenuRef.current.contains(e.target as Node)
-    ) {
-      setShowAccountMenu(false);
-    }
-  };
+    const handleAccountClickOutside = (e: MouseEvent) => {
+      if (
+        accountMenuRef.current &&
+        !accountMenuRef.current.contains(e.target as Node)
+      ) {
+        setShowAccountMenu(false);
+      }
+    };
 
-  document.addEventListener(
-    'mousedown',
-    handleAccountClickOutside
-  );
-
-  return () => {
-    document.removeEventListener(
+    document.addEventListener(
       'mousedown',
       handleAccountClickOutside
     );
-  };
-}, []);
+
+    return () => {
+      document.removeEventListener(
+        'mousedown',
+        handleAccountClickOutside
+      );
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -327,19 +326,17 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
               <button
                 type="button"
                 onClick={() => setShowCollegeModal(!showCollegeModal)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all shadow-shop-pill ${
-                  isBrowsingOtherCollege
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all shadow-shop-pill ${isBrowsingOtherCollege
                     ? 'bg-amber-900/30 border border-amber-500/40 text-white dark:text-white light:text-[#171B13]'
                     : 'bg-[#12160F] dark:bg-[#12160F] light:bg-[#FFFFFF] border border-[#C6DE41]/30 dark:border-[#C6DE41]/30 light:border-[#DFE5D5] text-white dark:text-white light:text-[#171B13] hover:border-[#C6DE41]/70'
-                }`}
+                  }`}
                 title="Click to switch active campus"
               >
                 <MapPin
-                  className={`w-3.5 h-3.5 shrink-0 ${
-                    isBrowsingOtherCollege
+                  className={`w-3.5 h-3.5 shrink-0 ${isBrowsingOtherCollege
                       ? 'text-amber-500'
                       : 'text-[#C6DE41]'
-                  }`}
+                    }`}
                 />
 
                 <span className="font-semibold text-white dark:text-white light:text-[#171B13]">
@@ -418,11 +415,10 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
                             setSelectedCollegeId(col.id);
                             setShowCollegeModal(false);
                           }}
-                          className={`w-full flex items-center justify-between p-2.5 rounded-[16px] text-left text-[12px] transition-all ${
-                            isSelected
+                          className={`w-full flex items-center justify-between p-2.5 rounded-[16px] text-left text-[12px] transition-all ${isSelected
                               ? 'bg-[#C6DE41]/20 text-[#C6DE41] font-semibold border border-[#C6DE41]/30'
                               : 'hover:bg-[#C6DE41]/10 text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-white light:hover:text-[#7E9E0A]'
-                          }`}
+                            }`}
                         >
                           <div className="flex flex-col">
                             <div className="flex items-center gap-1.5">
@@ -553,10 +549,10 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
 
                   {(user?.role === 'CAMPUS_HERO' ||
                     user?.role === 'ADMIN') && (
-                    <HoveredLink to="/hero-dashboard">
-                      Hero Operations
-                    </HoveredLink>
-                  )}
+                      <HoveredLink to="/hero-dashboard">
+                        Hero Operations
+                      </HoveredLink>
+                    )}
                 </MenuItem>
 
                 {user && (
@@ -579,22 +575,48 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
 
                 {(user?.role === 'CAMPUS_HERO' ||
                   user?.role === 'ADMIN') && (
-                  <Link
-                    to="/hero-dashboard"
-                    className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-[#C6DE41]"
-                    title="Campus Hero Delivery Operations"
-                  >
-                    Hero Ops
-                  </Link>
-                )}
+                    <Link
+                      to="/hero-dashboard"
+                      className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-[#C6DE41]"
+                      title="Campus Hero Delivery Operations"
+                    >
+                      Hero Ops
+                    </Link>
+                  )}
 
                 {user?.role === 'ADMIN' && (
-                  <Link
-                    to="/admin"
-                    className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-[#C6DE41]"
-                  >
-                    Admin
-                  </Link>
+                  <>
+                    <MenuItem
+                      label="Hero Manager"
+                      to="/hero-manager"
+                      active={activeMenu}
+                      setActive={setActiveMenu}
+                      current={isActive('/hero-manager')}
+                    >
+                      <HoveredLink to="/hero-manager">
+                        Manager Dashboard
+                      </HoveredLink>
+
+                      <HoveredLink to="/hero-manager?tab=heroes">
+                        Manage Campus Heroes
+                      </HoveredLink>
+
+                      <HoveredLink to="/hero-manager?tab=assignments">
+                        Task Assignments
+                      </HoveredLink>
+
+                      <HoveredLink to="/hero-manager?tab=access">
+                        Manage Manager Access
+                      </HoveredLink>
+                    </MenuItem>
+
+                    <Link
+                      to="/admin"
+                      className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-[#C6DE41]"
+                    >
+                      Admin
+                    </Link>
+                  </>
                 )}
               </>
             ) : (
@@ -640,10 +662,10 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
 
                   {(user?.role === 'CAMPUS_HERO' ||
                     user?.role === 'ADMIN') && (
-                    <HoveredLink to="/hero-dashboard">
-                      Hero Operations
-                    </HoveredLink>
-                  )}
+                      <HoveredLink to="/hero-dashboard">
+                        Hero Operations
+                      </HoveredLink>
+                    )}
                 </MenuItem>
 
                 {user && (
@@ -666,14 +688,14 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
 
                 {(user?.role === 'CAMPUS_HERO' ||
                   user?.role === 'ADMIN') && (
-                  <Link
-                    to="/hero-dashboard"
-                    className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-[#C6DE41]"
-                    title="Campus Hero Delivery Operations"
-                  >
-                    Hero Ops
-                  </Link>
-                )}
+                    <Link
+                      to="/hero-dashboard"
+                      className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-[#C6DE41]"
+                      title="Campus Hero Delivery Operations"
+                    >
+                      Hero Ops
+                    </Link>
+                  )}
 
                 {user?.role === 'ADMIN' && (
                   <Link
@@ -707,39 +729,39 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
               <div className="flex items-center gap-2">
                 {/* User Profile */}
                 {user ? (
-  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
 
-    {/* =========================================
+                    {/* =========================================
         ACCOUNT DROPDOWN
     ========================================= */}
 
-    <div
-      ref={accountMenuRef}
-      className="relative"
-      onMouseEnter={() => {
-        setShowAccountMenu(true);
-        setActiveMenu(null);
-      }}
-      onMouseLeave={() => {
-        setShowAccountMenu(false);
-      }}
-    >
+                    <div
+                      ref={accountMenuRef}
+                      className="relative"
+                      onMouseEnter={() => {
+                        setShowAccountMenu(true);
+                        setActiveMenu(null);
+                      }}
+                      onMouseLeave={() => {
+                        setShowAccountMenu(false);
+                      }}
+                    >
 
-      {/* USER PILL */}
+                      {/* USER PILL */}
 
-      <button
-        type="button"
-        onClick={() => {
-          setShowAccountMenu((prev) => !prev);
-          setActiveMenu(null);
-        }}
-        onFocus={() => {
-          setShowAccountMenu(true);
-          setActiveMenu(null);
-        }}
-        aria-expanded={showAccountMenu}
-        aria-haspopup="menu"
-        className="
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAccountMenu((prev) => !prev);
+                          setActiveMenu(null);
+                        }}
+                        onFocus={() => {
+                          setShowAccountMenu(true);
+                          setActiveMenu(null);
+                        }}
+                        aria-expanded={showAccountMenu}
+                        aria-haspopup="menu"
+                        className="
           flex items-center gap-2
           px-3 py-1.5
           rounded-full
@@ -766,12 +788,12 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
 
           shadow-shop-pill
         "
-      >
+                      >
 
-        {/* Avatar */}
+                        {/* Avatar */}
 
-        <div
-          className="
+                        <div
+                          className="
             w-6 h-6
             rounded-full
             bg-[#C6DE41]/20
@@ -784,20 +806,20 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
             font-bold
             text-[11px]
           "
-        >
-          {user.name.charAt(0).toUpperCase()}
-        </div>
+                        >
+                          {user.name.charAt(0).toUpperCase()}
+                        </div>
 
-        {/* Name */}
+                        {/* Name */}
 
-        <span className="hidden sm:inline font-semibold">
-          {user.name.split(' ')[0]}
-        </span>
+                        <span className="hidden sm:inline font-semibold">
+                          {user.name.split(' ')[0]}
+                        </span>
 
-        {/* College */}
+                        {/* College */}
 
-        <span
-          className="
+                        <span
+                          className="
             px-1.5 py-0.5
             rounded-full
             bg-[#C6DE41]/15
@@ -805,59 +827,58 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
             text-[#C6DE41]
             font-semibold
           "
-        >
-          {user.college.code}
-        </span>
+                        >
+                          {user.college.code}
+                        </span>
 
-        {/* Arrow */}
+                        {/* Arrow */}
 
-        <ChevronDown
-          className={`
+                        <ChevronDown
+                          className={`
             w-3 h-3
             text-zinc-400
             transition-transform
             duration-200
 
-            ${
-              showAccountMenu
-                ? 'rotate-180 text-[#C6DE41]'
-                : ''
-            }
+            ${showAccountMenu
+                              ? 'rotate-180 text-[#C6DE41]'
+                              : ''
+                            }
           `}
-        />
+                        />
 
-      </button>
+                      </button>
 
-      {/* =========================================
+                      {/* =========================================
           ANIMATED DROPDOWN
       ========================================= */}
 
-      {showAccountMenu && (
-        <motion.div
-          initial={{
-            opacity: 0,
-            scale: 0.85,
-            y: 10,
-          }}
-          animate={{
-            opacity: 1,
-            scale: 1,
-            y: 0,
-          }}
-          transition={menuTransition}
-          className="
+                      {showAccountMenu && (
+                        <motion.div
+                          initial={{
+                            opacity: 0,
+                            scale: 0.85,
+                            y: 10,
+                          }}
+                          animate={{
+                            opacity: 1,
+                            scale: 1,
+                            y: 0,
+                          }}
+                          transition={menuTransition}
+                          className="
             absolute
             right-0
             top-full
             z-[80]
             pt-4
           "
-        >
+                        >
 
-          <motion.div
-            layout
-            transition={menuTransition}
-            className="
+                          <motion.div
+                            layout
+                            transition={menuTransition}
+                            className="
               overflow-hidden
               min-w-[210px]
 
@@ -873,19 +894,19 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
               shadow-xl
               backdrop-blur-md
             "
-          >
+                          >
 
-            <motion.div
-              layout
-              className="flex flex-col gap-1 p-3"
-            >
+                            <motion.div
+                              layout
+                              className="flex flex-col gap-1 p-3"
+                            >
 
-              {/* VIEW PROFILE */}
+                              {/* VIEW PROFILE */}
 
-              <Link
-                to="/profile"
-                onClick={() => setShowAccountMenu(false)}
-                className="
+                              <Link
+                                to="/profile"
+                                onClick={() => setShowAccountMenu(false)}
+                                className="
                   flex items-center gap-3
 
                   rounded-xl
@@ -906,10 +927,10 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
                   light:hover:bg-[#C6DE41]/20
                   light:hover:text-[#7E9E0A]
                 "
-              >
+                              >
 
-                <div
-                  className="
+                                <div
+                                  className="
                     flex
                     w-8 h-8
                     items-center
@@ -921,41 +942,41 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
                     border
                     border-[#C6DE41]/20
                   "
-                >
-                  <UserIcon className="w-4 h-4" />
-                </div>
+                                >
+                                  <UserIcon className="w-4 h-4" />
+                                </div>
 
-                <div className="flex flex-col">
+                                <div className="flex flex-col">
 
-                  <span className="font-semibold">
-                    View Profile
-                  </span>
+                                  <span className="font-semibold">
+                                    View Profile
+                                  </span>
 
-                  <span className="text-[10px] text-zinc-500">
-                    Orders & activity
-                  </span>
+                                  <span className="text-[10px] text-zinc-500">
+                                    Orders & activity
+                                  </span>
 
-                </div>
+                                </div>
 
-              </Link>
+                              </Link>
 
-              {/* Separator */}
+                              {/* Separator */}
 
-              <div
-                className="
+                              <div
+                                className="
                   my-1
                   border-t
                   border-white/10
                   light:border-[#DFE5D5]
                 "
-              />
+                              />
 
-              {/* SETTINGS */}
+                              {/* SETTINGS */}
 
-              <Link
-                to="/settings"
-                onClick={() => setShowAccountMenu(false)}
-                className="
+                              <Link
+                                to="/settings"
+                                onClick={() => setShowAccountMenu(false)}
+                                className="
                   flex items-center gap-3
 
                   rounded-xl
@@ -976,10 +997,10 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
                   light:hover:bg-[#C6DE41]/20
                   light:hover:text-[#7E9E0A]
                 "
-              >
+                              >
 
-                <div
-                  className="
+                                <div
+                                  className="
                     flex
                     w-8 h-8
                     items-center
@@ -991,42 +1012,42 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
                     border
                     border-[#C6DE41]/20
                   "
-                >
-                  <SettingsIcon className="w-4 h-4" />
-                </div>
+                                >
+                                  <SettingsIcon className="w-4 h-4" />
+                                </div>
 
-                <div className="flex flex-col">
+                                <div className="flex flex-col">
 
-                  <span className="font-semibold">
-                    Account Settings
-                  </span>
+                                  <span className="font-semibold">
+                                    Account Settings
+                                  </span>
 
-                  <span className="text-[10px] text-zinc-500">
-                    Profile, mode & password
-                  </span>
+                                  <span className="text-[10px] text-zinc-500">
+                                    Profile, mode & password
+                                  </span>
 
-                </div>
+                                </div>
 
-              </Link>
+                              </Link>
 
-            </motion.div>
+                            </motion.div>
 
-          </motion.div>
+                          </motion.div>
 
-        </motion.div>
-      )}
+                        </motion.div>
+                      )}
 
-    </div>
+                    </div>
 
-    {/* =========================================
+                    {/* =========================================
         LOGOUT
     ========================================= */}
 
-    <button
-      type="button"
-      onClick={handleLogout}
-      title="Logout"
-      className="
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      title="Logout"
+                      className="
         p-2
 
         text-zinc-400
@@ -1039,32 +1060,32 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
         rounded-full
         transition-colors
       "
-    >
-      <LogOut className="w-4 h-4" />
-    </button>
+                    >
+                      <LogOut className="w-4 h-4" />
+                    </button>
 
-  </div>
-) : (
-  <div className="flex items-center gap-2">
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
 
-    <Link
-      to="/login"
-      className="px-4 py-1.5 text-[13px] font-medium text-white dark:text-white light:text-[#171B13] hover:text-[#C6DE41] rounded-full transition-colors"
-    >
-      <TextRoll text="Log in" />
-    </Link>
+                    <Link
+                      to="/login"
+                      className="px-4 py-1.5 text-[13px] font-medium text-white dark:text-white light:text-[#171B13] hover:text-[#C6DE41] rounded-full transition-colors"
+                    >
+                      <TextRoll text="Log in" />
+                    </Link>
 
-    <Link
-      to="/signup"
-      className="px-4 py-1.5 text-[13px] font-bold text-[#090B09] bg-[#C6DE41] hover:bg-[#D7EF59] rounded-full transition-all shadow-shop-pill shadow-[0_0_12px_rgba(198,222,65,0.3)] hover:scale-105 active:scale-95"
-    >
-      <TextRoll text="Sign up" />
-    </Link>
+                    <Link
+                      to="/signup"
+                      className="px-4 py-1.5 text-[13px] font-bold text-[#090B09] bg-[#C6DE41] hover:bg-[#D7EF59] rounded-full transition-all shadow-shop-pill shadow-[0_0_12px_rgba(198,222,65,0.3)] hover:scale-105 active:scale-95"
+                    >
+                      <TextRoll text="Sign up" />
+                    </Link>
 
-  </div>
-)}
+                  </div>
+                )}
 
-                
+
               </div>
             ) : (
               <div className="flex items-center gap-2">
@@ -1088,15 +1109,23 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
       </header>
 
       {/* Mobile Bottom Navigation */}
+      {user?.role === 'ADMIN' && (
+  <Link
+    to="/hero-manager"
+    className="flex flex-col items-center px-2 py-1 text-[10px] font-medium text-zinc-400 hover:text-[#C6DE41]"
+  >
+    <Users className="mb-0.5 h-4 w-4" />
+    <span>Manager</span>
+  </Link>
+)}
       <div className="lg:hidden fixed bottom-3 left-4 right-4 z-50 bg-[#090B09]/95 dark:bg-[#090B09]/95 light:bg-[#FFFFFF]/95 backdrop-blur-md border border-[#C6DE41]/30 dark:border-[#C6DE41]/30 light:border-[#DFE5D5] rounded-full px-4 py-2 flex items-center justify-around shadow-shop-float transition-colors duration-200">
 
         <Link
           to="/"
-          className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-            isActive('/')
+          className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/')
               ? 'text-[#C6DE41] font-semibold'
               : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
-          }`}
+            }`}
         >
           <Home className="w-4 h-4 mb-0.5" />
           <span>Home</span>
@@ -1106,11 +1135,10 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
           <>
             <Link
               to="/sell"
-              className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-                isActive('/sell')
+              className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/sell')
                   ? 'text-[#C6DE41] font-semibold'
                   : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
-              }`}
+                }`}
             >
               <Tag className="w-4 h-4 mb-0.5" />
               <span>
@@ -1121,11 +1149,10 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
             {TEAMS_ENABLED ? (
               <Link
                 to="/find-teammates"
-                className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-                  isTeammatesActive
+                className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isTeammatesActive
                     ? 'text-[#C6DE41] font-semibold'
                     : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
-                }`}
+                  }`}
               >
                 <Users className="w-4 h-4 mb-0.5" />
                 <span>Teams</span>
@@ -1146,11 +1173,10 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
           <>
             <Link
               to="/buy"
-              className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-                isActive('/buy')
+              className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/buy')
                   ? 'text-[#C6DE41] font-semibold'
                   : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
-              }`}
+                }`}
             >
               <ShoppingBag className="w-4 h-4 mb-0.5" />
               <span>
@@ -1161,11 +1187,10 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
             {TEAMS_ENABLED ? (
               <Link
                 to="/find-teammates"
-                className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-                  isTeammatesActive
+                className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isTeammatesActive
                     ? 'text-[#C6DE41] font-semibold'
                     : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
-                }`}
+                  }`}
               >
                 <Users className="w-4 h-4 mb-0.5" />
                 <span>Teams</span>
@@ -1184,11 +1209,10 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
 
             <Link
               to="/sell"
-              className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-                isActive('/sell')
+              className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/sell')
                   ? 'text-[#C6DE41] font-semibold'
                   : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
-              }`}
+                }`}
             >
               <Tag className="w-4 h-4 mb-0.5" />
               <span>
@@ -1201,11 +1225,10 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
         {user ? (
           <Link
             to="/settings"
-            className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-              isActive('/settings')
+            className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/settings')
                 ? 'text-[#C6DE41] font-semibold'
                 : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
-            }`}
+              }`}
           >
             <UserIcon className="w-4 h-4 mb-0.5" />
             <span>Settings</span>
@@ -1213,11 +1236,10 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
         ) : (
           <Link
             to="/login"
-            className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-              isActive('/login')
+            className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/login')
                 ? 'text-[#C6DE41] font-semibold'
                 : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
-            }`}
+              }`}
           >
             <LogIn className="w-4 h-4 mb-0.5" />
             <span>Login</span>
