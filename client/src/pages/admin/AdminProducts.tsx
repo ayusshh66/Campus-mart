@@ -1,4 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  useAdminError,
+  useAdminFeedback,
+} from '../../hooks/useAdminNotifications';
 import { api, Product } from '../../services/api';
 import {
   AlertCircle,
@@ -187,17 +191,17 @@ const metricItems = (
   accepting: number,
   paused: number
 ) => [
-  { title: 'Total SKU Listings', value: total, caption: 'Products in the master catalog', color: '#C6DE41', denominator: total },
-  { title: 'Active on Storefront', value: active, caption: 'Visible student listings', color: '#C6DE41', denominator: total },
-  { title: 'Active Buyback Engine', value: accepting, caption: 'Currently accepting sell requests', color: '#C6DE41', denominator: total },
-  { title: 'Buying Paused', value: paused, caption: 'Products not accepting new intake', color: '#FBBF24', denominator: total },
-];
+    { title: 'Total SKU Listings', value: total, caption: 'Products in the master catalog', color: '#C6DE41', denominator: total },
+    { title: 'Active on Storefront', value: active, caption: 'Visible student listings', color: '#C6DE41', denominator: total },
+    { title: 'Active Buyback Engine', value: accepting, caption: 'Currently accepting sell requests', color: '#C6DE41', denominator: total },
+    { title: 'Buying Paused', value: paused, caption: 'Products not accepting new intake', color: '#FBBF24', denominator: total },
+  ];
 
 export const AdminProducts: React.FC<Props> = ({ forceNewForm = false, onSaved, onCloseForm }) => {
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
+  const [loadError, setLoadError] =
+    useAdminError('Unable to load product catalog'); const [search, setSearch] = useState('');
   const [category, setCategory] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState<CatalogFilter>('ALL');
   const [buyingFilter, setBuyingFilter] = useState<BuyingFilter>('ALL');
@@ -207,12 +211,12 @@ export const AdminProducts: React.FC<Props> = ({ forceNewForm = false, onSaved, 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [urlInput, setUrlInput] = useState('');
-  const [formError, setFormError] = useState<string | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  const [formError, setFormError] =
+    useAdminError('Product configuration error'); const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmDeactivate, setConfirmDeactivate] = useState<CatalogProduct | null>(null);
   const [confirmPhrase, setConfirmPhrase] = useState('');
-  const [feedback, setFeedback] = useState<Feedback>(null);
-
+  const [feedback, setFeedback] =
+    useAdminFeedback<Feedback>();
   const loadProducts = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
@@ -224,7 +228,7 @@ export const AdminProducts: React.FC<Props> = ({ forceNewForm = false, onSaved, 
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setLoadError]);
 
   useEffect(() => { void loadProducts(); }, [loadProducts]);
   useEffect(() => {
@@ -367,9 +371,11 @@ export const AdminProducts: React.FC<Props> = ({ forceNewForm = false, onSaved, 
   };
   const addQuestion = () => updateForm('quality_questions', [
     ...form.quality_questions,
-    { id: `q_${Date.now()}`, question: '', options: [
-      { label: '', deduction: 0 }, { label: '', deduction: 0 },
-    ] },
+    {
+      id: `q_${Date.now()}`, question: '', options: [
+        { label: '', deduction: 0 }, { label: '', deduction: 0 },
+      ]
+    },
   ]);
   const loadTemplate = (kind: 'calculator' | 'book') => {
     if (form.quality_questions.length && !window.confirm('Replace the current quality questions with this template?')) return;
@@ -553,7 +559,7 @@ export const AdminProducts: React.FC<Props> = ({ forceNewForm = false, onSaved, 
                     <td className="px-3 py-3 text-center"><span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${p.is_active ? 'bg-[#D9E4D3]/10 text-[#DEE7D7]' : 'bg-white/5 text-[#8F988B]'}`}>{p.is_active ? 'Active' : 'Inactive'}</span></td>
                     <td className="px-4 py-3 text-right"><div className="inline-flex items-center gap-1.5">
                       <button disabled={busyId === p.id} onClick={() => openEdit(p)} className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-2.5 py-1.5 font-bold transition hover:border-[#C6DE41]/40 hover:text-[#C6DE41]"><Pencil className="h-3.5 w-3.5" /> Edit</button>
-                      {p.is_active ? <button disabled={busyId === p.id} title={`Deactivate ${p.name}`} aria-label={`Deactivate ${p.name}`} onClick={() => {setConfirmDeactivate(p);setConfirmPhrase('');}} className="rounded-lg border border-white/10 p-1.5 text-[#AAB4A3] hover:border-rose-400/40 hover:text-rose-300"><Trash2 className="h-3.5 w-3.5" /></button>
+                      {p.is_active ? <button disabled={busyId === p.id} title={`Deactivate ${p.name}`} aria-label={`Deactivate ${p.name}`} onClick={() => { setConfirmDeactivate(p); setConfirmPhrase(''); }} className="rounded-lg border border-white/10 p-1.5 text-[#AAB4A3] hover:border-rose-400/40 hover:text-rose-300"><Trash2 className="h-3.5 w-3.5" /></button>
                         : <button disabled={busyId === p.id} onClick={() => void toggle(p, 'is_active', true)} title={`Reactivate ${p.name}`} aria-label={`Reactivate ${p.name}`} className="rounded-lg border border-white/10 p-1.5 text-[#C6DE41] hover:border-[#C6DE41]/50"><RotateCcw className="h-3.5 w-3.5" /></button>}
                     </div></td>
                   </tr>)}
@@ -566,7 +572,7 @@ export const AdminProducts: React.FC<Props> = ({ forceNewForm = false, onSaved, 
             {filtered.map((p) => <div key={p.id} className="rounded-xl border border-white/10 bg-[#181D14] p-4">
               <div className="mb-3 flex gap-3"><div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[#2A3324]">{p.image_url && <img src={p.image_url} className="h-full w-full object-cover" alt="" />}</div><div className="min-w-0"><h3 className="font-bold">{p.name}</h3><span className="text-xs text-[#929C8D]">{p.category}</span></div></div>
               <div className="grid grid-cols-3 gap-2 border-t border-white/10 py-3 text-xs"><div><div className="mb-1 text-[10px] text-[#9AA493]">Base</div>{currency(p.buy_price)}</div><div><div className="mb-1 text-[10px] text-[#9AA493]">Max</div>{currency(p.upto_buy_price ?? p.buy_price)}</div><div><div className="mb-1 text-[10px] text-[#9AA493]">Selling</div>{currency(p.sell_price)}</div></div>
-              <div className="flex flex-wrap items-center justify-between gap-2"><button disabled={busyId === p.id} type="button" onClick={() => void toggle(p, 'is_buying_enabled', !p.is_buying_enabled)} className="rounded-lg border border-white/10 px-2.5 py-2 text-[11px] font-bold">{p.is_buying_enabled ? 'Buying: Accepting' : 'Buying: Paused'}</button><span className="text-xs text-[#ABB4A5]">{p.is_active ? 'Active' : 'Inactive'}</span><button onClick={() => openEdit(p)} className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold">Edit</button>{p.is_active ? <button onClick={() => { setConfirmDeactivate(p);setConfirmPhrase(''); }} className="text-xs text-rose-300">Deactivate</button> : <button onClick={() => void toggle(p, 'is_active', true)} className="text-xs text-[#C6DE41]">Reactivate</button>}</div>
+              <div className="flex flex-wrap items-center justify-between gap-2"><button disabled={busyId === p.id} type="button" onClick={() => void toggle(p, 'is_buying_enabled', !p.is_buying_enabled)} className="rounded-lg border border-white/10 px-2.5 py-2 text-[11px] font-bold">{p.is_buying_enabled ? 'Buying: Accepting' : 'Buying: Paused'}</button><span className="text-xs text-[#ABB4A5]">{p.is_active ? 'Active' : 'Inactive'}</span><button onClick={() => openEdit(p)} className="rounded-lg border border-white/10 px-3 py-2 text-xs font-bold">Edit</button>{p.is_active ? <button onClick={() => { setConfirmDeactivate(p); setConfirmPhrase(''); }} className="text-xs text-rose-300">Deactivate</button> : <button onClick={() => void toggle(p, 'is_active', true)} className="text-xs text-[#C6DE41]">Reactivate</button>}</div>
             </div>)}
           </div>
         </>

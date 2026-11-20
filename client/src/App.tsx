@@ -2,7 +2,7 @@
 import React from 'react';
 import { Toaster } from 'sonner';
 import { SettingsPage } from './pages/SettingsPage';
-
+import './styles/admin-notifications.css';
 import {
   BrowserRouter,
   Routes,

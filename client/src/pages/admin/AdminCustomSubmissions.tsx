@@ -1,6 +1,12 @@
 import { SmoothInput } from '../../components/motion/SmoothInput';
 import React, { useEffect, useState } from 'react';
 import { api, CustomItemSubmissionItem } from '../../services/api';
+import {
+  showAdminError,
+} from '../../utils/adminNotifications';
+import {
+  useAdminFeedback,
+} from '../../hooks/useAdminNotifications';
 import { 
   Sparkles, 
   CheckCircle, 
@@ -30,11 +36,15 @@ export const AdminCustomSubmissions: React.FC<Props> = ({ onAction }) => {
   const [statusFilter, setStatusFilter] = useState<'PENDING' | 'APPROVED' | 'REJECTED' | 'ALL'>('PENDING');
   const [searchQuery, setSearchQuery] = useState('');
   
+  
   // Review pricing drafts: [id] -> { buyPrice: number, sellPrice: number, reason: string }
   const [drafts, setDrafts] = useState<Record<string, { buy: number; sell: number; reason: string }>>({});
   const [processingId, setProcessingId] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-
+const [feedback, setFeedback] =
+  useAdminFeedback<{
+    type: 'success' | 'error';
+    message: string;
+  }>();
   // Image preview modal
   const [inspectingImages, setInspectingImages] = useState<{ title: string; images: string[] } | null>(null);
 
@@ -91,8 +101,10 @@ export const AdminCustomSubmissions: React.FC<Props> = ({ onAction }) => {
     const draft = drafts[id];
     if (action === 'APPROVE') {
       if (!draft || draft.buy <= 0 || draft.sell <= 0) {
-        alert('Please specify valid positive buying and selling prices.');
-        return;
+showAdminError(
+  'Please enter a valid selling price.',
+  'Invalid pricing'
+);        return;
       }
     }
 
