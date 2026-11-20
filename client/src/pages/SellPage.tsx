@@ -242,15 +242,26 @@ export const SellPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    if (!selectedProduct) return;
+  if (!selectedProduct) return;
+
+  if (imageUrls.length === 0) {
+    toast.error('Photo required', {
+      description:
+        'Upload at least one photo before submitting your sell request.',
+      duration: 5000,
+      closeButton: true,
+      className: 'campus-admin-error-toast',
+    });
+
+    setCurrentStep(imageStepIndex);
+    return;
+  }
 
     setSubmitting(true);
     setError(null);
 
     try {
-      const finalImages = imageUrls.length > 0 
-        ? imageUrls 
-        : (selectedProduct.images && selectedProduct.images.length > 0 ? selectedProduct.images : [selectedProduct.image_url]);
+     const finalImages = imageUrls;
 
       const formattedQualityAnswers: Record<string, string> = {};
       Object.entries(qualityAnswers).forEach(([qid, opt]) => {
@@ -293,9 +304,20 @@ export const SellPage: React.FC = () => {
       return;
     }
     if (customImages.length === 0) {
-      setCustomError('Please upload at least 1 photo of your item (1 to 5 photos supported).');
-      return;
-    }
+  const message =
+    'Please upload at least one photo of your item.';
+
+  setCustomError(message);
+
+  toast.error('Photo required', {
+    description: message,
+    duration: 5000,
+    closeButton: true,
+    className: 'campus-admin-error-toast',
+  });
+
+  return;
+}
 
     setCustomSubmitting(true);
     try {

@@ -48,14 +48,36 @@ router.post('/', authenticateToken, requireAuth, async (req: AuthRequest, res: R
     }
 
     // Format images
-    let imagesJson = '[]';
-    if (images) {
-      if (typeof images === 'string') {
-        imagesJson = images.startsWith('[') ? images : JSON.stringify([images]);
-      } else if (Array.isArray(images)) {
-        imagesJson = JSON.stringify(images);
-      }
-    }
+   let parsedImages: unknown = images;
+
+if (typeof images === 'string') {
+  try {
+    parsedImages = JSON.parse(images);
+  } catch {
+    parsedImages = [images];
+  }
+}
+
+if (
+  !Array.isArray(parsedImages) ||
+  parsedImages.length === 0 ||
+  parsedImages.length > 5 ||
+  !parsedImages.every(
+    (image) =>
+      typeof image === 'string' &&
+      image.trim().length > 0
+  )
+) {
+  return res.status(400).json({
+    success: false,
+    message:
+      'Please upload between 1 and 5 photos of your item.',
+  });
+}
+
+const imagesJson = JSON.stringify(
+  parsedImages.map((image: string) => image.trim())
+);
 
     
     // Parse quality answers safely
