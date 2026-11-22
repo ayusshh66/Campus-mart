@@ -48,7 +48,10 @@ html.light,
 }
 
 @layer base {
-  html { scroll-behavior: smooth; }
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     margin: 0;
     background: var(--color-canvas-mist);
@@ -58,28 +61,86 @@ html.light,
     -webkit-font-smoothing: antialiased;
     transition: background-color 0.25s ease, color 0.25s ease;
   }
-  h1,h2,h3,h4 { letter-spacing: -0.04em; }
-  button, input, select, textarea { font: inherit; }
-  :focus-visible { outline: 2px solid #C6DE41; outline-offset: 3px; }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    letter-spacing: -0.04em;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  :focus-visible {
+    outline: 2px solid #C6DE41;
+    outline-offset: 3px;
+  }
 }
 
 @layer components {
-  .shop-card-shadow { box-shadow: 0 14px 42px -25px rgba(0,0,0,.7),0 4px 14px -8px rgba(0,0,0,.4); }
-  .shop-card-hover { transition: transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s ease; }
-  .shop-card-hover:hover { transform: translateY(-4px); box-shadow: 0 24px 55px -30px rgba(198,222,65,.2); }
-  .shop-green-glow, .shop-violet-glow { box-shadow: 0 12px 32px -16px rgba(198,222,65,.7); }
-  .shop-pill-shadow { box-shadow: 0 3px 14px rgba(0,0,0,.3); }
-  .animate-shimmer { background: linear-gradient(90deg,#12160f 25%,#1f2919 50%,#12160f 75%);background-size:200% 100%;animation:shimmer 1.7s ease-in-out infinite; }
+  .shop-card-shadow {
+    box-shadow: 0 14px 42px -25px rgba(0, 0, 0, .7), 0 4px 14px -8px rgba(0, 0, 0, .4);
+  }
+
+  .shop-card-hover {
+    transition: transform .35s cubic-bezier(.2, .8, .2, 1), box-shadow .35s ease;
+  }
+
+  .shop-card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 24px 55px -30px rgba(198, 222, 65, .2);
+  }
+
+  .shop-green-glow,
+  .shop-violet-glow {
+    box-shadow: 0 12px 32px -16px rgba(198, 222, 65, .7);
+  }
+
+  .shop-pill-shadow {
+    box-shadow: 0 3px 14px rgba(0, 0, 0, .3);
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(90deg, #12160f 25%, #1f2919 50%, #12160f 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.7s ease-in-out infinite;
+  }
 }
 
-@keyframes shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
 
-::-webkit-scrollbar { width: 7px; height: 7px; }
-::-webkit-scrollbar-thumb { background: #2A3322; border-radius: 20px; }
-::-webkit-scrollbar-thumb:hover { background: #C6DE41; }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2A3322;
+  border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C6DE41;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  *,*::before,*::after {
+
+  *,
+  *::before,
+  *::after {
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: .01ms !important;
@@ -365,4 +426,68 @@ html.light ::-webkit-scrollbar-thumb {
 
 html.light ::-webkit-scrollbar-thumb:hover {
   background: #C6DE41;
+}
+
+/* CampusMart mobile width and centering */
+
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+html,
+body {
+  overflow-x: clip;
+}
+
+#root {
+  min-height: 100%;
+}
+
+@media (max-width: 767px) {
+
+  /* Ensure catalog content uses the actual viewport width */
+  .campus-explore-dark {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: clip;
+  }
+
+  .campus-explore-dark>.relative.z-10 {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* Children can shrink instead of expanding the page */
+  .campus-explore-dark .grid,
+  .campus-explore-dark .flex {
+    min-width: 0;
+  }
+
+  .campus-explore-dark img {
+    max-width: 100%;
+  }
+
+  .campus-explore-dark input,
+  .campus-explore-dark select {
+    max-width: 100%;
+  }
+
+  /* Category chips should scroll within their own row */
+  .campus-explore-dark .overflow-x-auto {
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
 }

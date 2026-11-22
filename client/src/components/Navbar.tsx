@@ -4,6 +4,7 @@ import { SmoothInput } from './motion/SmoothInput';
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { MobileHeader } from './MobileHeader';
 import { useAuth } from '../context/AuthContext';
 import { ThemeToggle } from './ThemeToggle';
 import { api, College } from '../services/api';
@@ -93,8 +94,8 @@ const MenuItem: React.FC<MenuItemProps> = ({
           aria-current={current ? 'page' : undefined}
           aria-expanded={active === label}
           className={`block whitespace-nowrap rounded-full px-2.5 py-2 text-[12px] font-medium transition-colors lg:text-[13px] ${current
-              ? 'text-[#C6DE41] font-semibold'
-              : 'text-white dark:text-white light:text-[#171B13] hover:text-[#C6DE41] light:hover:text-[#7E9E0A]'
+            ? 'text-[#C6DE41] font-semibold'
+            : 'text-white dark:text-white light:text-[#171B13] hover:text-[#C6DE41] light:hover:text-[#7E9E0A]'
             }`}
         >
           {label}
@@ -304,6 +305,9 @@ export const Navbar: React.FC = () => {
         </div>
       </div>
 
+      {/* New mobile navigation */}
+      <MobileHeader />
+
       {/* Main Header */}
       <header className="sticky top-0 z-50 border-b border-[#C6DE41]/20 dark:border-[#C6DE41]/20 light:border-[#DFE5D5] bg-[#090B09]/90 dark:bg-[#090B09]/90 light:bg-[#F7F8F2]/90 backdrop-blur-md transition-colors duration-200">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
@@ -327,15 +331,15 @@ export const Navbar: React.FC = () => {
                 type="button"
                 onClick={() => setShowCollegeModal(!showCollegeModal)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all shadow-shop-pill ${isBrowsingOtherCollege
-                    ? 'bg-amber-900/30 border border-amber-500/40 text-white dark:text-white light:text-[#171B13]'
-                    : 'bg-[#12160F] dark:bg-[#12160F] light:bg-[#FFFFFF] border border-[#C6DE41]/30 dark:border-[#C6DE41]/30 light:border-[#DFE5D5] text-white dark:text-white light:text-[#171B13] hover:border-[#C6DE41]/70'
+                  ? 'bg-amber-900/30 border border-amber-500/40 text-white dark:text-white light:text-[#171B13]'
+                  : 'bg-[#12160F] dark:bg-[#12160F] light:bg-[#FFFFFF] border border-[#C6DE41]/30 dark:border-[#C6DE41]/30 light:border-[#DFE5D5] text-white dark:text-white light:text-[#171B13] hover:border-[#C6DE41]/70'
                   }`}
                 title="Click to switch active campus"
               >
                 <MapPin
                   className={`w-3.5 h-3.5 shrink-0 ${isBrowsingOtherCollege
-                      ? 'text-amber-500'
-                      : 'text-[#C6DE41]'
+                    ? 'text-amber-500'
+                    : 'text-[#C6DE41]'
                     }`}
                 />
 
@@ -416,8 +420,8 @@ export const Navbar: React.FC = () => {
                             setShowCollegeModal(false);
                           }}
                           className={`w-full flex items-center justify-between p-2.5 rounded-[16px] text-left text-[12px] transition-all ${isSelected
-                              ? 'bg-[#C6DE41]/20 text-[#C6DE41] font-semibold border border-[#C6DE41]/30'
-                              : 'hover:bg-[#C6DE41]/10 text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-white light:hover:text-[#7E9E0A]'
+                            ? 'bg-[#C6DE41]/20 text-[#C6DE41] font-semibold border border-[#C6DE41]/30'
+                            : 'hover:bg-[#C6DE41]/10 text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-white light:hover:text-[#7E9E0A]'
                             }`}
                         >
                           <div className="flex flex-col">
@@ -1110,21 +1114,21 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile Bottom Navigation */}
       {user?.role === 'ADMIN' && (
-  <Link
-    to="/hero-manager"
-    className="flex flex-col items-center px-2 py-1 text-[10px] font-medium text-zinc-400 hover:text-[#C6DE41]"
-  >
-    <Users className="mb-0.5 h-4 w-4" />
-    <span>Manager</span>
-  </Link>
-)}
+        <Link
+          to="/hero-manager"
+          className="flex flex-col items-center px-2 py-1 text-[10px] font-medium text-zinc-400 hover:text-[#C6DE41]"
+        >
+          <Users className="mb-0.5 h-4 w-4" />
+          <span>Manager</span>
+        </Link>
+      )}
       <div className="lg:hidden fixed bottom-3 left-4 right-4 z-50 bg-[#090B09]/95 dark:bg-[#090B09]/95 light:bg-[#FFFFFF]/95 backdrop-blur-md border border-[#C6DE41]/30 dark:border-[#C6DE41]/30 light:border-[#DFE5D5] rounded-full px-4 py-2 flex items-center justify-around shadow-shop-float transition-colors duration-200">
 
         <Link
           to="/"
           className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/')
-              ? 'text-[#C6DE41] font-semibold'
-              : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
+            ? 'text-[#C6DE41] font-semibold'
+            : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
             }`}
         >
           <Home className="w-4 h-4 mb-0.5" />
@@ -1136,8 +1140,8 @@ export const Navbar: React.FC = () => {
             <Link
               to="/sell"
               className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/sell')
-                  ? 'text-[#C6DE41] font-semibold'
-                  : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
+                ? 'text-[#C6DE41] font-semibold'
+                : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
                 }`}
             >
               <Tag className="w-4 h-4 mb-0.5" />
@@ -1150,8 +1154,8 @@ export const Navbar: React.FC = () => {
               <Link
                 to="/find-teammates"
                 className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isTeammatesActive
-                    ? 'text-[#C6DE41] font-semibold'
-                    : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
+                  ? 'text-[#C6DE41] font-semibold'
+                  : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
                   }`}
               >
                 <Users className="w-4 h-4 mb-0.5" />
@@ -1174,8 +1178,8 @@ export const Navbar: React.FC = () => {
             <Link
               to="/buy"
               className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/buy')
-                  ? 'text-[#C6DE41] font-semibold'
-                  : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
+                ? 'text-[#C6DE41] font-semibold'
+                : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
                 }`}
             >
               <ShoppingBag className="w-4 h-4 mb-0.5" />
@@ -1188,8 +1192,8 @@ export const Navbar: React.FC = () => {
               <Link
                 to="/find-teammates"
                 className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isTeammatesActive
-                    ? 'text-[#C6DE41] font-semibold'
-                    : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
+                  ? 'text-[#C6DE41] font-semibold'
+                  : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
                   }`}
               >
                 <Users className="w-4 h-4 mb-0.5" />
@@ -1210,8 +1214,8 @@ export const Navbar: React.FC = () => {
             <Link
               to="/sell"
               className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/sell')
-                  ? 'text-[#C6DE41] font-semibold'
-                  : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
+                ? 'text-[#C6DE41] font-semibold'
+                : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
                 }`}
             >
               <Tag className="w-4 h-4 mb-0.5" />
@@ -1226,8 +1230,8 @@ export const Navbar: React.FC = () => {
           <Link
             to="/settings"
             className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/settings')
-                ? 'text-[#C6DE41] font-semibold'
-                : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
+              ? 'text-[#C6DE41] font-semibold'
+              : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
               }`}
           >
             <UserIcon className="w-4 h-4 mb-0.5" />
@@ -1237,8 +1241,8 @@ export const Navbar: React.FC = () => {
           <Link
             to="/login"
             className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${isActive('/login')
-                ? 'text-[#C6DE41] font-semibold'
-                : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
+              ? 'text-[#C6DE41] font-semibold'
+              : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
               }`}
           >
             <LogIn className="w-4 h-4 mb-0.5" />
