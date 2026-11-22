@@ -530,91 +530,281 @@ router.put('/campus-heroes/:id', async (req: AuthRequest, res: Response) => {
 });
 
 // GET /api/admin/auto-match/rules - List auto-match rules for all products
-router.get('/auto-match/rules', async (_req: AuthRequest, res: Response) => {
-  try {
-    const products = await prisma.product.findMany({
-      where: { is_active: true },
-      select: {
-        id: true,
-        name: true,
-        category: true,
-        image_url: true,
-        buy_price: true,
-        upto_buy_price: true,
-        sell_price: true,
-        auto_match_enabled: true,
-        max_campus_inventory: true,
-        auto_accept_conditions: true,
-        require_photos_for_auto: true,
-        min_payout_for_auto: true,
-      },
-      orderBy: { created_at: 'asc' },
-    });
+// GET /api/admin/auto-match/rules
+router.get(
+  '/auto-match/rules',
+  async (_req: AuthRequest, res: Response) => {
+    try {
+      const products = await prisma.product.findMany({
+        where: { is_active: true },
+        select: {
+          id: true,
+          name: true,
+          category: true,
+          image_url: true,
+          buy_price: true,
+          upto_buy_price: true,
+          sell_price: true,
+          auto_match_enabled: true,
+          max_campus_inventory: true,
+          auto_accept_conditions: true,
+          auto_accept_answers: true,
+          quality_questions: true,
+          require_photos_for_auto: true,
+          min_payout_for_auto: true,
+        },
+        orderBy: { created_at: 'asc' },
+      });
 
-    const formatted = products.map((p) => {
-      let conditions = ['Like New', 'Good'];
-      try {
-        conditions = JSON.parse(p.auto_accept_conditions || '["Like New", "Good"]');
-      } catch (e) {
-        conditions = ['Like New', 'Good'];
-      }
-      return {
-        ...p,
-        auto_accept_conditions: conditions,
+      const parseArray = (value: string) => {
+        try {
+          const parsed = JSON.parse(value);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
       };
-    });
 
-    return res.json({ success: true, data: formatted });
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to fetch auto-match rules',
-      error: error.message,
-    });
-  }
-});
+      const parseObject = (value: string) => {
+        try {
+          const parsed = JSON.parse(value);
 
-// PUT /api/admin/auto-match/rules/:productId - Update auto-match rule for a product
-router.put('/auto-match/rules/:productId', async (req: AuthRequest, res: Response) => {
-  try {
-    const { productId } = req.params;
-    const {
-      auto_match_enabled,
-      max_campus_inventory,
-      auto_accept_conditions,
-      require_photos_for_auto,
-      min_payout_for_auto,
-    } = req.body;
+          return (
+            parsed &&
+            typeof parsed === 'object' &&
+            !Array.isArray(parsed)
+          )
+            ? parsed
+            : {};
+        } catch {
+          return {};
+        }
+      };
 
-    const dataToUpdate: any = {};
-    if (auto_match_enabled !== undefined) dataToUpdate.auto_match_enabled = Boolean(auto_match_enabled);
-    if (max_campus_inventory !== undefined) dataToUpdate.max_campus_inventory = parseInt(max_campus_inventory);
-    if (auto_accept_conditions !== undefined) {
-      dataToUpdate.auto_accept_conditions = Array.isArray(auto_accept_conditions)
-        ? JSON.stringify(auto_accept_conditions)
-        : auto_accept_conditions;
+      const formatted = products.map((product) => ({
+        ...product,
+        quality_questions: parseArray(
+          product.quality_questions
+        ),
+        auto_accept_answers: parseObject(
+          product.auto_accept_answers
+        ),
+        auto_accept_conditions: parseArray(
+          product.auto_accept_conditions
+        ),
+      }));
+
+      return res.json({
+        success: true,
+        data: formatted,
+      });
+    } catch (error) {
+      console.error('Loading auto-match rules failed:', error);
+
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to load auto-match rules.',
+      });
     }
-    if (require_photos_for_auto !== undefined) dataToUpdate.require_photos_for_auto = Boolean(require_photos_for_auto);
-    if (min_payout_for_auto !== undefined) dataToUpdate.min_payout_for_auto = parseFloat(min_payout_for_auto);
-
-    const updated = await prisma.product.update({
-      where: { id: productId },
-      data: dataToUpdate,
-    });
-
-    return res.json({
-      success: true,
-      message: 'Auto-matching rules updated successfully.',
-      data: updated,
-    });
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to update auto-matching rules',
-      error: error.message,
-    });
   }
-});
+);
+
+
+// PUT /api/admin/auto-match/rules/:productId
+router.put(
+  '/auto-match/rules/:productId',
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { productId } = req.params;
+
+      const {
+        auto_match_enabled,
+        max_campus_inventory,
+        require_photos_for_auto,
+        min_payout_for_auto,
+        auto_accept_answers,
+      } = req.body ?? {};
+
+      const product = await prisma.product.findUnique({
+        where: { id: productId },
+      });
+
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: 'Product not found.',
+        });
+      }
+
+      const dataToUpdate: any = {};
+
+      if (auto_match_enabled !== undefined) {
+        if (typeof auto_match_enabled !== 'boolean') {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid auto-match status.',
+          });
+        }
+
+        dataToUpdate.auto_match_enabled =
+          auto_match_enabled;
+      }
+
+      if (max_campus_inventory !== undefined) {
+        if (
+          !Number.isInteger(max_campus_inventory) ||
+          max_campus_inventory < 1 ||
+          max_campus_inventory > 100
+        ) {
+          return res.status(400).json({
+            success: false,
+            message:
+              'Campus inventory limit must be between 1 and 100.',
+          });
+        }
+
+        dataToUpdate.max_campus_inventory =
+          max_campus_inventory;
+      }
+
+      if (require_photos_for_auto !== undefined) {
+        if (typeof require_photos_for_auto !== 'boolean') {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid photo requirement.',
+          });
+        }
+
+        dataToUpdate.require_photos_for_auto =
+          require_photos_for_auto;
+      }
+
+      if (min_payout_for_auto !== undefined) {
+        if (
+          min_payout_for_auto !== null &&
+          (
+            typeof min_payout_for_auto !== 'number' ||
+            !Number.isFinite(min_payout_for_auto) ||
+            min_payout_for_auto < 0
+          )
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid minimum payout.',
+          });
+        }
+
+        dataToUpdate.min_payout_for_auto =
+          min_payout_for_auto;
+      }
+
+      // Admin can only SELECT existing answers.
+      // This endpoint cannot edit questions,
+      // descriptions, or deduction values.
+
+      if (auto_accept_answers !== undefined) {
+        if (
+          !auto_accept_answers ||
+          typeof auto_accept_answers !== 'object' ||
+          Array.isArray(auto_accept_answers)
+        ) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid answer selection.',
+          });
+        }
+
+        let questions: Array<{
+          id: string;
+          options: Array<{ label: string }>;
+        }> = [];
+
+        try {
+          const parsed = JSON.parse(
+            product.quality_questions
+          );
+
+          if (!Array.isArray(parsed)) {
+            throw new Error('Invalid questions');
+          }
+
+          questions = parsed;
+        } catch {
+          return res.status(400).json({
+            success: false,
+            message:
+              'Product questionnaire is invalid. Update it in Product Catalog.',
+          });
+        }
+
+        const allowedByQuestion = new Map(
+          questions.map((question) => [
+            question.id,
+            new Set(
+              question.options.map((option) => option.label)
+            ),
+          ])
+        );
+
+        const validated: Record<string, string[]> = {};
+
+        for (const [questionId, labels] of Object.entries(
+          auto_accept_answers
+        )) {
+          const allowedLabels =
+            allowedByQuestion.get(questionId);
+
+          if (!allowedLabels || !Array.isArray(labels)) {
+            return res.status(400).json({
+              success: false,
+              message:
+                'Unknown question or invalid answer selections.',
+            });
+          }
+
+          if (
+            !labels.every(
+              (label) =>
+                typeof label === 'string' &&
+                allowedLabels.has(label)
+            )
+          ) {
+            return res.status(400).json({
+              success: false,
+              message:
+                'You can only choose existing questionnaire answers.',
+            });
+          }
+
+          validated[questionId] = [
+            ...new Set(labels as string[]),
+          ];
+        }
+
+        dataToUpdate.auto_accept_answers =
+          JSON.stringify(validated);
+      }
+
+      const updated = await prisma.product.update({
+        where: { id: productId },
+        data: dataToUpdate,
+      });
+
+      return res.json({
+        success: true,
+        message: 'Auto-approval rules saved successfully.',
+        data: updated,
+      });
+    } catch (error) {
+      console.error('Saving auto-match rules failed:', error);
+
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to save auto-match rules.',
+      });
+    }
+  }
+);
 
 // POST /api/admin/auto-match/run - Manually trigger auto-match & auto-accept scan
 router.post('/auto-match/run', async (_req: AuthRequest, res: Response) => {

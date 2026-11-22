@@ -70,8 +70,29 @@ async function loadAccess(req: OpsRequest, res: Response, next: NextFunction) {
             prisma.campusHeroApplication.findFirst({ where: { user_id: u.id, status: 'APPROVED' }, select: { id: true } }),
             prisma.heroManagerAssignment.findMany({ where: { user_id: u.id, is_active: true }, select: { college_id: true } }),
         ]);
-        req.ops = { admin, hero: admin || Boolean(approved), managerCollegeIds: assignments.map(a => a.college_id) };
-        next();
+if (
+  u.role === 'HERO_MANAGER' &&
+  assignments.length === 0
+) {
+  return bad(
+    res,
+    403,
+    'Your Manager access has been revoked.'
+  );
+}
+
+req.ops = {
+  admin,
+  hero:
+    admin ||
+    (
+      u.role !== 'HERO_MANAGER' &&
+      Boolean(approved)
+    ),
+  managerCollegeIds: assignments.map(
+    a => a.college_id
+  ),
+};        next();
     } catch (err) { next(err); }
 }
 router.use(loadAccess);
@@ -83,10 +104,25 @@ function requireManager(req: OpsRequest, res: Response, next: NextFunction) {
     return req.ops?.admin || req.ops?.managerCollegeIds.length ? next() : bad(res, 403, 'Campus Hero Manager assignment is required.');
 }
 function targetCollege(req: OpsRequest) {
-    const id = safeString(req.query.college_id, 100);
-    if (req.ops?.admin) return id || req.user!.college_id;
-    if (id && req.ops?.managerCollegeIds.includes(id)) return id;
-    return req.ops?.managerCollegeIds[0] || null;
+  const id = safeString(
+    req.query.college_id,
+    100
+  );
+
+  if (req.ops?.admin) {
+    return id || req.user!.college_id;
+  }
+
+  const assignedColleges =
+    req.ops?.managerCollegeIds || [];
+
+  if (id) {
+    return assignedColleges.includes(id)
+      ? id
+      : null;
+  }
+
+  return assignedColleges[0] || null;
 }
 function errResponse(res: Response, err: unknown, label: string) {
     console.error(label, err);

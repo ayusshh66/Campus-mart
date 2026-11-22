@@ -3,6 +3,9 @@ import React, {
   useState,
 } from 'react';
 
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
 import {
   Link,
   useSearchParams,
@@ -194,10 +197,10 @@ function Status({ value }: { value: string }) {
   return (
     <span
       className={`inline-flex w-fit rounded-full border px-2.5 py-1 text-[10px] font-bold ${positive
-          ? 'border-[#C6DE41]/25 bg-[#C6DE41]/10 text-[#C6DE41]'
-          : negative
-            ? 'border-red-400/20 bg-red-400/10 text-red-300'
-            : 'border-amber-400/20 bg-amber-400/10 text-amber-300'
+        ? 'border-[#C6DE41]/25 bg-[#C6DE41]/10 text-[#C6DE41]'
+        : negative
+          ? 'border-red-400/20 bg-red-400/10 text-red-300'
+          : 'border-amber-400/20 bg-amber-400/10 text-amber-300'
         }`}
     >
       {formatStatus(value)}
@@ -336,6 +339,16 @@ function exportCSV(tasks: ManagerTask[]) {
 }
 
 export const HeroManagerDashboardPage: React.FC = () => {
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+
+    navigate('/hero-manager/login', {
+      replace: true,
+    });
+  };
   const [params, setParams] = useSearchParams();
 
   const tab = params.get('tab') || 'overview';
@@ -768,8 +781,8 @@ export const HeroManagerDashboardPage: React.FC = () => {
 
       <aside
         className={`fixed inset-y-0 left-0 z-50 flex w-[255px] flex-col border-r border-white/10 bg-[#12160F] transition-transform lg:translate-x-0 ${mobileOpen
-            ? 'translate-x-0'
-            : '-translate-x-full'
+          ? 'translate-x-0'
+          : '-translate-x-full'
           }`}
       >
         <div className="border-b border-white/10 p-6">
@@ -806,8 +819,8 @@ export const HeroManagerDashboardPage: React.FC = () => {
                       navigateTab(item.id)
                     }
                     className={`mb-1 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-xs font-semibold transition-colors ${tab === item.id
-                        ? 'bg-[#C6DE41] text-[#090B09]'
-                        : 'text-stone-300 hover:bg-white/5'
+                      ? 'bg-[#C6DE41] text-[#090B09]'
+                      : 'text-stone-300 hover:bg-white/5'
                       }`}
                   >
                     <Icon size={17} />
@@ -822,8 +835,8 @@ export const HeroManagerDashboardPage: React.FC = () => {
             <button
               onClick={() => navigateTab('access')}
               className={`flex w-full items-center gap-3 rounded-xl p-3 text-xs font-semibold ${tab === 'access'
-                  ? 'bg-[#C6DE41] text-[#090B09]'
-                  : 'text-stone-300 hover:bg-white/5'
+                ? 'bg-[#C6DE41] text-[#090B09]'
+                : 'text-stone-300 hover:bg-white/5'
                 }`}
             >
               <Settings size={17} />
@@ -847,13 +860,28 @@ export const HeroManagerDashboardPage: React.FC = () => {
             </div>
           </div>
 
-          <Link
-            to="/"
-            className="flex items-center gap-2 text-xs text-stone-400 hover:text-[#C6DE41]"
-          >
-            <ArrowLeft size={14} />
-            Return to CampusMart
-          </Link>
+          <div className="space-y-3">
+
+            {user?.role === 'ADMIN' && (
+              <Link
+                to="/admin"
+                className="flex items-center gap-2 text-xs text-stone-400 hover:text-[#C6DE41]"
+              >
+                <ArrowLeft size={14} />
+                Return to Admin Panel
+              </Link>
+            )}
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex w-full items-center gap-2 rounded-xl border border-red-400/15 px-3 py-2.5 text-xs font-semibold text-red-300 transition-colors hover:bg-red-400/10"
+            >
+              <LogOut size={15} />
+              Sign Out
+            </button>
+
+          </div>
         </div>
       </aside>
 
@@ -1732,13 +1760,12 @@ export const HeroManagerDashboardPage: React.FC = () => {
                 </p>
               </div>
 
-              <Link
-                to="/settings"
-                className={secondary}
-              >
-                <Settings size={16} />
-                Account Settings
-              </Link>
+              {user?.role !== 'HERO_MANAGER' && (
+                <Link to="/settings" className={secondary}>
+                  <Settings size={16} />
+                  Account Settings
+                </Link>
+              )}
             </section>
           )}
 
@@ -2148,8 +2175,8 @@ export const HeroManagerDashboardPage: React.FC = () => {
                     <div
                       key={item.id}
                       className={`rounded-xl p-3 ${item.is_mine
-                          ? 'bg-[#C6DE41]/10'
-                          : 'bg-white/5'
+                        ? 'bg-[#C6DE41]/10'
+                        : 'bg-white/5'
                         }`}
                     >
                       <p className="text-xs font-bold text-[#C6DE41]">

@@ -24,20 +24,30 @@ export const authenticateToken = async (
   res: Response,
   next: NextFunction
 ) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.startsWith('Bearer ')
-    ? authHeader.split(' ')[1]
-    : null;
+  const authHeader = req.headers.authorization;
+
+  const token =
+    authHeader && authHeader.startsWith('Bearer ')
+      ? authHeader.split(' ')[1]
+      : null;
 
   if (!token) {
     return next();
   }
 
   try {
-    const decoded = jwt.verify(token, config.jwtSecret) as { id: string };
+    const decoded = jwt.verify(
+      token,
+      config.jwtSecret
+    ) as { id: string };
+
     const user = await prisma.user.findUnique({
-      where: { id: decoded.id },
-      include: { college: true },
+      where: {
+        id: decoded.id,
+      },
+      include: {
+        college: true,
+      },
     });
 
     if (user) {
@@ -45,18 +55,55 @@ export const authenticateToken = async (
         id: user.id,
         email: user.email,
         name: user.name,
+        phone: user.phone,
         college_id: user.college_id,
         college_name: user.college.name,
         college_code: user.college.code,
         role: user.role,
-        marketplace_mode: user.marketplace_mode || 'BUYER',
       };
     }
-  } catch (err) {
-    // Token expired or invalid, leave req.user undefined
+  } catch {
+    req.user = undefined;
+    return next();
   }
 
-  next();
+  // Restrict dedicated manager accounts.
+  if (req.user?.role === 'HERO_MANAGER') {
+    const path = req.originalUrl
+      .split('?')[0]
+      .replace(/\/+$/, '');
+
+    const method = req.method.toUpperCase();
+
+    const allowed =
+      (
+        method === 'GET' &&
+        path === '/api/auth/me'
+      ) ||
+      (
+        method === 'GET' &&
+        path === '/api/hero-ops/me'
+      ) ||
+      path.startsWith('/api/hero-ops/manager/') ||
+      (
+        /^\/api\/hero-ops\/tasks\/[^/]+\/proofs$/.test(path) &&
+        method === 'GET'
+      ) ||
+      (
+        /^\/api\/hero-ops\/tasks\/[^/]+\/messages$/.test(path) &&
+        ['GET', 'POST'].includes(method)
+      );
+
+    if (!allowed) {
+      return res.status(403).json({
+        success: false,
+        message:
+          'This account is restricted to Campus Hero Manager operations.',
+      });
+    }
+  }
+
+  return next();
 };
 
 export const requireAuth = (

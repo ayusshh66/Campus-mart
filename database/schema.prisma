@@ -91,6 +91,7 @@ model Product {
   buy_requests            BuyRequest[]
   delivery_tasks          DeliveryTask[]
   custom_item_submissions CustomItemSubmission[]
+  auto_accept_answers String @default("{}")
 
   @@map("products")
 }
