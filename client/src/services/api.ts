@@ -23,14 +23,11 @@ export interface User {
   email: string;
   phone: string;
 
-  role:
-    | 'USER'
-    | 'ADMIN'
-    | 'CAMPUS_HERO';
+  role: 'USER' | 'ADMIN' | 'CAMPUS_HERO' | 'HERO_MANAGER';
 
   marketplace_mode:
-    | 'BUYER'
-    | 'SELLER';
+  | 'BUYER'
+  | 'SELLER';
 
   college: {
     id: string;
@@ -247,19 +244,39 @@ export interface HeroDashboardData {
   tasks: DeliveryTaskItem[];
 }
 
+export interface AutoApprovalOption {
+  label: string;
+  description?: string;
+  deduction: number;
+}
+
+export interface AutoApprovalQuestion {
+  id: string;
+  question: string;
+  options: AutoApprovalOption[];
+}
+
 export interface AutoMatchRule {
   id: string;
   name: string;
   category: string;
   image_url: string;
+
   buy_price: number;
-  upto_buy_price?: number;
+  upto_buy_price?: number | null;
   sell_price: number;
+
   auto_match_enabled: boolean;
   max_campus_inventory: number;
   auto_accept_conditions: string[];
   require_photos_for_auto: boolean;
-  min_payout_for_auto?: number;
+  min_payout_for_auto?: number | null;
+
+  // Existing questions are read-only in Auto-Match.
+  quality_questions: AutoApprovalQuestion[];
+
+  // Only these options qualify for auto-approval.
+  auto_accept_answers: Record<string, string[]>;
 }
 
 export interface HackathonProfile {
@@ -396,8 +413,11 @@ export interface AdminUserItem {
   name: string;
   email: string;
   phone: string;
-  role: 'USER' | 'CAMPUS_HERO' | 'ADMIN';
-  college_id: string;
+  role:
+  | 'USER'
+  | 'ADMIN'
+  | 'CAMPUS_HERO'
+  | 'HERO_MANAGER'; college_id: string;
   college?: {
     id: string;
     code: string;
@@ -506,7 +526,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 export const api = {
-  
+
   // Colleges
   getColleges: async () => {
     const res = await request<{ success: boolean; data: College[] }>('/colleges');
@@ -521,12 +541,29 @@ export const api = {
     });
   },
 
-  login: async (payload: { email: string; password: string }) => {
-    return request<{ success: boolean; message: string; data: { token: string; user: User } }>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
-    
+  login: async (
+    payload: {
+      email: string;
+      password: string;
+    },
+    managerLogin = false
+  ) => {
+    return request<{
+      success: boolean;
+      message: string;
+      data: {
+        token: string;
+        user: User;
+      };
+    }>(
+      managerLogin
+        ? '/auth/manager-login'
+        : '/auth/login',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
   },
 
   getMe: async () => {
@@ -535,25 +572,25 @@ export const api = {
   },
 
   updateMarketplaceMode: async (
-  mode: 'BUYER' | 'SELLER'
-) => {
-  return request<{
-    success: boolean;
-    message: string;
+    mode: 'BUYER' | 'SELLER'
+  ) => {
+    return request<{
+      success: boolean;
+      message: string;
 
-    data: {
-      marketplace_mode:
+      data: {
+        marketplace_mode:
         | 'BUYER'
         | 'SELLER';
-    };
-  }>('/auth/marketplace-mode', {
-    method: 'PATCH',
+      };
+    }>('/auth/marketplace-mode', {
+      method: 'PATCH',
 
-    body: JSON.stringify({
-      marketplace_mode: mode,
-    }),
-  });
-},
+      body: JSON.stringify({
+        marketplace_mode: mode,
+      }),
+    });
+  },
 
   // Products
   getProducts: async (college_id?: string) => {
@@ -675,7 +712,7 @@ export const api = {
     }
     return data.data as Array<{ url: string; filename: string }>;
   },
-  
+
 
   // Admin APIs
   admin: {

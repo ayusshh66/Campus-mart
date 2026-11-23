@@ -81,21 +81,21 @@ router.post('/register', async (req: Request, res: Response) => {
       data: {
         token,
         user: {
-  id: newUser.id,
-  name: newUser.name,
-  email: newUser.email,
-  phone: newUser.phone,
-  role: newUser.role,
+          id: newUser.id,
+          name: newUser.name,
+          email: newUser.email,
+          phone: newUser.phone,
+          role: newUser.role,
 
-  marketplace_mode:
-    newUser.marketplace_mode,
+          marketplace_mode:
+            newUser.marketplace_mode,
 
-  college: {  
-    id: newUser.college.id,
-    code: newUser.college.code,
-    name: newUser.college.name,
-  },
-},
+          college: {
+            id: newUser.college.id,
+            code: newUser.college.code,
+            name: newUser.college.name,
+          },
+        },
       },
     });
   } catch (error: any) {
@@ -108,83 +108,120 @@ router.post('/register', async (req: Request, res: Response) => {
 });
 
 // POST /api/auth/login
-router.post('/login', async (req: Request, res: Response) => {
-  try {
-    const { email, password } = req.body;
+router.post(
+  ['/login', '/manager-login'],
+  async (req: Request, res: Response) => {
+    try {
+      const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email and password are required.',
+      if (!email || !password) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email and password are required.',
+        });
+      }
+
+      const normalizedEmail = email.trim().toLowerCase();
+
+      // Find user
+      const user = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+        include: {
+          college: true,
+        },
       });
-    }
 
-    const normalizedEmail = email.trim().toLowerCase();
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid email or password.',
+        });
+      }
 
-    // Find user
-    const user = await prisma.user.findUnique({
-      where: { email: normalizedEmail },
-      include: {
-        college: true,
-      },
-    });
+      // Verify password
+      const isMatch = await bcrypt.compare(password, user.password_hash);
+      if (!isMatch) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid email or password.',
+        });
+      }
+      const isManagerLogin = req.path === '/manager-login';
 
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password.',
-      });
-    }
+      if (isManagerLogin) {
+        if (user.role !== 'HERO_MANAGER') {
+          return res.status(403).json({
+            success: false,
+            message: 'This account is not a Campus Hero Manager account.',
+          });
+        }
 
-    // Verify password
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid email or password.',
-      });
-    }
+        const assignment =
+          await prisma.heroManagerAssignment.findFirst({
+            where: {
+              user_id: user.id,
+              is_active: true,
+            },
+            select: {
+              id: true,
+            },
+          });
 
-    // Generate JWT token
-    const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        college_id: user.college_id,
-      },
-      config.jwtSecret,
-      { expiresIn: '7d' }
-    );
+        if (!assignment) {
+          return res.status(403).json({
+            success: false,
+            message:
+              'Your Campus Hero Manager access is inactive. Contact an administrator.',
+          });
+        }
+      } else if (user.role === 'HERO_MANAGER') {
+        return res.status(403).json({
+          success: false,
+          message:
+            'Please sign in through the Campus Hero Manager login portal.',
+        });
+      }
 
-    return res.json({
-      success: true,
-      message: `Welcome back, ${user.name}!`,
-      data: {
-        token,
-        user: {
+      // Generate JWT token
+      const token = jwt.sign(
+        {
           id: user.id,
-          name: user.name,
           email: user.email,
-          phone: user.phone,
           role: user.role,
-          marketplace_mode: user.marketplace_mode,
-          college: {
-            id: user.college.id,
-            code: user.college.code,
-            name: user.college.name,
+          college_id: user.college_id,
+        },
+        config.jwtSecret,
+        { expiresIn: '7d' }
+      );
+
+      return res.json({
+        success: true,
+        message: `Welcome back, ${user.name}!`,
+        data: {
+          token,
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+            marketplace_mode: user.marketplace_mode,
+            college: {
+              id: user.college.id,
+              code: user.college.code,
+              name: user.college.name,
+            },
           },
         },
-      },
-    });
-  } catch (error: any) {
-    return res.status(500).json({
-      success: false,
-      message: 'Login failed due to a server error.',
-      error: error.message,
-    });
-  }
-});
+      });
+    } catch (error: any) {
+      return res.status(500).json({
+        success: false,
+        message: 'Login failed due to a server error.',
+        error: error.message,
+      });
+    }
+  });
 
 // GET /api/auth/me
 router.get('/me', authenticateToken, requireAuth, async (req: AuthRequest, res: Response) => {

@@ -1,32 +1,37 @@
 
-import { TextRoll } from './motion/TextRoll';
-import { SmoothInput } from './motion/SmoothInput';
-import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { ThemeToggle } from './ThemeToggle';
-import { api, College } from '../services/api';
-import { TEAMS_ENABLED } from '../config/features';
+
 import {
+  ArrowRight,
+  Building2,
+  Check,
+  ChevronDown,
+  Home,
+  LayoutDashboard,
+  LogIn,
+  LogOut,
+  MapPin,
+  Menu,
+  RotateCcw,
+  Search,
+  Settings,
+  ShieldCheck,
   ShoppingBag,
   Tag,
-  User as UserIcon,
-  MapPin,
-  LogOut,
-  LogIn,
-  Home,
+  UserRound,
   Users,
-  ChevronDown,
-  Search,
   X,
-  Check,
-  Building2,
-  RotateCcw,
-  Settings as SettingsIcon,
 } from 'lucide-react';
 
-// Original spring animation settings
+import { useAuth } from '../context/AuthContext';
+import { ThemeToggle } from './ThemeToggle';
+import { api } from '../services/api';
+import type { College } from '../services/api';
+import { TEAMS_ENABLED } from '../config/features';
+
+// Original CampusMart spring dropdown animation
 const menuTransition = {
   type: 'spring' as const,
   mass: 0.5,
@@ -36,7 +41,7 @@ const menuTransition = {
   restSpeed: 0.001,
 };
 
-type MenuItemProps = {
+type DesktopMenuProps = {
   label: string;
   to: string;
   active: string | null;
@@ -45,100 +50,74 @@ type MenuItemProps = {
   children: React.ReactNode;
 };
 
+// ============================================
+// DESKTOP ANIMATED MENU
+// ============================================
 
-const MenuItem: React.FC<MenuItemProps> = ({
+const DesktopMenu: React.FC<DesktopMenuProps> = ({
   label,
   to,
   active,
   setActive,
   current,
   children,
-}) => {
-  // Hide My Teams during the buy/sell-only release
-  if (!TEAMS_ENABLED && label === 'My Teams') {
-    return null;
-  }
-
-  // Show a disabled Teammates label
-  
-if (!TEAMS_ENABLED && label === 'Teammates') {
-  return (
-    <div
-      aria-label="Teammates — Coming Soon"
-      title="Hackathon matching is launching soon"
-      className="flex cursor-not-allowed select-none flex-col items-center justify-center gap-0.5 px-2.5 py-1.5"
+}) => (
+  <div
+    className="relative"
+    onMouseEnter={() => setActive(label)}
+    onFocus={() => setActive(label)}
+  >
+    <Link
+      to={to}
+      aria-current={current ? 'page' : undefined}
+      aria-expanded={active === label}
+      className={`block whitespace-nowrap rounded-full px-2.5 py-2 text-[12px] font-medium transition-colors xl:text-[13px] ${
+        current
+          ? 'font-semibold text-[#C6DE41]'
+          : 'text-white hover:text-[#C6DE41] light:text-[#171B13] light:hover:text-[#7E9E0A]'
+      }`}
     >
-      <span className="whitespace-nowrap text-[12px] font-medium leading-4 text-zinc-400 light:text-[#62695E] lg:text-[13px]">
-        Teammates
-      </span>
+      {label}
+    </Link>
 
-      <span className="whitespace-nowrap text-[9px] font-medium leading-3 tracking-wide text-[#C6DE41] light:text-[#526800]">
-        Coming Soon
-      </span>
-    </div>
-  );
-}
-
-
-  // Original dropdown behavior for other menus
-  return (
-    <div
-      className="relative"
-      onMouseEnter={() => setActive(label)}
-      onFocus={() => setActive(label)}
-    >
-      <motion.div transition={{ duration: 0.3 }}>
-        <Link
-          to={to}
-          aria-current={current ? 'page' : undefined}
-          aria-expanded={active === label}
-          className={`block whitespace-nowrap rounded-full px-2.5 py-2 text-[12px] font-medium transition-colors lg:text-[13px] ${
-            current
-              ? 'text-[#C6DE41] font-semibold'
-              : 'text-white dark:text-white light:text-[#171B13] hover:text-[#C6DE41] light:hover:text-[#7E9E0A]'
-          }`}
-        >
-          {label}
-        </Link>
-      </motion.div>
-
-      {active === label && (
+    {active === label && (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.85, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={menuTransition}
+        className="absolute left-1/2 top-full z-[80] -translate-x-1/2 pt-4"
+      >
         <motion.div
-          initial={{ opacity: 0, scale: 0.85, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
+          layoutId="campusmart-navbar-active"
           transition={menuTransition}
-          className="absolute left-1/2 top-full z-[70] -translate-x-1/2 pt-4"
+          className="overflow-hidden rounded-2xl border border-[#C6DE41]/30 bg-[#0A0D08]/95 shadow-xl backdrop-blur-md light:border-[#DFE5D5] light:bg-white/95"
         >
-          <motion.div
-            layoutId="campusmart-navbar-active"
-            transition={menuTransition}
-            className="overflow-hidden rounded-2xl border border-[#C6DE41]/30 light:border-[#DFE5D5] bg-[#0A0D08]/95 light:bg-[#FFFFFF]/98 shadow-xl backdrop-blur-md"
-          >
-            <motion.div
-              layout
-              className="flex w-max min-w-[185px] flex-col gap-1 p-4 text-sm"
-            >
-              {children}
-            </motion.div>
-          </motion.div>
+          <div className="flex w-max min-w-[190px] flex-col gap-1 p-3 text-[12px]">
+            {children}
+          </div>
         </motion.div>
-      )}
-    </div>
-  );
-};
+      </motion.div>
+    )}
+  </div>
+);
 
-
-const HoveredLink: React.FC<{
+const DropdownLink: React.FC<{
   to: string;
   children: React.ReactNode;
-}> = ({ to, children }) => (
+  onClick?: () => void;
+}> = ({ to, children, onClick }) => (
   <Link
     to={to}
-    className="rounded-lg px-3 py-2 text-zinc-300 dark:text-zinc-300 light:text-[#171B13] transition-colors hover:bg-[#C6DE41]/15 hover:text-[#C6DE41] light:hover:bg-[#C6DE41]/20 light:hover:text-[#7E9E0A]"
+    onClick={onClick}
+    className="rounded-lg px-3 py-2.5 text-zinc-300 transition-colors hover:bg-[#C6DE41]/15 hover:text-[#C6DE41] light:text-[#171B13] light:hover:bg-[#C6DE41]/20 light:hover:text-[#7E9E0A]"
   >
     {children}
   </Link>
 );
+
+// ============================================
+// MAIN NAVBAR
+// ============================================
 
 export const Navbar: React.FC = () => {
   const {
@@ -151,935 +130,1050 @@ export const Navbar: React.FC = () => {
     marketplaceMode,
   } = useAuth();
 
-  const location = useLocation();
   const navigate = useNavigate();
+  const location = useLocation();
 
-const [colleges, setColleges] = useState<College[]>([]);
-const [activeMenu, setActiveMenu] = useState<string | null>(null);
-const [showCollegeModal, setShowCollegeModal] = useState(false);
-const [collegeSearch, setCollegeSearch] = useState('');
+  const [colleges, setColleges] = useState<College[]>([]);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
-const [showAccountMenu, setShowAccountMenu] = useState(false);
+  const [collegeOpen, setCollegeOpen] = useState<
+    'mobile' | 'desktop' | null
+  >(null);
 
-  const modalRef = useRef<HTMLDivElement>(null);  
-  const accountMenuRef = useRef<HTMLDivElement>(null);
+  const [collegeSearch, setCollegeSearch] = useState('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+
+  const desktopCollegeRef = useRef<HTMLDivElement>(null);
+  const mobileCollegeRef = useRef<HTMLDivElement>(null);
+  const accountRef = useRef<HTMLDivElement>(null);
+
+  // ============================================
+  // LOAD CAMPUSES
+  // ============================================
 
   useEffect(() => {
-    const fetchColleges = async () => {
-      try {
-        const list = await api.getColleges();
-        setColleges(list);
-      } catch (err) {
-        console.error('Failed to fetch colleges for navbar:', err);
-      }
-    };
+    let mounted = true;
 
-    fetchColleges();
-  }, []);
-
-  // Close campus selector when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        modalRef.current &&
-        !modalRef.current.contains(e.target as Node)
-      ) {
-        setShowCollegeModal(false);
-      }
-    };
-
-    if (showCollegeModal) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
+    api.getColleges()
+      .then((items) => {
+        if (mounted) setColleges(items);
+      })
+      .catch((error) =>
+        console.error('Could not load colleges:', error)
+      );
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      mounted = false;
     };
-  }, [showCollegeModal]);
+  }, []);
 
+  // Close menus after route changes
   useEffect(() => {
-  const handleAccountClickOutside = (e: MouseEvent) => {
-    if (
-      accountMenuRef.current &&
-      !accountMenuRef.current.contains(e.target as Node)
-    ) {
-      setShowAccountMenu(false);
-    }
-  };
+    setActiveMenu(null);
+    setCollegeOpen(null);
+    setMobileMenuOpen(false);
+    setAccountOpen(false);
+  }, [location.pathname]);
 
-  document.addEventListener(
-    'mousedown',
-    handleAccountClickOutside
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const onPointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+
+      if (
+        collegeOpen === 'desktop' &&
+        !desktopCollegeRef.current?.contains(target)
+      ) {
+        setCollegeOpen(null);
+      }
+
+      if (
+        collegeOpen === 'mobile' &&
+        !mobileCollegeRef.current?.contains(target)
+      ) {
+        setCollegeOpen(null);
+      }
+
+      if (!accountRef.current?.contains(target)) {
+        setAccountOpen(false);
+      }
+    };
+
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setCollegeOpen(null);
+        setMobileMenuOpen(false);
+        setAccountOpen(false);
+        setActiveMenu(null);
+      }
+    };
+
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onEscape);
+    };
+  }, [collegeOpen]);
+
+  // Close mobile overlay when changing to desktop
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 1280px)');
+
+    const onResize = () => {
+      if (media.matches) {
+        setMobileMenuOpen(false);
+
+        if (collegeOpen === 'mobile') {
+          setCollegeOpen(null);
+        }
+      }
+    };
+
+    media.addEventListener('change', onResize);
+
+    return () =>
+      media.removeEventListener('change', onResize);
+  }, [collegeOpen]);
+
+  // ============================================
+  // SHARED VALUES
+  // ============================================
+
+  const activeCollege =
+    colleges.find(
+      (college) => college.id === selectedCollegeId
+    ) ||
+    user?.college ||
+    colleges[0];
+
+  const matchingColleges = colleges.filter((college) =>
+    `${college.code} ${college.name}`
+      .toLowerCase()
+      .includes(collegeSearch.trim().toLowerCase())
   );
 
-  return () => {
-    document.removeEventListener(
-      'mousedown',
-      handleAccountClickOutside
-    );
-  };
-}, []);
+  const isActive = (to: string) =>
+    to === '/'
+      ? location.pathname === '/'
+      : location.pathname === to ||
+        location.pathname.startsWith(`${to}/`);
 
-  const handleLogout = () => {
+  const isAdmin = user?.role === 'ADMIN';
+
+  const isHero =
+    user?.role === 'CAMPUS_HERO' || isAdmin;
+
+  const isManager =
+    String(user?.role) === 'HERO_MANAGER';
+
+  const doLogout = () => {
+    setMobileMenuOpen(false);
+    setAccountOpen(false);
     logout();
     navigate('/login');
   };
 
-  const isActive = (path: string) => {
-    if (path === '/' && location.pathname === '/') {
-      return true;
-    }
-
-    if (path !== '/' && location.pathname.startsWith(path)) {
-      return true;
-    }
-
-    return false;
+  const chooseCollege = (id: string) => {
+    setSelectedCollegeId(id);
+    setCollegeOpen(null);
+    setCollegeSearch('');
   };
 
-  // Highlight Teammates for both team and individual posts
-  const isTeammatesActive =
-    isActive('/find-teammates') ||
-    isActive('/teams') ||
-    isActive('/find-students') ||
-    isActive('/students') ||
-    isActive('/my-teams');
+  // ============================================
+  // SHARED CAMPUS PICKER
+  // ============================================
 
-  const activeCollege =
-    colleges.find((c) => c.id === selectedCollegeId) ||
-    (user ? user.college : colleges[0]);
+  const collegePicker = () => (
+    <div className="absolute left-0 top-full z-[120] mt-2 w-[min(90vw,350px)] rounded-[22px] border border-[#C6DE41]/30 bg-[#0E120A]/95 p-4 text-white shadow-2xl backdrop-blur-lg light:border-[#DFE5D5] light:bg-white light:text-[#171B13]">
 
-  const filteredColleges = colleges.filter(
-    (c) =>
-      c.name.toLowerCase().includes(collegeSearch.toLowerCase()) ||
-      c.code.toLowerCase().includes(collegeSearch.toLowerCase())
+      <div className="mb-3 flex items-center gap-2">
+        <Building2
+          size={18}
+          className="text-[#C6DE41]"
+        />
+
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold">
+            Select Campus
+          </p>
+
+          <p className="text-[11px] text-zinc-400 light:text-[#57614E]">
+            Browse college-specific listings
+          </p>
+        </div>
+
+        <button
+          type="button"
+          aria-label="Close campus selector"
+          onClick={() => setCollegeOpen(null)}
+        >
+          <X size={17} />
+        </button>
+      </div>
+
+      <label className="relative mb-3 block">
+        <Search
+          size={15}
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
+        />
+
+        <input
+          value={collegeSearch}
+          onChange={(event) =>
+            setCollegeSearch(event.target.value)
+          }
+          placeholder="Search college..."
+          className="w-full rounded-full border border-[#C6DE41]/25 bg-[#090B09] py-2.5 pl-9 pr-3 text-xs text-white outline-none focus:border-[#C6DE41] light:bg-[#F3F5EC] light:text-[#171B13]"
+        />
+      </label>
+
+      <div className="max-h-60 space-y-1 overflow-y-auto">
+        {matchingColleges.map((college) => (
+          <button
+            key={college.id}
+            type="button"
+            onClick={() => chooseCollege(college.id)}
+            className={`flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-left text-xs transition-colors ${
+              activeCollege?.id === college.id
+                ? 'bg-[#C6DE41]/15 text-[#C6DE41]'
+                : 'text-zinc-300 hover:bg-[#C6DE41]/10 light:text-[#171B13]'
+            }`}
+          >
+            <span className="min-w-0">
+              <span className="block font-bold">
+                {college.code}
+                {user?.college.id === college.id
+                  ? ' · Home'
+                  : ''}
+              </span>
+
+              <span className="block truncate text-[11px] text-zinc-400 light:text-[#57614E]">
+                {college.name}
+              </span>
+            </span>
+
+            {activeCollege?.id === college.id && (
+              <Check
+                size={16}
+                className="shrink-0"
+              />
+            )}
+          </button>
+        ))}
+
+        {matchingColleges.length === 0 && (
+          <p className="py-4 text-center text-xs text-zinc-400">
+            No matching colleges
+          </p>
+        )}
+      </div>
+
+      {user && isBrowsingOtherCollege && (
+        <button
+          type="button"
+          onClick={() => {
+            resetToHomeCollege();
+            setCollegeOpen(null);
+          }}
+          className="mt-3 flex w-full items-center justify-center gap-2 border-t border-white/10 pt-3 text-xs font-semibold text-[#C6DE41] light:border-[#DFE5D5]"
+        >
+          <RotateCcw size={13} />
+          Reset to {user.college.code}
+        </button>
+      )}
+    </div>
   );
 
-  // Shared menu content works for Buyer and Seller modes
-  const teammatesMenu = (
+  // ============================================
+  // MOBILE HAMBURGER MENU ITEMS
+  // No Teammates here
+  // ============================================
+
+  const mobileLinks = [
+    {
+      to: '/',
+      label: 'Home',
+      icon: Home,
+    },
+    {
+      to: '/buy',
+      label: 'Explore Campus Catalog',
+      icon: ShoppingBag,
+    },
+    {
+      to: '/sell',
+      label: 'Sell Gear',
+      icon: Tag,
+    },
+    {
+      to: '/campus-heroes',
+      label: 'Campus Heroes',
+      icon: ShieldCheck,
+    },
+
+    ...(isHero
+      ? [
+          {
+            to: '/hero-dashboard',
+            label: 'Hero Operations',
+            icon: ShieldCheck,
+          },
+        ]
+      : []),
+
+    ...(isAdmin
+      ? [
+          {
+            to: '/hero-manager',
+            label: 'Hero Manager',
+            icon: Users,
+          },
+          {
+            to: '/admin',
+            label: 'Admin Dashboard',
+            icon: LayoutDashboard,
+          },
+        ]
+      : []),
+
+    ...(isManager
+      ? [
+          {
+            to: '/hero-manager',
+            label: 'Manager Dashboard',
+            icon: LayoutDashboard,
+          },
+        ]
+      : []),
+
+    ...(user
+      ? [
+          {
+            to: '/profile',
+            label: 'View Profile',
+            icon: UserRound,
+          },
+          {
+            to: '/settings',
+            label: 'Account Settings',
+            icon: Settings,
+          },
+        ]
+      : [
+          {
+            to: '/login',
+            label: 'Log In',
+            icon: LogIn,
+          },
+        ]),
+  ];
+
+  // ============================================
+  // MOBILE BOTTOM NAVIGATION
+  // Home | Buy | Heroes | Sell | Settings
+  // ============================================
+
+  const bottomLinks = [
+    {
+      to: '/',
+      label: 'Home',
+      icon: Home,
+    },
+    {
+      to: '/buy',
+      label: 'Buy',
+      icon: ShoppingBag,
+    },
+    {
+      to: '/campus-heroes',
+      label: 'Heroes',
+      icon: ShieldCheck,
+    },
+    {
+      to: '/sell',
+      label: 'Sell',
+      icon: Tag,
+    },
+    user
+      ? {
+          to: '/settings',
+          label: 'Settings',
+          icon: Settings,
+        }
+      : {
+          to: '/login',
+          label: 'Login',
+          icon: LogIn,
+        },
+  ];
+
+  // ============================================
+  // DESKTOP DROPDOWN CONTENT
+  // ============================================
+
+  const teammatesLinks = (
     <>
-      <HoveredLink to="/find-teammates">
+      <DropdownLink to="/find-teammates">
         Browse Team Openings
-      </HoveredLink>
+      </DropdownLink>
 
-      <HoveredLink to="/teams/create">
+      <DropdownLink to="/teams/create">
         Create Team Post
-      </HoveredLink>
+      </DropdownLink>
 
-      <div className="my-1 border-t border-white/10 light:border-[#DFE5D5]" />
-
-      <HoveredLink to="/find-students">
+      <DropdownLink to="/find-students">
         Browse Available Students
-      </HoveredLink>
+      </DropdownLink>
 
-      <HoveredLink to="/students/create">
+      <DropdownLink to="/students/create">
         Post Looking for Team
-      </HoveredLink>
+      </DropdownLink>
 
       {user && (
-        <>
-          <div className="my-1 border-t border-white/10 light:border-[#DFE5D5]" />
-
-          <HoveredLink to="/my-teams">
-            My Teams
-          </HoveredLink>
-        </>
+        <DropdownLink to="/my-teams">
+          My Teams
+        </DropdownLink>
       )}
+    </>
+  );
+
+  const heroesLinks = (
+    <>
+      <DropdownLink to="/campus-heroes">
+        Campus Hero Program
+      </DropdownLink>
+
+      {isHero && (
+        <DropdownLink to="/hero-dashboard">
+          Hero Operations
+        </DropdownLink>
+      )}
+    </>
+  );
+
+  const adminLinks = isAdmin && (
+    <>
+      <DesktopMenu
+        label="Hero Manager"
+        to="/hero-manager"
+        active={activeMenu}
+        setActive={setActiveMenu}
+        current={isActive('/hero-manager')}
+      >
+        <DropdownLink to="/hero-manager">
+          Manager Dashboard
+        </DropdownLink>
+
+        <DropdownLink to="/hero-manager?tab=heroes">
+          Manage Campus Heroes
+        </DropdownLink>
+
+        <DropdownLink to="/hero-manager?tab=assignments">
+          Task Assignments
+        </DropdownLink>
+
+        <DropdownLink to="/hero-manager?tab=access">
+          Manage Manager Access
+        </DropdownLink>
+      </DesktopMenu>
+
+      <Link
+        to="/admin"
+        className={`whitespace-nowrap rounded-full px-2.5 py-2 text-xs hover:text-[#C6DE41] light:text-[#171B13] ${
+          isActive('/admin')
+            ? 'text-[#C6DE41]'
+            : 'text-zinc-300'
+        }`}
+      >
+        Admin
+      </Link>
     </>
   );
 
   return (
     <>
-      {/* Top Banner */}
-      <div className="bg-[#090B09] dark:bg-[#090B09] light:bg-[#EEF2E6] text-white dark:text-white light:text-[#171B13] py-2 px-4 text-center text-xs font-medium tracking-tight border-b border-[#C6DE41]/20 dark:border-[#C6DE41]/20 light:border-[#DFE5D5] shadow-sm transition-colors duration-200">
-        <div className="max-w-[1200px] mx-auto flex items-center justify-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#C6DE41] shadow-[0_0_8px_#C6DE41] shrink-0" />
+      {/* =====================================
+          TOP ANNOUNCEMENT
+          Desktop only
+      ===================================== */}
 
-          <span className="font-semibold text-white dark:text-white light:text-[#171B13]">
-            CampusMart Recommerce:
-          </span>
+      <div className="hidden border-b border-[#C6DE41]/20 bg-[#090B09] px-4 py-2 text-center text-xs text-white light:border-[#DFE5D5] light:bg-[#EEF2E6] light:text-[#171B13] xl:block">
+        <span className="mr-2 inline-block h-2 w-2 rounded-full bg-[#C6DE41] shadow-[0_0_8px_#C6DE41]" />
 
-          <span className="text-white/90 dark:text-white/90 light:text-[#57614E]">
-            Verified student-to-student handover with zero shipping fee
-          </span>
-        </div>
+        <strong>CampusMart Recommerce:</strong>{' '}
+        Verified student-to-student handover with zero shipping fee
       </div>
 
-      {/* Main Header */}
-      <header className="sticky top-0 z-50 border-b border-[#C6DE41]/20 dark:border-[#C6DE41]/20 light:border-[#DFE5D5] bg-[#090B09]/90 dark:bg-[#090B09]/90 light:bg-[#F7F8F2]/90 backdrop-blur-md transition-colors duration-200">
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      {/* =====================================
+          MOBILE TOP HEADER
+          Single header — no duplicate
+      ===================================== */}
 
-          {/* Brand and Campus Selector */}
-          <div className="flex items-center gap-3 sm:gap-4">
+      <header className="sticky top-0 z-[90] w-full min-w-0 border-b border-[#C6DE41]/20 bg-[#090B09]/95 text-white backdrop-blur-md light:border-[#DFE5D5] light:bg-[#F7F8F2]/95 light:text-[#171B13] xl:hidden">
+
+        <div className="mx-auto flex h-[60px] w-full max-w-[1200px] items-center justify-between gap-2 px-3 sm:px-5">
+
+          <div className="flex min-w-0 items-center gap-2">
+
+            {/* Logo */}
+
             <Link
               to="/"
-              className="flex items-center gap-1.5 group shrink-0"
+              className="flex shrink-0 items-center gap-1"
+              onClick={() => setMobileMenuOpen(false)}
             >
-              <span className="font-bold text-[20px] tracking-tightest text-white dark:text-white light:text-[#171B13]">
+              <span className="text-[16px] font-extrabold tracking-tight min-[390px]:text-[18px]">
                 CampusMart
               </span>
 
-              <span className="w-2 h-2 rounded-full bg-[#C6DE41] mb-1 shadow-[0_0_8px_rgba(198,222,65,0.6)]" />
+              <span className="h-2 w-2 rounded-full bg-[#C6DE41] shadow-[0_0_8px_#C6DE41]" />
             </Link>
 
-            {/* Campus Selector */}
-            <div className="relative">
+            {/* Mobile campus selector */}
+
+            <div
+              className="relative shrink-0"
+              ref={mobileCollegeRef}
+            >
               <button
                 type="button"
-                onClick={() => setShowCollegeModal(!showCollegeModal)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium transition-all shadow-shop-pill ${
-                  isBrowsingOtherCollege
-                    ? 'bg-amber-900/30 border border-amber-500/40 text-white dark:text-white light:text-[#171B13]'
-                    : 'bg-[#12160F] dark:bg-[#12160F] light:bg-[#FFFFFF] border border-[#C6DE41]/30 dark:border-[#C6DE41]/30 light:border-[#DFE5D5] text-white dark:text-white light:text-[#171B13] hover:border-[#C6DE41]/70'
-                }`}
-                title="Click to switch active campus"
+                aria-label="Select campus"
+                aria-expanded={collegeOpen === 'mobile'}
+                onClick={() => {
+                  setCollegeOpen(
+                    collegeOpen === 'mobile'
+                      ? null
+                      : 'mobile'
+                  );
+                  setMobileMenuOpen(false);
+                }}
+                className="flex items-center gap-1 rounded-full border border-[#C6DE41]/30 bg-[#12160F] px-2 py-1.5 text-[10px] light:bg-white"
               >
                 <MapPin
-                  className={`w-3.5 h-3.5 shrink-0 ${
-                    isBrowsingOtherCollege
-                      ? 'text-amber-500'
-                      : 'text-[#C6DE41]'
-                  }`}
+                  size={12}
+                  className="text-[#C6DE41]"
                 />
 
-                <span className="font-semibold text-white dark:text-white light:text-[#171B13]">
-                  {activeCollege ? activeCollege.code : 'All Campuses'}
+                <span className="max-w-[40px] truncate font-semibold">
+                  {activeCollege?.code || 'Campus'}
                 </span>
 
-                <span className="hidden xl:inline text-zinc-400 dark:text-zinc-400 light:text-[#78826F] text-[11px] max-w-[110px] truncate">
-                  (
-                  {activeCollege
-                    ? activeCollege.name.split('-')[0].trim()
-                    : 'Select'}
-                  )
-                </span>
-
-                <ChevronDown className="w-3 h-3 text-zinc-400 dark:text-zinc-400 light:text-[#78826F] shrink-0 ml-0.5" />
+                <ChevronDown
+                  size={11}
+                  className="text-zinc-400"
+                />
               </button>
 
-              {/* Campus Selector Popover */}
-              {showCollegeModal && (
-                <div
-                  ref={modalRef}
-                  className="absolute left-0 mt-2 w-80 sm:w-96 bg-[#0E120A]/95 dark:bg-[#0E120A]/95 light:bg-[#FFFFFF]/98 rounded-[28px] shadow-2xl border border-[#C6DE41]/30 dark:border-[#C6DE41]/30 light:border-[#DFE5D5] p-5 z-50 text-white dark:text-white light:text-[#171B13] animate-fade-in backdrop-blur-md"
-                >
-                  <div className="flex items-center justify-between pb-3 border-b border-[#C6DE41]/20 dark:border-[#C6DE41]/20 light:border-[#DFE5D5]">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-[#C6DE41]/15 flex items-center justify-center text-[#C6DE41]">
-                        <Building2 className="w-4 h-4" />
-                      </div>
-
-                      <div>
-                        <h4 className="text-[13px] font-semibold text-white dark:text-white light:text-[#171B13]">
-                          Select Campus
-                        </h4>
-
-                        <p className="text-[11px] text-zinc-400 dark:text-zinc-400 light:text-[#57614E]">
-                          Browse listings specific to your college
-                        </p>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowCollegeModal(false)}
-                      className="p-1 rounded-full text-zinc-400 hover:text-white dark:hover:text-white light:hover:text-[#171B13] hover:bg-white/10 light:hover:bg-black/5 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* Campus Search */}
-                  <div className="relative my-3">
-                    <Search className="w-3.5 h-3.5 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-
-                    <SmoothInput
-                      type="text"
-                      placeholder="Search college code or name..."
-                      value={collegeSearch}
-                      onChange={(e) => setCollegeSearch(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 text-[12px] rounded-full border border-[#C6DE41]/30 dark:border-[#C6DE41]/30 light:border-[#DFE5D5] bg-white/5 dark:bg-white/5 light:bg-[#F3F5EC] text-white dark:text-white light:text-[#171B13] placeholder:text-zinc-500 focus:outline-none focus:border-[#C6DE41]"
-                    />
-                  </div>
-
-                  {/* Campus Options */}
-                  <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
-                    {filteredColleges.map((col) => {
-                      const isSelected = activeCollege?.id === col.id;
-
-                      const isUserHome =
-                        user && user.college.id === col.id;
-
-                      return (
-                        <button
-                          type="button"
-                          key={col.id}
-                          onClick={() => {
-                            setSelectedCollegeId(col.id);
-                            setShowCollegeModal(false);
-                          }}
-                          className={`w-full flex items-center justify-between p-2.5 rounded-[16px] text-left text-[12px] transition-all ${
-                            isSelected
-                              ? 'bg-[#C6DE41]/20 text-[#C6DE41] font-semibold border border-[#C6DE41]/30'
-                              : 'hover:bg-[#C6DE41]/10 text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-white light:hover:text-[#7E9E0A]'
-                          }`}
-                        >
-                          <div className="flex flex-col">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-semibold text-white dark:text-white light:text-[#171B13]">
-                                {col.code}
-                              </span>
-
-                              {isUserHome && (
-                                <span className="px-1.5 py-0.2 text-[9px] font-medium rounded-full bg-[#C6DE41]/20 text-[#C6DE41] border border-[#C6DE41]/30">
-                                  Home
-                                </span>
-                              )}
-                            </div>
-
-                            <span className="text-[11px] text-zinc-400 dark:text-zinc-400 light:text-[#57614E] line-clamp-1">
-                              {col.name}
-                            </span>
-                          </div>
-
-                          {isSelected && (
-                            <Check className="w-4 h-4 text-[#C6DE41] shrink-0 ml-2" />
-                          )}
-                        </button>
-                      );
-                    })}
-
-                    {filteredColleges.length === 0 && (
-                      <p className="text-center text-[12px] text-zinc-400 dark:text-zinc-400 light:text-[#57614E] py-4">
-                        No colleges match your query.
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Reset Home Campus */}
-                  {user && isBrowsingOtherCollege && (
-                    <div className="pt-3 mt-2 border-t border-[#C6DE41]/20 dark:border-[#C6DE41]/20 light:border-[#DFE5D5] flex items-center justify-between">
-                      <span className="text-[11px] text-amber-400 font-medium">
-                        Browsing alternate campus
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          resetToHomeCollege();
-                          setShowCollegeModal(false);
-                        }}
-                        className="text-[12px] font-medium text-[#C6DE41] hover:underline flex items-center gap-1"
-                      >
-                        <RotateCcw className="w-3 h-3" />
-
-                        <span>
-                          Reset to {user.college.code}
-                        </span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+              {collegeOpen === 'mobile' &&
+                collegePicker()}
             </div>
           </div>
 
-          {/* Desktop Navigation */}
-          <nav
-            className="relative hidden items-center justify-center gap-0.5 rounded-full border border-[#C6DE41]/30 dark:border-[#C6DE41]/30 light:border-[#DFE5D5] bg-[#090B09] dark:bg-[#090B09] light:bg-[#FFFFFF] px-3 py-1.5 shadow-lg lg:flex transition-colors duration-200"
-            onMouseLeave={() => setActiveMenu(null)}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                setActiveMenu(null);
+          {/* Theme and menu */}
+
+          <div className="flex shrink-0 items-center gap-1.5">
+            <ThemeToggle />
+
+            <button
+              type="button"
+              aria-label={
+                mobileMenuOpen
+                  ? 'Close navigation menu'
+                  : 'Open navigation menu'
               }
-            }}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="campusmart-mobile-menu"
+              onClick={() => {
+                setMobileMenuOpen((open) => !open);
+                setCollegeOpen(null);
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#C6DE41]/30 bg-[#12160F] text-[#C6DE41] light:bg-white"
+            >
+              {mobileMenuOpen ? (
+                <X size={20} />
+              ) : (
+                <Menu size={20} />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* =================================
+            MOBILE ANIMATED HAMBURGER
+        ================================= */}
+
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              id="campusmart-mobile-menu"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-x-0 top-[60px] z-[110] h-[calc(100dvh-60px)] bg-black/75"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <motion.nav
+                aria-label="Mobile menu"
+                initial={{
+                  opacity: 0,
+                  y: -14,
+                  scale: 0.98,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                  scale: 1,
+                }}
+                exit={{
+                  opacity: 0,
+                  y: -12,
+                  scale: 0.98,
+                }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 280,
+                  damping: 27,
+                }}
+                onClick={(event) =>
+                  event.stopPropagation()
+                }
+                className="mx-auto mt-2 max-h-[calc(100dvh-90px)] w-[calc(100%-24px)] max-w-md overflow-y-auto rounded-[24px] border border-[#C6DE41]/25 bg-[#11150F] p-4 shadow-2xl light:border-[#DFE5D5] light:bg-white"
+              >
+
+                {/* Logged-in user info */}
+
+                {user && (
+                  <div className="mb-3 flex items-center gap-3 border-b border-white/10 pb-4 light:border-[#DFE5D5]">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#C6DE41] font-bold text-[#090B09]">
+                      {user.name.charAt(0).toUpperCase()}
+                    </span>
+
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold">
+                        {user.name}
+                      </p>
+
+                      <p className="truncate text-[11px] text-zinc-400">
+                        {user.college.code}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Navigation links */}
+
+                <div className="space-y-1">
+                  {mobileLinks.map(
+                    ({ to, label, icon: Icon }) => (
+                      <Link
+                        key={`${to}-${label}`}
+                        to={to}
+                        onClick={() =>
+                          setMobileMenuOpen(false)
+                        }
+                        aria-current={
+                          isActive(to)
+                            ? 'page'
+                            : undefined
+                        }
+                        className={`flex min-h-11 items-center justify-between rounded-xl px-3 py-3 text-sm transition-colors ${
+                          isActive(to)
+                            ? 'bg-[#C6DE41]/15 font-semibold text-[#C6DE41]'
+                            : 'text-zinc-200 hover:bg-white/5 light:text-[#171B13]'
+                        }`}
+                      >
+                        <span className="flex items-center gap-3">
+                          <Icon size={18} />
+                          {label}
+                        </span>
+
+                        <ArrowRight
+                          size={14}
+                          className="opacity-40"
+                        />
+                      </Link>
+                    )
+                  )}
+                </div>
+
+                {/* Logout / Sign up */}
+
+                {user ? (
+                  <button
+                    type="button"
+                    onClick={doLogout}
+                    className="mt-4 flex w-full items-center gap-3 border-t border-white/10 px-3 pt-4 text-sm text-rose-300 light:border-[#DFE5D5]"
+                  >
+                    <LogOut size={18} />
+                    Sign Out
+                  </button>
+                ) : (
+                  <Link
+                    to="/signup"
+                    onClick={() =>
+                      setMobileMenuOpen(false)
+                    }
+                    className="mt-4 flex justify-center rounded-xl bg-[#C6DE41] px-4 py-3 text-sm font-bold text-[#090B09]"
+                  >
+                    Create Account
+                  </Link>
+                )}
+              </motion.nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </header>
+
+      {/* =====================================
+          DESKTOP HEADER
+          Preserves dropdown animation
+      ===================================== */}
+
+      <header className="sticky top-0 z-[70] hidden w-full border-b border-[#C6DE41]/20 bg-[#090B09]/95 text-white backdrop-blur-md light:border-[#DFE5D5] light:bg-[#F7F8F2]/95 light:text-[#171B13] xl:block">
+
+        <div className="mx-auto flex h-16 max-w-[1300px] items-center justify-between gap-3 px-4 xl:px-6">
+
+          {/* Brand and campus */}
+
+          <div className="flex min-w-0 items-center gap-3">
+            <Link
+              to="/"
+              className="flex shrink-0 items-center gap-1.5"
+            >
+              <span className="text-[19px] font-extrabold tracking-tight">
+                CampusMart
+              </span>
+
+              <span className="h-2 w-2 rounded-full bg-[#C6DE41] shadow-[0_0_8px_#C6DE41]" />
+            </Link>
+
+            <div
+              className="relative"
+              ref={desktopCollegeRef}
+            >
+              <button
+                type="button"
+                onClick={() =>
+                  setCollegeOpen(
+                    collegeOpen === 'desktop'
+                      ? null
+                      : 'desktop'
+                  )
+                }
+                aria-expanded={
+                  collegeOpen === 'desktop'
+                }
+                className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                  isBrowsingOtherCollege
+                    ? 'border-amber-500/40 bg-amber-900/30'
+                    : 'border-[#C6DE41]/30 bg-[#12160F] hover:border-[#C6DE41]/70 light:bg-white'
+                }`}
+              >
+                <MapPin
+                  size={14}
+                  className="text-[#C6DE41]"
+                />
+
+                <span className="font-semibold">
+                  {activeCollege?.code || 'Campus'}
+                </span>
+
+                <span className="hidden max-w-[110px] truncate text-zinc-400 2xl:inline">
+                  {activeCollege?.name}
+                </span>
+
+                <ChevronDown
+                  size={12}
+                  className="text-zinc-400"
+                />
+              </button>
+
+              {collegeOpen === 'desktop' &&
+                collegePicker()}
+            </div>
+          </div>
+
+          {/* =================================
+              DESKTOP MENU
+          ================================= */}
+
+          <nav
+            aria-label="Desktop navigation"
+            className="relative flex shrink-0 items-center justify-center gap-0.5 rounded-full border border-[#C6DE41]/30 bg-[#090B09] px-2 py-1.5 shadow-lg light:border-[#DFE5D5] light:bg-white"
+            onMouseLeave={() =>
+              setActiveMenu(null)
+            }
           >
+
+            {/* Buyer / Seller specific links */}
+
             {marketplaceMode === 'SELLER' ? (
-              /* Seller Mode Navigation */
               <>
-                <MenuItem
+                <DesktopMenu
                   label="Sell Gear"
                   to="/sell"
                   active={activeMenu}
                   setActive={setActiveMenu}
                   current={isActive('/sell')}
                 >
-                  <HoveredLink to="/sell">
+                  <DropdownLink to="/sell">
                     Submit Item to Sell
-                  </HoveredLink>
+                  </DropdownLink>
 
-                  <HoveredLink to="/profile">
+                  <DropdownLink to="/profile">
                     Track Payouts & Valuation
-                  </HoveredLink>
-                </MenuItem>
+                  </DropdownLink>
+                </DesktopMenu>
 
-                <MenuItem
+                <DesktopMenu
                   label="My Submissions"
                   to="/profile"
                   active={activeMenu}
                   setActive={setActiveMenu}
                   current={isActive('/profile')}
                 >
-                  <HoveredLink to="/profile">
+                  <DropdownLink to="/profile">
                     Submission Review Status
-                  </HoveredLink>
+                  </DropdownLink>
 
-                  <HoveredLink to="/profile">
+                  <DropdownLink to="/profile">
                     Payout Quotes
-                  </HoveredLink>
-                </MenuItem>
-
-                {/* Seller Teammates Menu */}
-                <MenuItem
-                  label="Teammates"
-                  to="/find-teammates"
-                  active={activeMenu}
-                  setActive={setActiveMenu}
-                  current={isTeammatesActive}
-                >
-                  {teammatesMenu}
-                </MenuItem>
-
-                <MenuItem
-                  label="Heroes"
-                  to="/campus-heroes"
-                  active={activeMenu}
-                  setActive={setActiveMenu}
-                  current={isActive('/campus-heroes')}
-                >
-                  <HoveredLink to="/campus-heroes">
-                    Campus Hero Program
-                  </HoveredLink>
-
-                  {(user?.role === 'CAMPUS_HERO' ||
-                    user?.role === 'ADMIN') && (
-                    <HoveredLink to="/hero-dashboard">
-                      Hero Operations
-                    </HoveredLink>
-                  )}
-                </MenuItem>
-
-                {user && (
-                  <MenuItem
-                    label="My Teams"
-                    to="/my-teams"
-                    active={activeMenu}
-                    setActive={setActiveMenu}
-                    current={isActive('/my-teams')}
-                  >
-                    <HoveredLink to="/my-teams">
-                      My Team Applications
-                    </HoveredLink>
-
-                    <HoveredLink to="/find-teammates">
-                      Find Teammates
-                    </HoveredLink>
-                  </MenuItem>
-                )}
-
-                {(user?.role === 'CAMPUS_HERO' ||
-                  user?.role === 'ADMIN') && (
-                  <Link
-                    to="/hero-dashboard"
-                    className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-[#C6DE41]"
-                    title="Campus Hero Delivery Operations"
-                  >
-                    Hero Ops
-                  </Link>
-                )}
-
-                {user?.role === 'ADMIN' && (
-                  <Link
-                    to="/admin"
-                    className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-[#C6DE41]"
-                  >
-                    Admin
-                  </Link>
-                )}
+                  </DropdownLink>
+                </DesktopMenu>
               </>
             ) : (
-              /* Buyer Mode Navigation */
-              <>
-                <MenuItem
-                  label="Explore"
-                  to="/buy"
-                  active={activeMenu}
-                  setActive={setActiveMenu}
-                  current={isActive('/buy')}
-                >
-                  <HoveredLink to="/buy">
-                    Browse Campus Catalog
-                  </HoveredLink>
+              <DesktopMenu
+                label="Explore"
+                to="/buy"
+                active={activeMenu}
+                setActive={setActiveMenu}
+                current={isActive('/buy')}
+              >
+                <DropdownLink to="/buy">
+                  Browse Campus Catalog
+                </DropdownLink>
 
-                  <HoveredLink to="/sell">
-                    Sell Your Gear
-                  </HoveredLink>
-                </MenuItem>
+                <DropdownLink to="/sell">
+                  Sell Your Gear
+                </DropdownLink>
+              </DesktopMenu>
+            )}
 
-                {/* Buyer Teammates Menu */}
-                <MenuItem
-                  label="Teammates"
-                  to="/find-teammates"
-                  active={activeMenu}
-                  setActive={setActiveMenu}
-                  current={isTeammatesActive}
-                >
-                  {teammatesMenu}
-                </MenuItem>
+            {/* Teammates remains desktop-only */}
 
-                <MenuItem
-                  label="Heroes"
-                  to="/campus-heroes"
-                  active={activeMenu}
-                  setActive={setActiveMenu}
-                  current={isActive('/campus-heroes')}
-                >
-                  <HoveredLink to="/campus-heroes">
-                    Campus Hero Program
-                  </HoveredLink>
+            {TEAMS_ENABLED ? (
+              <DesktopMenu
+                label="Teammates"
+                to="/find-teammates"
+                active={activeMenu}
+                setActive={setActiveMenu}
+                current={isActive('/find-teammates')}
+              >
+                {teammatesLinks}
+              </DesktopMenu>
+            ) : (
+              <div
+                className="flex cursor-not-allowed select-none flex-col items-center justify-center gap-0.5 px-2.5 py-1.5"
+                aria-label="Teammates — Coming Soon"
+              >
+                <span className="whitespace-nowrap text-[12px] text-zinc-400">
+                  Teammates
+                </span>
 
-                  {(user?.role === 'CAMPUS_HERO' ||
-                    user?.role === 'ADMIN') && (
-                    <HoveredLink to="/hero-dashboard">
-                      Hero Operations
-                    </HoveredLink>
-                  )}
-                </MenuItem>
+                <span className="whitespace-nowrap text-[9px] font-semibold text-[#C6DE41]">
+                  Coming Soon
+                </span>
+              </div>
+            )}
 
-                {user && (
-                  <MenuItem
-                    label="My Teams"
-                    to="/my-teams"
-                    active={activeMenu}
-                    setActive={setActiveMenu}
-                    current={isActive('/my-teams')}
-                  >
-                    <HoveredLink to="/my-teams">
-                      My Team Applications
-                    </HoveredLink>
+            {/* Heroes */}
 
-                    <HoveredLink to="/find-teammates">
-                      Find Teammates
-                    </HoveredLink>
-                  </MenuItem>
-                )}
+            <DesktopMenu
+              label="Heroes"
+              to="/campus-heroes"
+              active={activeMenu}
+              setActive={setActiveMenu}
+              current={isActive('/campus-heroes')}
+            >
+              {heroesLinks}
+            </DesktopMenu>
 
-                {(user?.role === 'CAMPUS_HERO' ||
-                  user?.role === 'ADMIN') && (
-                  <Link
-                    to="/hero-dashboard"
-                    className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-[#C6DE41]"
-                    title="Campus Hero Delivery Operations"
-                  >
-                    Hero Ops
-                  </Link>
-                )}
+            {/* Hero Operations */}
 
-                {user?.role === 'ADMIN' && (
-                  <Link
-                    to="/admin"
-                    className="whitespace-nowrap rounded-full px-2 py-1 text-[12px] text-zinc-300 dark:text-zinc-300 light:text-[#171B13] hover:text-[#C6DE41]"
-                  >
-                    Admin
-                  </Link>
-                )}
+            {isHero && (
+              <Link
+                to="/hero-dashboard"
+                className={`rounded-full px-2 py-2 text-xs hover:text-[#C6DE41] ${
+                  isActive('/hero-dashboard')
+                    ? 'text-[#C6DE41]'
+                    : 'text-zinc-300 light:text-[#171B13]'
+                }`}
+              >
+                Hero Ops
+              </Link>
+            )}
 
-                <MenuItem
-                  label="Sell Gear"
-                  to="/sell"
-                  active={activeMenu}
-                  setActive={setActiveMenu}
-                  current={isActive('/sell')}
-                >
-                  <HoveredLink to="/sell">
-                    Sell Campus Essentials
-                  </HoveredLink>
-                </MenuItem>
-              </>
+            {/* Admin and Manager */}
+
+            {adminLinks}
+
+            {/* Buyer's Sell Gear link */}
+
+            {marketplaceMode !== 'SELLER' && (
+              <DesktopMenu
+                label="Sell Gear"
+                to="/sell"
+                active={activeMenu}
+                setActive={setActiveMenu}
+                current={isActive('/sell')}
+              >
+                <DropdownLink to="/sell">
+                  Sell Campus Essentials
+                </DropdownLink>
+              </DesktopMenu>
             )}
           </nav>
 
-          {/* Theme, Account and Login Controls */}
-          <div className="flex items-center gap-2">
+          {/* =================================
+              ACCOUNT AND THEME
+          ================================= */}
+
+          <div className="flex shrink-0 items-center gap-2">
             <ThemeToggle />
 
             {user ? (
-              <div className="flex items-center gap-2">
-                {/* User Profile */}
-                {user ? (
-  <div className="flex items-center gap-2">
-
-    {/* =========================================
-        ACCOUNT DROPDOWN
-    ========================================= */}
-
-    <div
-      ref={accountMenuRef}
-      className="relative"
-      onMouseEnter={() => {
-        setShowAccountMenu(true);
-        setActiveMenu(null);
-      }}
-      onMouseLeave={() => {
-        setShowAccountMenu(false);
-      }}
-    >
-
-      {/* USER PILL */}
-
-      <button
-        type="button"
-        onClick={() => {
-          setShowAccountMenu((prev) => !prev);
-          setActiveMenu(null);
-        }}
-        onFocus={() => {
-          setShowAccountMenu(true);
-          setActiveMenu(null);
-        }}
-        aria-expanded={showAccountMenu}
-        aria-haspopup="menu"
-        className="
-          flex items-center gap-2
-          px-3 py-1.5
-          rounded-full
-
-          border
-          border-[#C6DE41]/30
-          dark:border-[#C6DE41]/30
-          light:border-[#DFE5D5]
-
-          bg-[#12160F]
-          dark:bg-[#12160F]
-          light:bg-[#FFFFFF]
-
-          hover:border-[#C6DE41]/60
-
-          transition-all
-
-          text-[12px]
-          font-medium
-
-          text-white
-          dark:text-white
-          light:text-[#171B13]
-
-          shadow-shop-pill
-        "
-      >
-
-        {/* Avatar */}
-
-        <div
-          className="
-            w-6 h-6
-            rounded-full
-            bg-[#C6DE41]/20
-            text-[#C6DE41]
-            border
-            border-[#C6DE41]/30
-            flex
-            items-center
-            justify-center
-            font-bold
-            text-[11px]
-          "
-        >
-          {user.name.charAt(0).toUpperCase()}
-        </div>
-
-        {/* Name */}
-
-        <span className="hidden sm:inline font-semibold">
-          {user.name.split(' ')[0]}
-        </span>
-
-        {/* College */}
-
-        <span
-          className="
-            px-1.5 py-0.5
-            rounded-full
-            bg-[#C6DE41]/15
-            text-[10px]
-            text-[#C6DE41]
-            font-semibold
-          "
-        >
-          {user.college.code}
-        </span>
-
-        {/* Arrow */}
-
-        <ChevronDown
-          className={`
-            w-3 h-3
-            text-zinc-400
-            transition-transform
-            duration-200
-
-            ${
-              showAccountMenu
-                ? 'rotate-180 text-[#C6DE41]'
-                : ''
-            }
-          `}
-        />
-
-      </button>
-
-      {/* =========================================
-          ANIMATED DROPDOWN
-      ========================================= */}
-
-      {showAccountMenu && (
-        <motion.div
-          initial={{
-            opacity: 0,
-            scale: 0.85,
-            y: 10,
-          }}
-          animate={{
-            opacity: 1,
-            scale: 1,
-            y: 0,
-          }}
-          transition={menuTransition}
-          className="
-            absolute
-            right-0
-            top-full
-            z-[80]
-            pt-4
-          "
-        >
-
-          <motion.div
-            layout
-            transition={menuTransition}
-            className="
-              overflow-hidden
-              min-w-[210px]
-
-              rounded-2xl
-
-              border
-              border-[#C6DE41]/30
-              light:border-[#DFE5D5]
-
-              bg-[#0A0D08]/95
-              light:bg-[#FFFFFF]/98
-
-              shadow-xl
-              backdrop-blur-md
-            "
-          >
-
-            <motion.div
-              layout
-              className="flex flex-col gap-1 p-3"
-            >
-
-              {/* VIEW PROFILE */}
-
-              <Link
-                to="/profile"
-                onClick={() => setShowAccountMenu(false)}
-                className="
-                  flex items-center gap-3
-
-                  rounded-xl
-                  px-3 py-2.5
-
-                  text-[12px]
-                  font-medium
-
-                  text-zinc-300
-                  dark:text-zinc-300
-                  light:text-[#171B13]
-
-                  transition-all
-
-                  hover:bg-[#C6DE41]/15
-                  hover:text-[#C6DE41]
-
-                  light:hover:bg-[#C6DE41]/20
-                  light:hover:text-[#7E9E0A]
-                "
-              >
-
+              <>
                 <div
-                  className="
-                    flex
-                    w-8 h-8
-                    items-center
-                    justify-center
-
-                    rounded-full
-
-                    bg-[#C6DE41]/10
-                    border
-                    border-[#C6DE41]/20
-                  "
+                  ref={accountRef}
+                  className="relative"
+                  onMouseEnter={() => {
+                    setAccountOpen(true);
+                    setActiveMenu(null);
+                  }}
+                  onMouseLeave={() =>
+                    setAccountOpen(false)
+                  }
                 >
-                  <UserIcon className="w-4 h-4" />
+
+                  {/* User pill */}
+
+                  <button
+                    type="button"
+                    aria-haspopup="menu"
+                    aria-expanded={accountOpen}
+                    onClick={() => {
+                      setAccountOpen(
+                        (value) => !value
+                      );
+
+                      setActiveMenu(null);
+                    }}
+                    className="flex items-center gap-2 rounded-full border border-[#C6DE41]/30 bg-[#12160F] px-3 py-1.5 text-xs hover:border-[#C6DE41]/60 light:bg-white"
+                  >
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full border border-[#C6DE41]/30 bg-[#C6DE41]/20 text-[11px] font-bold text-[#C6DE41]">
+                      {user.name
+                        .charAt(0)
+                        .toUpperCase()}
+                    </span>
+
+                    <span className="hidden max-w-[80px] truncate font-semibold xl:inline">
+                      {user.name.split(' ')[0]}
+                    </span>
+
+                    <span className="rounded-full bg-[#C6DE41]/15 px-1.5 py-0.5 text-[10px] font-bold text-[#C6DE41]">
+                      {user.college.code}
+                    </span>
+
+                    <ChevronDown
+                      size={12}
+                      className={`text-zinc-400 transition-transform ${
+                        accountOpen
+                          ? 'rotate-180'
+                          : ''
+                      }`}
+                    />
+                  </button>
+
+                  {/* Animated account dropdown */}
+
+                  {accountOpen && (
+                    <motion.div
+                      initial={{
+                        opacity: 0,
+                        scale: 0.85,
+                        y: 10,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        scale: 1,
+                        y: 0,
+                      }}
+                      transition={menuTransition}
+                      className="absolute right-0 top-full z-[100] pt-4"
+                    >
+                      <motion.div
+                        layout
+                        className="flex w-[215px] flex-col gap-1 rounded-2xl border border-[#C6DE41]/30 bg-[#0A0D08]/95 p-3 shadow-xl backdrop-blur-md light:border-[#DFE5D5] light:bg-white/95"
+                      >
+                        <DropdownLink
+                          to="/profile"
+                          onClick={() =>
+                            setAccountOpen(false)
+                          }
+                        >
+                          <span className="flex items-center gap-2">
+                            <UserRound size={16} />
+                            View Profile
+                          </span>
+                        </DropdownLink>
+
+                        <div className="my-1 border-t border-white/10 light:border-[#DFE5D5]" />
+
+                        <DropdownLink
+                          to="/settings"
+                          onClick={() =>
+                            setAccountOpen(false)
+                          }
+                        >
+                          <span className="flex items-center gap-2">
+                            <Settings size={16} />
+                            Account Settings
+                          </span>
+                        </DropdownLink>
+                      </motion.div>
+                    </motion.div>
+                  )}
                 </div>
 
-                <div className="flex flex-col">
+                {/* Logout */}
 
-                  <span className="font-semibold">
-                    View Profile
-                  </span>
-
-                  <span className="text-[10px] text-zinc-500">
-                    Orders & activity
-                  </span>
-
-                </div>
-
-              </Link>
-
-              {/* Separator */}
-
-              <div
-                className="
-                  my-1
-                  border-t
-                  border-white/10
-                  light:border-[#DFE5D5]
-                "
-              />
-
-              {/* SETTINGS */}
-
-              <Link
-                to="/settings"
-                onClick={() => setShowAccountMenu(false)}
-                className="
-                  flex items-center gap-3
-
-                  rounded-xl
-                  px-3 py-2.5
-
-                  text-[12px]
-                  font-medium
-
-                  text-zinc-300
-                  dark:text-zinc-300
-                  light:text-[#171B13]
-
-                  transition-all
-
-                  hover:bg-[#C6DE41]/15
-                  hover:text-[#C6DE41]
-
-                  light:hover:bg-[#C6DE41]/20
-                  light:hover:text-[#7E9E0A]
-                "
-              >
-
-                <div
-                  className="
-                    flex
-                    w-8 h-8
-                    items-center
-                    justify-center
-
-                    rounded-full
-
-                    bg-[#C6DE41]/10
-                    border
-                    border-[#C6DE41]/20
-                  "
+                <button
+                  type="button"
+                  onClick={doLogout}
+                  title="Log out"
+                  aria-label="Log out"
+                  className="rounded-full p-2 text-zinc-400 hover:bg-[#C6DE41]/10 hover:text-[#C6DE41]"
                 >
-                  <SettingsIcon className="w-4 h-4" />
-                </div>
-
-                <div className="flex flex-col">
-
-                  <span className="font-semibold">
-                    Account Settings
-                  </span>
-
-                  <span className="text-[10px] text-zinc-500">
-                    Profile, mode & password
-                  </span>
-
-                </div>
-
-              </Link>
-
-            </motion.div>
-
-          </motion.div>
-
-        </motion.div>
-      )}
-
-    </div>
-
-    {/* =========================================
-        LOGOUT
-    ========================================= */}
-
-    <button
-      type="button"
-      onClick={handleLogout}
-      title="Logout"
-      className="
-        p-2
-
-        text-zinc-400
-        dark:text-zinc-400
-        light:text-[#57614E]
-
-        hover:text-[#C6DE41]
-        hover:bg-[#C6DE41]/10
-
-        rounded-full
-        transition-colors
-      "
-    >
-      <LogOut className="w-4 h-4" />
-    </button>
-
-  </div>
-) : (
-  <div className="flex items-center gap-2">
-
-    <Link
-      to="/login"
-      className="px-4 py-1.5 text-[13px] font-medium text-white dark:text-white light:text-[#171B13] hover:text-[#C6DE41] rounded-full transition-colors"
-    >
-      <TextRoll text="Log in" />
-    </Link>
-
-    <Link
-      to="/signup"
-      className="px-4 py-1.5 text-[13px] font-bold text-[#090B09] bg-[#C6DE41] hover:bg-[#D7EF59] rounded-full transition-all shadow-shop-pill shadow-[0_0_12px_rgba(198,222,65,0.3)] hover:scale-105 active:scale-95"
-    >
-      <TextRoll text="Sign up" />
-    </Link>
-
-  </div>
-)}
-
-                
-              </div>
+                  <LogOut size={17} />
+                </button>
+              </>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 text-xs">
                 <Link
                   to="/login"
-                  className="px-4 py-1.5 text-[13px] font-medium text-white dark:text-white light:text-[#171B13] hover:text-[#C6DE41] rounded-full transition-colors"
+                  className="px-2 py-2 hover:text-[#C6DE41]"
                 >
-                  <TextRoll text="Log in" />
+                  Log in
                 </Link>
 
                 <Link
                   to="/signup"
-                  className="px-4 py-1.5 text-[13px] font-bold text-[#090B09] bg-[#C6DE41] hover:bg-[#D7EF59] rounded-full transition-all shadow-shop-pill shadow-[0_0_12px_rgba(198,222,65,0.3)] hover:scale-105 active:scale-95"
+                  className="rounded-full bg-[#C6DE41] px-4 py-2 font-bold text-[#090B09] hover:bg-[#D7EF59]"
                 >
-                  <TextRoll text="Sign up" />
+                  Sign up
                 </Link>
               </div>
             )}
@@ -1087,143 +1181,48 @@ const [showAccountMenu, setShowAccountMenu] = useState(false);
         </div>
       </header>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="lg:hidden fixed bottom-3 left-4 right-4 z-50 bg-[#090B09]/95 dark:bg-[#090B09]/95 light:bg-[#FFFFFF]/95 backdrop-blur-md border border-[#C6DE41]/30 dark:border-[#C6DE41]/30 light:border-[#DFE5D5] rounded-full px-4 py-2 flex items-center justify-around shadow-shop-float transition-colors duration-200">
+      {/* =====================================
+          MOBILE BOTTOM NAVIGATION
 
-        <Link
-          to="/"
-          className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-            isActive('/')
-              ? 'text-[#C6DE41] font-semibold'
-              : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
-          }`}
-        >
-          <Home className="w-4 h-4 mb-0.5" />
-          <span>Home</span>
-        </Link>
+          Home | Buy | Heroes | Sell | Settings
 
-        {marketplaceMode === 'SELLER' ? (
-          <>
-            <Link
-              to="/sell"
-              className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-                isActive('/sell')
-                  ? 'text-[#C6DE41] font-semibold'
-                  : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
-              }`}
-            >
-              <Tag className="w-4 h-4 mb-0.5" />
-              <span>
-                <TextRoll text="Sell" />
-              </span>
-            </Link>
+          No Teams / Teammates
+      ===================================== */}
 
-            {TEAMS_ENABLED ? (
+      <nav
+        aria-label="Mobile bottom navigation"
+        className="fixed bottom-3 left-1/2 z-[80] flex w-[calc(100%-32px)] max-w-md -translate-x-1/2 items-center justify-around rounded-full border border-[#C6DE41]/30 bg-[#090B09]/95 px-2 py-2.5 text-white shadow-[0_8px_35px_rgba(0,0,0,0.5)] backdrop-blur-xl light:border-[#DFE5D5] light:bg-white/95 xl:hidden"
+      >
+        {bottomLinks.map(
+          ({ to, label, icon: Icon }) => {
+            const current = isActive(to);
+
+            return (
               <Link
-                to="/find-teammates"
-                className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-                  isTeammatesActive
-                    ? 'text-[#C6DE41] font-semibold'
-                    : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
+                key={to}
+                to={to}
+                aria-label={label}
+                aria-current={
+                  current ? 'page' : undefined
+                }
+                className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1 text-[10px] font-medium transition-colors ${
+                  current
+                    ? 'font-semibold text-[#C6DE41]'
+                    : 'text-zinc-400 hover:text-[#C6DE41] light:text-[#57614E]'
                 }`}
               >
-                <Users className="w-4 h-4 mb-0.5" />
-                <span>Teams</span>
+                <Icon size={18} />
+
+                <span className="whitespace-nowrap">
+                  {label}
+                </span>
               </Link>
-            ) : (
-              <div
-                aria-label="Teams launching soon"
-                title="Hackathon team matching is launching soon"
-                className="flex cursor-not-allowed select-none flex-col items-center px-2 py-1 text-[10px] font-medium text-zinc-500 light:text-[#62695E]"
-              >
-                <Users className="mb-0.5 h-4 w-4" />
-                <span>Teams</span>
-                <span className="text-[9px] text-[#C6DE41] light:text-[#526800]">Soon</span>
-              </div>
-            )}
-          </>
-        ) : (
-          <>
-            <Link
-              to="/buy"
-              className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-                isActive('/buy')
-                  ? 'text-[#C6DE41] font-semibold'
-                  : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
-              }`}
-            >
-              <ShoppingBag className="w-4 h-4 mb-0.5" />
-              <span>
-                <TextRoll text="Buy" />
-              </span>
-            </Link>
-
-            {TEAMS_ENABLED ? (
-              <Link
-                to="/find-teammates"
-                className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-                  isTeammatesActive
-                    ? 'text-[#C6DE41] font-semibold'
-                    : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
-                }`}
-              >
-                <Users className="w-4 h-4 mb-0.5" />
-                <span>Teams</span>
-              </Link>
-            ) : (
-              <div
-                aria-label="Teams launching soon"
-                title="Hackathon team matching is launching soon"
-                className="flex cursor-not-allowed select-none flex-col items-center px-2 py-1 text-[10px] font-medium text-zinc-500 light:text-[#62695E]"
-              >
-                <Users className="mb-0.5 h-4 w-4" />
-                <span>Teams</span>
-                <span className="text-[9px] text-[#C6DE41] light:text-[#526800]">Soon</span>
-              </div>
-            )}
-
-            <Link
-              to="/sell"
-              className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-                isActive('/sell')
-                  ? 'text-[#C6DE41] font-semibold'
-                  : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
-              }`}
-            >
-              <Tag className="w-4 h-4 mb-0.5" />
-              <span>
-                <TextRoll text="Sell" />
-              </span>
-            </Link>
-          </>
+            );
+          }
         )}
-
-        {user ? (
-          <Link
-            to="/settings"
-            className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-              isActive('/settings')
-                ? 'text-[#C6DE41] font-semibold'
-                : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
-            }`}
-          >
-            <UserIcon className="w-4 h-4 mb-0.5" />
-            <span>Settings</span>
-          </Link>
-        ) : (
-          <Link
-            to="/login"
-            className={`flex flex-col items-center py-1 px-2 text-[10px] font-medium transition-colors ${
-              isActive('/login')
-                ? 'text-[#C6DE41] font-semibold'
-                : 'text-zinc-400 dark:text-zinc-400 light:text-[#57614E] hover:text-white light:hover:text-[#171B13]'
-            }`}
-          >
-            <LogIn className="w-4 h-4 mb-0.5" />
-            <span>Login</span>
-          </Link>
-        )}
-      </div>
+      </nav>
     </>
   );
 };
+
+export default Navbar;

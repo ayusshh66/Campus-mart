@@ -15,9 +15,10 @@ interface AuthContextType {
   isLoading: boolean;
 
   login: (
-    email: string,
-    password: string
-  ) => Promise<User>;
+  email: string,
+  password: string,
+  managerLogin?: boolean
+) => Promise<User>;
 
   register: (payload: {
     name: string;
@@ -237,72 +238,34 @@ export const AuthProvider: React.FC<{
   */
 
   const login = async (
-    email: string,
-    password: string
-  ): Promise<User> => {
+  email: string,
+  password: string,
+  managerLogin = false
+): Promise<User> => {
+  const res = await api.login(
+    {
+      email,
+      password,
+    },
+    managerLogin
+  );
 
-    const res =
-      await api.login({
-        email,
-        password,
-      });
+  localStorage.setItem(
+    'campusmart_token',
+    res.data.token
+  );
 
-    const loggedInUser =
-      res.data.user;
+  setToken(res.data.token);
+  setUser(res.data.user);
 
-    const authToken =
-      res.data.token;
+  localStorage.removeItem(
+    'campusmart_browsing_college'
+  );
 
-    /*
-    |--------------------------------------------------------------------------
-    | Save authentication
-    |--------------------------------------------------------------------------
-    */
+  setBrowsingCollegeId(null);
 
-    localStorage.setItem(
-      'campusmart_token',
-      authToken
-    );
-
-    setToken(authToken);
-
-    setUser(loggedInUser);
-
-    /*
-    |--------------------------------------------------------------------------
-    | Restore user's marketplace preference
-    |--------------------------------------------------------------------------
-    */
-
-    const userMode =
-      normalizeMarketplaceMode(
-        loggedInUser.marketplace_mode
-      );
-
-    setMarketplaceModeState(
-      userMode
-    );
-
-    localStorage.setItem(
-      'campusmart_marketplace_mode',
-      userMode
-    );
-
-    /*
-    |--------------------------------------------------------------------------
-    | Reset alternate campus browsing
-    |--------------------------------------------------------------------------
-    */
-
-    localStorage.removeItem(
-      'campusmart_browsing_college'
-    );
-
-    setBrowsingCollegeId(null);
-
-    return loggedInUser;
-  };
-
+  return res.data.user;
+};
   /*
   |--------------------------------------------------------------------------
   | REGISTER

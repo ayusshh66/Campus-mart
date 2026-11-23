@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import { config } from './config';
+import heroOpsRoutes from './routes/heroOps';
 import authRoutes from './routes/auth';
 import collegeRoutes from './routes/colleges';
 import productRoutes from './routes/products';
@@ -113,6 +114,7 @@ app.use('/api/hero', heroRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/account', accountRoutes);
+app.use('/api/hero-ops', heroOpsRoutes);
 
 // Error Handling Middleware
 app.use((err: any, _req: Request, res: Response, _next: any) => {

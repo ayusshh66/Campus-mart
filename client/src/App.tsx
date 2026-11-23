@@ -1,8 +1,6 @@
-
 import React from 'react';
 import { Toaster } from 'sonner';
-import { SettingsPage } from './pages/SettingsPage';
-import './styles/admin-notifications.css';
+
 import {
   BrowserRouter,
   Routes,
@@ -13,8 +11,11 @@ import {
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+
 import { TEAMS_ENABLED } from './config/features';
 import { SmoothScroll } from './components/SmoothScroll';
+
+import './styles/admin-notifications.css';
 
 // Shared components
 import { Navbar } from './components/Navbar';
@@ -26,12 +27,19 @@ import { BuyPage } from './pages/BuyPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { SellPage } from './pages/SellPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { SettingsPage } from './pages/SettingsPage';
+
+// Authentication pages
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 
 // Campus Hero pages
 import { CampusHeroesPage } from './pages/CampusHeroesPage';
 import { CampusHeroDashboardPage } from './pages/CampusHeroDashboardPage';
+
+// Campus Hero Manager pages
+import { HeroManagerLoginPage } from './pages/HeroManagerLoginPage';
+import { HeroManagerDashboardPage } from './pages/HeroManagerDashboardPage';
 
 // Admin page
 import { AdminDashboard } from './pages/admin/AdminDashboard';
@@ -44,7 +52,64 @@ import { MyTeamsPage } from './pages/MyTeamsPage';
 import { SoloPostsPage } from './pages/SoloPostsPage';
 import { CreateSoloPostPage } from './pages/CreateSoloPostPage';
 
-// Admin route protection
+// ============================================
+// SHARED LOADING SCREEN
+// ============================================
+
+const LoadingScreen: React.FC<{
+  message?: string;
+}> = ({
+  message = 'Loading CampusMart...',
+}) => {
+  return (
+    <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#C6DE41] border-t-transparent" />
+
+      <p className="text-xs font-medium text-zinc-400">
+        {message}
+      </p>
+    </div>
+  );
+};
+
+// ============================================
+// CAMPUS HERO MANAGER ROUTE PROTECTION
+// ============================================
+
+const HeroManagerRoute: React.FC<{
+  children: React.ReactNode;
+}> = ({ children }) => {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <LoadingScreen message="Loading Manager Workspace..." />
+    );
+  }
+
+  if (!user) {
+    return (
+      <Navigate
+        to="/hero-manager/login"
+        replace
+      />
+    );
+  }
+
+  // The Manager Dashboard verifies active college
+  // assignments through the backend before
+  // displaying any private operational data.
+  //
+  // This also preserves access for previously
+  // authorized managers and global admins.
+
+  return <>{children}</>;
+};
+
+// ============================================
+// ADMIN ROUTE PROTECTION
+// ============================================
+
 const AdminRoute: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
@@ -52,30 +117,7 @@ const AdminRoute: React.FC<{
 
   if (isLoading) {
     return (
-      <div className="p-8 text-center text-xs text-slate-400">
-        Loading CampusMart...
-      </div>
-    );
-  }
-
-  if (!user || user.role !== 'ADMIN') {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
-};
-
-// Logged-in user protection
-const ProtectedRoute: React.FC<{
-  children: React.ReactNode;
-}> = ({ children }) => {
-  const { user, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className="p-8 text-center text-xs text-slate-400">
-        Loading CampusMart...
-      </div>
+      <LoadingScreen message="Loading Admin Workspace..." />
     );
   }
 
@@ -83,10 +125,59 @@ const ProtectedRoute: React.FC<{
     return <Navigate to="/login" replace />;
   }
 
+  // Dedicated managers cannot access Admin Panel.
+  if (user.role === 'HERO_MANAGER') {
+    return (
+      <Navigate
+        to="/hero-manager"
+        replace
+      />
+    );
+  }
+
+  // Only global admins can access Admin Panel.
+  if (user.role !== 'ADMIN') {
+    return <Navigate to="/" replace />;
+  }
+
   return <>{children}</>;
 };
 
-// Campus Hero protection
+// ============================================
+// LOGGED-IN USER ROUTE PROTECTION
+// ============================================
+
+const ProtectedRoute: React.FC<{
+  children: React.ReactNode;
+}> = ({ children }) => {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Dedicated managers cannot access normal
+  // marketplace user pages.
+  if (user.role === 'HERO_MANAGER') {
+    return (
+      <Navigate
+        to="/hero-manager"
+        replace
+      />
+    );
+  }
+
+  return <>{children}</>;
+};
+
+// ============================================
+// CAMPUS HERO ROUTE PROTECTION
+// ============================================
+
 const HeroRoute: React.FC<{
   children: React.ReactNode;
 }> = ({ children }) => {
@@ -94,9 +185,7 @@ const HeroRoute: React.FC<{
 
   if (isLoading) {
     return (
-      <div className="min-h-[50vh] flex items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-campus-primary border-t-transparent" />
-      </div>
+      <LoadingScreen message="Loading Campus Hero Workspace..." />
     );
   }
 
@@ -104,46 +193,149 @@ const HeroRoute: React.FC<{
     return <Navigate to="/login" replace />;
   }
 
+  if (user.role === 'HERO_MANAGER') {
+    return (
+      <Navigate
+        to="/hero-manager"
+        replace
+      />
+    );
+  }
+
+  // Only Campus Heroes and global admins
+  // can access the individual Hero Dashboard.
   if (
     user.role !== 'CAMPUS_HERO' &&
     user.role !== 'ADMIN'
   ) {
-    return <Navigate to="/campus-heroes" replace />;
+    return (
+      <Navigate
+        to="/campus-heroes"
+        replace
+      />
+    );
   }
 
   return <>{children}</>;
 };
 
-// Main application routes
+// ============================================
+// MAIN APPLICATION ROUTES
+// ============================================
+
 const AppRoutes: React.FC = () => {
   const location = useLocation();
 
-  // Temporarily disable all hackathon-related pages.
+  const { user, isLoading } = useAuth();
+
+  const pathname =
+    location.pathname
+      .replace(/\/+$/, '')
+      .toLowerCase() || '/';
+
+  // Dedicated Manager pages.
+  const isHeroManagerPage =
+    pathname === '/hero-manager' ||
+    pathname === '/hero-manager/login';
+
+  // Temporarily disable all hackathon pages.
   const isHackathonRoute =
     /^\/(?:find-teammates|teams|my-teams|find-students|students)(?:\/|$)/i.test(
-      location.pathname
+      pathname
     );
 
+  // ==========================================
+  // RESTRICT DEDICATED MANAGER ACCOUNTS
+  // ==========================================
+
+  // Wait for session restoration before
+  // determining account permissions.
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#090B09]">
+        <LoadingScreen />
+      </div>
+    );
+  }
+
+  // Managers must remain inside their
+  // dedicated Manager Operations Panel.
+  if (
+    user?.role === 'HERO_MANAGER' &&
+    !isHeroManagerPage
+  ) {
+    return (
+      <Navigate
+        to="/hero-manager"
+        replace
+      />
+    );
+  }
+
+  // Block direct access to paused
+  // hackathon-related routes.
   if (!TEAMS_ENABLED && isHackathonRoute) {
     return <Navigate to="/buy" replace />;
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#090B09] dark:bg-[#090B09] light:bg-[#F7F8F2] text-[#F5F7F0] dark:text-[#F5F7F0] light:text-[#171B13] selection:bg-[#C6DE41] selection:text-[#090B09] transition-colors duration-200">
+    <div
+      className="
+        min-h-screen
+        flex
+        flex-col
 
-      <Navbar />
+        bg-[#090B09]
+        dark:bg-[#090B09]
+        light:bg-[#F7F8F2]
 
-      <main className="flex-grow pb-20 md:pb-0">
+        text-[#F5F7F0]
+        dark:text-[#F5F7F0]
+        light:text-[#171B13]
+
+        selection:bg-[#C6DE41]
+        selection:text-[#090B09]
+
+        transition-colors
+        duration-200
+      "
+    >
+      {/* ======================================
+          GLOBAL NAVBAR
+      ====================================== */}
+
+      {!isHeroManagerPage && <Navbar />}
+
+      {/* ======================================
+          MAIN CONTENT
+      ====================================== */}
+
+      <main
+        className={`flex-grow min-w-0 ${
+          isHeroManagerPage
+            ? 'pb-0'
+            : 'pb-20 md:pb-0'
+        }`}
+      >
         <Routes>
 
-          {/* SAME HOMEPAGE FOR EVERYONE */}
+          {/* ==================================
+              HOMEPAGE
+          ================================== */}
+
           <Route
             path="/"
             element={<GuestHome />}
           />
 
-          {/* Marketplace */}
-          <Route path="/buy" element={<BuyPage />} />
+          {/* ==================================
+              MARKETPLACE
+          ================================== */}
+
+          <Route
+            path="/buy"
+            element={<BuyPage />}
+          />
 
           <Route
             path="/buy/:productId"
@@ -159,6 +351,10 @@ const AppRoutes: React.FC = () => {
             }
           />
 
+          {/* ==================================
+              USER ACCOUNT
+          ================================== */}
+
           <Route
             path="/profile"
             element={
@@ -168,15 +364,41 @@ const AppRoutes: React.FC = () => {
             }
           />
 
-          {/* Authentication */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
 
-          {/* Campus Heroes */}
+          {/* ==================================
+              NORMAL AUTHENTICATION
+          ================================== */}
+
+          <Route
+            path="/login"
+            element={<LoginPage />}
+          />
+
+          <Route
+            path="/signup"
+            element={<SignupPage />}
+          />
+
+          {/* ==================================
+              CAMPUS HERO PUBLIC PAGE
+          ================================== */}
+
           <Route
             path="/campus-heroes"
             element={<CampusHeroesPage />}
           />
+
+          {/* ==================================
+              CAMPUS HERO DASHBOARD
+          ================================== */}
 
           <Route
             path="/hero-dashboard"
@@ -187,25 +409,54 @@ const AppRoutes: React.FC = () => {
             }
           />
 
+          {/* Preserve previous Hero Dashboard URLs */}
+
           <Route
             path="/hero/dashboard"
             element={
-              <HeroRoute>
-                <CampusHeroDashboardPage />
-              </HeroRoute>
+              <Navigate
+                to="/hero-dashboard"
+                replace
+              />
             }
           />
 
           <Route
             path="/campus-hero-dashboard"
             element={
-              <HeroRoute>
-                <CampusHeroDashboardPage />
-              </HeroRoute>
+              <Navigate
+                to="/hero-dashboard"
+                replace
+              />
             }
           />
 
-          {/* Admin */}
+          {/* ==================================
+              CAMPUS HERO MANAGER LOGIN
+          ================================== */}
+
+          <Route
+            path="/hero-manager/login"
+            element={<HeroManagerLoginPage />}
+          />
+
+          {/* ==================================
+              CAMPUS HERO MANAGER DASHBOARD
+          ================================== */}
+
+          <Route
+            path="/hero-manager"
+            element={
+              <HeroManagerRoute>
+                <HeroManagerDashboardPage />
+              </HeroManagerRoute>
+            }
+          />
+
+          {/* ==================================
+              GLOBAL ADMIN PANEL
+          ================================== */}
+
           <Route
             path="/admin"
             element={
@@ -224,7 +475,11 @@ const AppRoutes: React.FC = () => {
             }
           />
 
-          {/* Hackathon features — future release */}
+          {/* ==================================
+              HACKATHON FEATURES
+              Preserved for future release
+          ================================== */}
+
           {TEAMS_ENABLED && (
             <>
               <Route
@@ -271,30 +526,39 @@ const AppRoutes: React.FC = () => {
             </>
           )}
 
-          {/* Fallback */}
+          {/* ==================================
+              INVALID ROUTE FALLBACK
+          ================================== */}
+
           <Route
             path="*"
-            element={<Navigate to="/" replace />}
+            element={
+              <Navigate
+                to={
+                  user?.role === 'HERO_MANAGER'
+                    ? '/hero-manager'
+                    : '/'
+                }
+                replace
+              />
+            }
           />
-          <Route
-  path="/settings"
-  element={
-    <ProtectedRoute>
-      <SettingsPage />
-    </ProtectedRoute>
-  }
-/>
 
         </Routes>
-      
       </main>
 
-      <Footer />
+      {/* ======================================
+          GLOBAL FOOTER
+      ====================================== */}
+
+      {!isHeroManagerPage && <Footer />}
     </div>
   );
 };
 
-// Root application
+// ============================================
+// ROOT APPLICATION
+// ============================================
 
 export const App: React.FC = () => {
   return (
@@ -302,15 +566,23 @@ export const App: React.FC = () => {
       <BrowserRouter>
         <SmoothScroll>
           <AuthProvider>
+
             <AppRoutes />
+
+            {/* Global toast notifications */}
 
             <Toaster
               position="top-right"
               richColors
               closeButton
               duration={5000}
-              offset={{ top: 90, right: 20 }}
+              visibleToasts={3}
+              offset={{
+                top: 90,
+                right: 20,
+              }}
             />
+
           </AuthProvider>
         </SmoothScroll>
       </BrowserRouter>

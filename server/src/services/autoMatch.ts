@@ -31,16 +31,117 @@ export async function processAutoMatchForSellRequest(sellRequestId: string) {
     }
 
     // 1. Condition check
-    let acceptedConditions: string[] = ['Like New', 'Good'];
-    try {
-      acceptedConditions = JSON.parse(product.auto_accept_conditions || '["Like New", "Good"]');
-    } catch (e) {
-      acceptedConditions = ['Like New', 'Good'];
+    // 1. Per-question answer eligibility check.
+    //
+    // An auto-approved sell request must have an eligible
+    // answer for EVERY configured quality question.
+    //
+    // Missing, unknown or unapproved answers always result
+    // in manual review (request remains PENDING).
+
+    if (!product.is_buying_enabled) {
+      return null;
     }
 
-    if (!acceptedConditions.includes(sellRequest.condition)) {
-      return null; // Condition not met for auto-accept
+    type QualityQuestion = {
+      id: string;
+      question: string;
+      options: Array<{
+        label: string;
+        deduction: number;
+      }>;
+    };
+
+    let questions: QualityQuestion[] = [];
+
+    let approvedAnswers: Record<string, string[]> = {};
+
+    let studentAnswers: Record<string, unknown> = {};
+
+    try {
+      questions = JSON.parse(
+        product.quality_questions || '[]'
+      );
+
+      approvedAnswers = JSON.parse(
+        product.auto_accept_answers || '{}'
+      );
+
+      studentAnswers = JSON.parse(
+        sellRequest.quality_answers || '{}'
+      );
+    } catch {
+      // Invalid saved configuration.
+      // Never approve automatically.
+      return null;
     }
+
+    if (
+      !Array.isArray(questions) ||
+      questions.length === 0 ||
+      !approvedAnswers ||
+      typeof approvedAnswers !== 'object' ||
+      Array.isArray(approvedAnswers) ||
+      !studentAnswers ||
+      typeof studentAnswers !== 'object' ||
+      Array.isArray(studentAnswers)
+    ) {
+      return null;
+    }
+
+    for (const question of questions) {
+      if (
+        !question.id ||
+        !Array.isArray(question.options) ||
+        question.options.length === 0
+      ) {
+        return null;
+      }
+
+      const answer = studentAnswers[question.id];
+
+      // SellPage usually submits the complete option object.
+      // Also support a plain label string.
+      const selectedLabel =
+        typeof answer === 'string'
+          ? answer
+          : answer &&
+            typeof answer === 'object' &&
+            'label' in answer &&
+            typeof answer.label === 'string'
+            ? answer.label
+            : null;
+
+      if (!selectedLabel) {
+        return null;
+      }
+
+      // Validate against actual catalog question options.
+      const matchingOption = question.options.find(
+        (option) => option.label === selectedLabel
+      );
+
+      if (!matchingOption) {
+        return null;
+      }
+
+      // Load the admin's approved choices for this question.
+      const eligibleLabels =
+        approvedAnswers[question.id];
+
+      if (
+        !Array.isArray(eligibleLabels) ||
+        !eligibleLabels.includes(matchingOption.label)
+      ) {
+        // An answer was not selected for auto-approval.
+        // Leave the sell request PENDING.
+        return null;
+      }
+    }
+
+    // All questionnaire answers qualify.
+    // Continue evaluating the existing photo,
+    // payout, and inventory requirements.
 
     // 2. Photos requirement check
     if (product.require_photos_for_auto) {
@@ -55,7 +156,7 @@ export async function processAutoMatchForSellRequest(sellRequestId: string) {
       }
     }
 
-   
+
     // 3. Validate payout before auto-approval
     const payout = sellRequest.estimated_price;
 
